@@ -37,4 +37,5 @@
 *.vcxproj
 *.filters
 *.user
-
+x64/
+*.filters.txt

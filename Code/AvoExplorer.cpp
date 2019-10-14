@@ -4,19 +4,49 @@
 
 //------------------------------
 
-uint32 const WINDOW_WIDTH_MIN = 100;
-uint32 const WINDOW_HEIGHT_MIN = 100;
-uint32 const WINDOW_WIDTH_START = 750;
-uint32 const WINDOW_HEIGHT_START = 600;
+uint32 const WINDOW_WIDTH_MIN = 260;
+uint32 const WINDOW_HEIGHT_MIN = 200;
+uint32 const WINDOW_WIDTH_START = 800;
+uint32 const WINDOW_HEIGHT_START = 560;
 
 //------------------------------
 
-AvoExplorer::AvoExplorer()
+AvoExplorer::AvoExplorer() :
+	m_topBar(0)
 {
 	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::Default);
 }
 
 void AvoExplorer::createContent()
 {
+	AvoGUI::DrawingContext* context = getDrawingContext();
+
+	//------------------------------
+
+	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
+
+	context->setBackgroundColor(Colors::avoExplorerBackground);
+	
+	setThemeColor("background", Colors::avoExplorerBackground);
+	setThemeColor("on background", Colors::avoExplorerOnBackground);
+	setThemeColor("shadow", Colors::avoExplorerShadow);
+
+	//------------------------------
+
+	AvoGUI::TextProperties textProperties = context->getDefaultTextProperties();
+	textProperties.fontFamilyName = "Roboto";
+	textProperties.fontSize = 16.f;
+	textProperties.fontWeight = AvoGUI::FontWeight::Light;
+	textProperties.lineHeight = 1.1f;
+	textProperties.characterSpacing = 0.3f;
+	context->setDefaultTextProperties(textProperties);
+
+	//------------------------------
+
 	m_topBar = new TopBar(this);
+}
+
+void AvoExplorer::handleSizeChange()
+{
+	m_topBar->setWidth(getWidth());
 }

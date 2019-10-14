@@ -1,6 +1,8 @@
 #pragma once
 
 #include <AvoGUI.hpp>
+#include "../Resources/Colors.hpp"
+#include "../Resources/Strings.hpp"
 
 //------------------------------
 
@@ -16,4 +18,6 @@ public:
 	AvoExplorer();
 
 	void createContent() override;
+
+	void handleSizeChange() override;
 };
