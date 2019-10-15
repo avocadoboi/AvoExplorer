@@ -1,6 +1,9 @@
 #include "AvoExplorer.hpp"
 
 #include "TopBar/TopBar.hpp"
+#include "FileExplorer/FileExplorer.hpp"
+
+#include "ActionMenu/ActionMenu.hpp"
 
 //------------------------------
 
@@ -44,9 +47,24 @@ void AvoExplorer::createContent()
 	//------------------------------
 
 	m_topBar = new TopBar(this);
+
+	//------------------------------
+
+	enableMouseEvents();
+	m_actionMenu = new ActionMenu(this);
 }
 
 void AvoExplorer::handleSizeChange()
 {
 	m_topBar->setWidth(getWidth());
+}
+
+//------------------------------
+
+void AvoExplorer::handleMouseDown(AvoGUI::MouseEvent const& p_event) 
+{
+	if (p_event.mouseButton == AvoGUI::MouseButton::Right)
+	{
+		m_actionMenu->open(p_event.x, p_event.y);
+	}
 }
