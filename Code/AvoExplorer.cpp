@@ -34,6 +34,8 @@ void AvoExplorer::createContent()
 	setThemeColor("on background", Colors::avoExplorerOnBackground);
 	setThemeColor("shadow", Colors::avoExplorerShadow);
 
+	setThemeValue("hover animation speed", 0.2f);
+
 	//------------------------------
 
 	AvoGUI::TextProperties textProperties = context->getDefaultTextProperties();
@@ -51,7 +53,10 @@ void AvoExplorer::createContent()
 	//------------------------------
 
 	enableMouseEvents();
-	m_actionMenu = new ActionMenu(this);
+	m_actionMenu = new ActionMenu(this, 150.f);
+	m_actionMenu->addAction("Copy", "CTRL + C");
+	m_actionMenu->addAction("Cut", "CTRL + X");
+	m_actionMenu->addAction("Paste", "CTRL + V");
 }
 
 void AvoExplorer::handleSizeChange()
