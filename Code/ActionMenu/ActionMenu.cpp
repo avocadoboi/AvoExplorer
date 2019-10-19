@@ -51,20 +51,30 @@ void ActionMenu::open(float p_anchorX, float p_anchorY)
 	if (p_anchorX + m_targetBounds.getWidth() > getParent()->getWidth() - ACTION_MENU_MIN_PARENT_MARGIN)
 	{
 		m_targetBounds.setRight(p_anchorX);
+		if (p_anchorY + m_targetBounds.getHeight() > getParent()->getHeight() - ACTION_MENU_MIN_PARENT_MARGIN)
+		{
+			m_targetBounds.setBottom(p_anchorY);
+			setCornerRadius(4.f, 4.f, 5.f, 0.f);
+		}
+		else
+		{
+			m_targetBounds.setTop(p_anchorY);
+			setCornerRadius(5.f, 0.f, 5.f, 5.f);
+		}
 	}
 	else
 	{
 		m_targetBounds.setLeft(p_anchorX);
-	}
-	if (p_anchorY + m_targetBounds.getHeight() > getParent()->getHeight() - ACTION_MENU_MIN_PARENT_MARGIN)
-	{
-		m_targetBounds.setBottom(p_anchorY);
-		setCornerRadius(5.f, 0.f, 5.f, 5.f);
-	}
-	else
-	{
-		m_targetBounds.setTop(p_anchorY);
-		setCornerRadius(5.f, 0.f, 5.f, 5.f);
+		if (p_anchorY + m_targetBounds.getHeight() > getParent()->getHeight() - ACTION_MENU_MIN_PARENT_MARGIN)
+		{
+			m_targetBounds.setBottom(p_anchorY);
+			setCornerRadius(4.f, 4.f, 0.f, 5.f);
+		}
+		else
+		{
+			m_targetBounds.setTop(p_anchorY);
+			setCornerRadius(0.f, 5.f, 5.f, 5.f);
+		}
 	}
 
 	m_anchor.set(p_anchorX, p_anchorY);

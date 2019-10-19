@@ -46,7 +46,8 @@ public:
 			m_text_shortcut->setFontWeight(AvoGUI::FontWeight::Medium);
 		}
 
-		m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.2f));
+		m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.05f));
+
 		setCursor(AvoGUI::Cursor::Hand);
 
 		enableMouseEvents();
@@ -65,10 +66,12 @@ public:
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
+		p_context->setOpacity(getThemeValue("opacity"));
 		p_context->setColor(getThemeColor("on background"));
 		p_context->drawText(m_text_action);
 		p_context->setColor(Colors::actionMenuShortcut);
 		p_context->drawText(m_text_shortcut);
+		p_context->setOpacity(1.f);
 	}
 };
 
@@ -95,6 +98,7 @@ public:
 	{
 		setThemeValue("font size", 15.f);
 		setThemeColor("background", Colors::actionMenuBackground);
+		setThemeValue("opacity", 1.f);
 
 		setCornerRadius(5.f);
 		setElevation(8.f);
@@ -150,7 +154,7 @@ public:
 		{
 			if (m_openAnimationTime < 1.f)
 			{
-				m_openAnimationValue = getThemeEasing("ease in out").easeValue(m_openAnimationTime += 0.1f);
+				m_openAnimationValue = getThemeEasing("out").easeValue(m_openAnimationTime += 0.1f);
 				queueAnimationUpdate();
 			}
 		}
@@ -158,7 +162,7 @@ public:
 		{
 			if (m_openAnimationTime < 1.f)
 			{
-				m_openAnimationValue = 1.f - getThemeEasing("ease in out").easeValue(m_openAnimationTime += 0.1f);
+				m_openAnimationValue = 1.f - getThemeEasing("out").easeValue(m_openAnimationTime += 0.1f);
 				queueAnimationUpdate();
 			}
 			else
@@ -176,12 +180,16 @@ public:
 			AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
 		);
 
+		setThemeValue("opacity", AvoGUI::square(m_openAnimationValue));
+
 		invalidate();
 	}
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setColor(AvoGUI::Color(getThemeColor("background"), m_openAnimationValue));
+		p_context->setOpacity(m_openAnimationValue);
+		p_context->setColor(getThemeColor("background"));
 		p_context->fillRectangle(getSize());
+		p_context->setOpacity(1.f);
 	}
 };

@@ -2,5 +2,5 @@
 
 namespace Strings
 {
-	char const* const bookmarks = u8"Bookmarks";
+	char const* const bookmarks = u8"BOOKMARKS";
 };
