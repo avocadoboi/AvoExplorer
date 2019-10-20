@@ -1,23 +1,32 @@
 #pragma once
 
 #include "TopBar.hpp"
+#include "../ActionMenu/ContextMenu.hpp"
 
 //------------------------------
 
 class Bookmarks :
-	public AvoGUI::View
+	public ContextView
 {
 private:
 	TopBar* m_topBar;
 
 public:
 	Bookmarks(TopBar* p_topBar) :
-		View(p_topBar), m_topBar(0)
+		ContextView(p_topBar), m_topBar(p_topBar)
 	{
 		setElevation(3.f);
 		setCornerRadius(6.f);
 
 		setThemeColor("background", Colors::topBarBookmarksBackground);
+
+		enableMouseEvents();
+
+		//------------------------------
+
+		m_contextMenuWidth = 150.f;
+		m_contextMenuItems.push_back(ActionMenuItemData("Test 1", "Ctrl+N"));
+		m_contextMenuItems.push_back(ActionMenuItemData("Test 2", "Ctrl+Shift+N"));
 	}
 
 	void draw(AvoGUI::DrawingContext* p_context) override

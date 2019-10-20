@@ -8,22 +8,28 @@
 
 class TopBar;
 class ActionMenu;
+class ContextMenu;
 
 class AvoExplorer : 
 	public AvoGUI::GUI
 {
 private:
 	TopBar* m_topBar;
-	ActionMenu* m_actionMenu;
+	ContextMenu* m_contextMenu;
 
 public:
 	AvoExplorer();
 
-	void createContent() override;
+	//------------------------------
 
-	void handleSizeChange() override;
+	ContextMenu* getContextMenu()
+	{
+		return m_contextMenu;
+	}
 
 	//------------------------------
 
-	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
+	void createContent() override;
+
+	void handleSizeChange() override;
 };

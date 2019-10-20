@@ -9,6 +9,8 @@ float const ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	*8.f;
 float const ACTION_MENU_MIN_PARENT_MARGIN = 3.f		*8.f;
 float const ACTION_MENU_VERTICAL_PADDING = 1.f		*8.f;
 
+float const ACTION_MENU_ANIMATION_SPEED = 0.1f;
+
 //
 // Class ActionMenuItem
 //
@@ -23,7 +25,10 @@ void ActionMenuItem::handleSizeChange()
 }
 void ActionMenuItem::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	m_parent->handleActionMenuItemChoice();
+	if (p_event.mouseButton == AvoGUI::MouseButton::Left)
+	{
+		m_parent->handleActionMenuItemChoice(this);
+	}
 }
 
 //
@@ -82,7 +87,42 @@ void ActionMenu::open(float p_anchorX, float p_anchorY)
 
 	setIsVisible(true);
 
-	m_isOpen = true;
 	m_openAnimationTime = 0.f;
 	queueAnimationUpdate();
+}
+
+void ActionMenu::updateAnimations()
+{
+	if (m_openAnimationTime < 1.f)
+	{
+		m_openAnimationValue = getThemeEasing("out").easeValue(m_openAnimationTime += ACTION_MENU_ANIMATION_SPEED);
+		queueAnimationUpdate();
+	}
+
+	float heightFactor = 1.f - std::cos(m_openAnimationValue * AvoGUI::HALF_PI);
+	setBounds(
+		m_targetBounds.left,
+		AvoGUI::interpolate(m_anchor.y, m_targetBounds.top, heightFactor),
+		m_targetBounds.right,
+		AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
+	);
+	float itemsTop = m_targetBounds.top - getTop() + ACTION_MENU_VERTICAL_PADDING;
+	if (getChild(0)->getTop() != itemsTop)
+	{
+		for (uint32_t a = 0; a < getNumberOfChildren(); a++)
+		{
+			if (a)
+			{
+				getChild(a)->setTop(getChild(a-1)->getBottom());
+			}
+			else
+			{
+				getChild(a)->setTop(itemsTop);
+			}
+		}
+	}
+
+	setThemeValue("opacity", AvoGUI::square(AvoGUI::max(m_openAnimationValue * 7.f - 6.f, 0.f)));
+
+	invalidate();
 }

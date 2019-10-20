@@ -3,7 +3,7 @@
 #include "TopBar/TopBar.hpp"
 #include "FileExplorer/FileExplorer.hpp"
 
-#include "ActionMenu/ActionMenu.hpp"
+#include "ActionMenu/ContextMenu.hpp"
 
 //------------------------------
 
@@ -20,6 +20,8 @@ AvoExplorer::AvoExplorer() :
 	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::Default);
 }
 
+//------------------------------
+
 void AvoExplorer::createContent()
 {
 	AvoGUI::DrawingContext* context = getDrawingContext();
@@ -34,7 +36,7 @@ void AvoExplorer::createContent()
 	setThemeColor("on background", Colors::avoExplorerOnBackground);
 	setThemeColor("shadow", Colors::avoExplorerShadow);
 
-	setThemeValue("hover animation speed", 0.2f);
+	setThemeValue("hover animation speed", 0.4f);
 
 	//------------------------------
 
@@ -48,28 +50,18 @@ void AvoExplorer::createContent()
 
 	//------------------------------
 
+	m_contextMenu = new ContextMenu(this);
+
+	//------------------------------
+
 	m_topBar = new TopBar(this);
 
 	//------------------------------
 
 	enableMouseEvents();
-	m_actionMenu = new ActionMenu(this, 150.f);
-	m_actionMenu->addAction("Copy", "CTRL + C");
-	m_actionMenu->addAction("Cut", "CTRL + X");
-	m_actionMenu->addAction("Paste", "CTRL + V");
 }
 
 void AvoExplorer::handleSizeChange()
 {
 	m_topBar->setWidth(getWidth());
-}
-
-//------------------------------
-
-void AvoExplorer::handleMouseDown(AvoGUI::MouseEvent const& p_event) 
-{
-	if (p_event.mouseButton == AvoGUI::MouseButton::Right)
-	{
-		m_actionMenu->open(p_event.x, p_event.y);
-	}
 }

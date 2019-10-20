@@ -42,11 +42,11 @@ public:
 		m_text_action = context->createText(p_action, getThemeValue("font size"));
 		if (*p_shortcut)
 		{
-			m_text_shortcut = context->createText(p_shortcut, getThemeValue("font size")*0.8f);
+			m_text_shortcut = context->createText(p_shortcut, getThemeValue("font size")*0.75f);
 			m_text_shortcut->setFontWeight(AvoGUI::FontWeight::Medium);
 		}
 
-		m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.05f));
+		m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.3f));
 
 		setCursor(AvoGUI::Cursor::Hand);
 
@@ -57,6 +57,17 @@ public:
 		m_text_action(0), m_text_shortcut(0)
 	{
 		ActionMenuItem(p_parent, p_itemData.action, p_itemData.shortcut);
+	}
+
+	//------------------------------
+
+	std::string const& getAction()
+	{
+		return m_text_action->getString();
+	}
+	std::string const& getShortcut()
+	{
+		return m_text_shortcut->getString();
 	}
 
 	//------------------------------
@@ -83,7 +94,6 @@ class ActionMenu :
 	public AvoGUI::GlobalMouseListener
 {
 private:
-	bool m_isOpen;
 	float m_openAnimationTime;
 	float m_openAnimationValue;
 
@@ -93,10 +103,10 @@ private:
 public:
 	ActionMenu(AvoGUI::View* p_parent, float p_width = 200.f) :
 		View(p_parent, AvoGUI::Rectangle<float>(0.f, 0.f, p_width, 0.f)),
-		m_isOpen(false), m_openAnimationTime(0.f), m_openAnimationValue(0.f),
+		m_openAnimationTime(0.f), m_openAnimationValue(0.f),
 		m_targetBounds(0.f, 0.f, p_width, 0.f)
 	{
-		setThemeValue("font size", 15.f);
+		setThemeValue("font size", 14.f);
 		setThemeColor("background", Colors::actionMenuBackground);
 		setThemeValue("opacity", 1.f);
 
@@ -116,6 +126,32 @@ public:
 	{
 		addAction(p_itemData.action, p_itemData.shortcut);
 	}
+	void setActions(std::vector<ActionMenuItemData> const& p_actions)
+	{
+		removeAllChildren();
+		
+		m_children.reserve(p_actions.size());
+		for (uint32 a = 0; a < p_actions.size(); a++)
+		{
+			addAction(p_actions[a].action, p_actions[a].shortcut);
+		}
+	}
+	void clearActions()
+	{
+		removeAllChildren();
+	}
+
+	//------------------------------
+
+	void setMenuWidth(float p_width)
+	{
+		m_targetBounds.setWidth(p_width);
+
+		for (auto child : m_children)
+		{
+			child->setWidth(p_width);
+		}
+	}
 
 	//------------------------------
 
@@ -125,7 +161,7 @@ public:
 	}
 	void open(float p_anchorX, float p_anchorY);
 
-	virtual void handleActionMenuItemChoice() 
+	virtual void handleActionMenuItemChoice(ActionMenuItem* p_item) 
 	{
 		setIsVisible(false);
 		invalidate();
@@ -137,9 +173,8 @@ public:
 	{
 		if (m_openAnimationTime >= 1.f && !getIsContaining(p_event.x, p_event.y))
 		{
-			m_isOpen = false;
-			m_openAnimationTime = 0.f;
-			queueAnimationUpdate();
+			setIsVisible(false);
+			invalidate();
 		}
 	}
 	void handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event) override
@@ -148,42 +183,7 @@ public:
 
 	//------------------------------
 
-	void updateAnimations()
-	{
-		if (m_isOpen)
-		{
-			if (m_openAnimationTime < 1.f)
-			{
-				m_openAnimationValue = getThemeEasing("out").easeValue(m_openAnimationTime += 0.1f);
-				queueAnimationUpdate();
-			}
-		}
-		else
-		{
-			if (m_openAnimationTime < 1.f)
-			{
-				m_openAnimationValue = 1.f - getThemeEasing("out").easeValue(m_openAnimationTime += 0.1f);
-				queueAnimationUpdate();
-			}
-			else
-			{
-				setIsVisible(false);
-			}
-		}
-
-		float widthFactor = std::sin(m_openAnimationValue * AvoGUI::HALF_PI);
-		float heightFactor = 1.f - std::cos(m_openAnimationValue * AvoGUI::HALF_PI);
-		setBounds(
-			AvoGUI::interpolate(m_anchor.x, m_targetBounds.left, widthFactor), 
-			AvoGUI::interpolate(m_anchor.y, m_targetBounds.top, heightFactor),
-			AvoGUI::interpolate(m_anchor.x, m_targetBounds.right, widthFactor),
-			AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
-		);
-
-		setThemeValue("opacity", AvoGUI::square(m_openAnimationValue));
-
-		invalidate();
-	}
+	void updateAnimations() override;
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{

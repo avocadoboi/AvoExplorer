@@ -23,6 +23,8 @@ TopBar::TopBar(AvoExplorer* p_parent) :
 	setElevation(5.f);
 	setHasShadow(true);
 
+	enableMouseEvents();
+
 	//------------------------------
 
 	m_title = getGUI()->getDrawingContext()->createText(Strings::bookmarks, 14.f);
