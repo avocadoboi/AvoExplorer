@@ -7,7 +7,8 @@
 //------------------------------
 
 class TopBar;
-class ActionMenu;
+class FileBrowser;
+
 class ContextMenu;
 
 class AvoExplorer : 
@@ -15,6 +16,8 @@ class AvoExplorer :
 {
 private:
 	TopBar* m_topBar;
+	FileBrowser* m_fileBrowser;
+
 	ContextMenu* m_contextMenu;
 
 public:

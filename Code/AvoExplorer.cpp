@@ -1,7 +1,7 @@
 #include "AvoExplorer.hpp"
 
 #include "TopBar/TopBar.hpp"
-#include "FileExplorer/FileExplorer.hpp"
+#include "FileBrowser/FileBrowser.hpp"
 
 #include "ActionMenu/ContextMenu.hpp"
 
@@ -15,7 +15,7 @@ uint32 const WINDOW_HEIGHT_START = 560;
 //------------------------------
 
 AvoExplorer::AvoExplorer() :
-	m_topBar(0)
+	m_topBar(0), m_fileBrowser(0), m_contextMenu(0)
 {
 	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::Default);
 }
@@ -55,6 +55,7 @@ void AvoExplorer::createContent()
 	//------------------------------
 
 	m_topBar = new TopBar(this);
+	m_fileBrowser = new FileBrowser(this);
 
 	//------------------------------
 
@@ -64,4 +65,5 @@ void AvoExplorer::createContent()
 void AvoExplorer::handleSizeChange()
 {
 	m_topBar->setWidth(getWidth());
+	m_fileBrowser->setBounds(0.f, m_topBar->getBottom(), getWidth(), getHeight());
 }

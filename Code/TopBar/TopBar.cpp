@@ -1,6 +1,6 @@
 #include "TopBar.hpp"
 
-#include "Bookmarks.hpp"
+#include "Bookmarks/Bookmarks.hpp"
 
 //------------------------------
 

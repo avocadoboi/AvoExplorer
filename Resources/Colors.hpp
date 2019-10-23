@@ -20,4 +20,9 @@ namespace Colors
 
 	AvoGUI::Color const actionMenuBackground(0.2f);
 	AvoGUI::Color const actionMenuShortcut(0.6f);
+
+	AvoGUI::Color const fileBrowserPathEditorBackground(0.06f);
+	AvoGUI::Color const fileBrowserPathEditorBorder(0.3f);
+
+	AvoGUI::Color const scrollbar(0.7f);
 };

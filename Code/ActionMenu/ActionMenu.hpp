@@ -88,6 +88,14 @@ public:
 
 //------------------------------
 
+class ActionMenuListener
+{
+public:
+	virtual void handleActionMenuItemChoice(std::string const& p_action, uint32 p_index) = 0;
+};
+
+//------------------------------
+
 class ActionMenu :
 	public AvoGUI::View,
 	public AvoGUI::KeyboardListener,
@@ -99,6 +107,8 @@ private:
 
 	AvoGUI::Point<float> m_anchor;
 	AvoGUI::Rectangle<float> m_targetBounds;
+
+	std::vector<ActionMenuListener*> m_actionMenuListeners;
 
 public:
 	ActionMenu(AvoGUI::View* p_parent, float p_width = 200.f) :
@@ -117,6 +127,17 @@ public:
 		getGUI()->addGlobalMouseListener(this);
 
 		enableMouseEvents();
+	}
+
+	//------------------------------
+
+	void addActionMenuListener(ActionMenuListener* p_listener)
+	{
+		m_actionMenuListeners.push_back(p_listener);
+	}
+	void removeActionMenuListener(ActionMenuListener* p_listener)
+	{
+		AvoGUI::removeVectorElementWithoutKeepingOrder(m_actionMenuListeners, p_listener);
 	}
 
 	//------------------------------
@@ -163,6 +184,11 @@ public:
 
 	virtual void handleActionMenuItemChoice(ActionMenuItem* p_item) 
 	{
+		for (auto listener : m_actionMenuListeners)
+		{
+			listener->handleActionMenuItemChoice(p_item->getAction(), p_item->getIndex());
+		}
+
 		setIsVisible(false);
 		invalidate();
 	}
