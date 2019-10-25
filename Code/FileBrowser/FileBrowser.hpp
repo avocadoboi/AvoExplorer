@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../AvoExplorer.hpp"
+#include "../ScrollContainer/ScrollContainer.hpp"
 
 //------------------------------
 
@@ -15,6 +16,8 @@ private:
 	FileBrowserPathEditor* m_pathEditor;
 	AvoGUI::Button* m_button_changeView;
 	AvoGUI::Button* m_button_add;
+
+	ScrollContainer* m_itemsContainer;
 
 public:
 	FileBrowser(AvoExplorer* p_parent);
