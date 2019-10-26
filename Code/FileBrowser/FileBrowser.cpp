@@ -19,7 +19,7 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	m_itemsContainer = new ScrollContainer(this);
 	for (uint32 a = 0; a < 20; a++)
 	{
-		FileBrowserItem* item = new FileBrowserItem(m_itemsContainer, AvoGUI::Rectangle<float>(0.f, 0.f, 300.f, 200.f));
+		FileBrowserItem* item = new FileBrowserItem(m_itemsContainer->getContent(), AvoGUI::Rectangle<float>(0.f, 0.f, 300.f, 200.f));
 	}
 }
 
@@ -31,7 +31,7 @@ void FileBrowser::handleSizeChange()
 	m_itemsContainer->setBounds(0, m_pathEditor->getBottom(), getWidth(), getHeight());
 
 	FileBrowserItem* lastItem = 0;
-	for (FileBrowserItem* item : (std::vector<FileBrowserItem*> const&)m_itemsContainer->getChildren())
+	for (FileBrowserItem* item : (std::vector<FileBrowserItem*> const&)m_itemsContainer->getContent()->getChildren())
 	{
 		if (lastItem)
 		{
@@ -50,4 +50,5 @@ void FileBrowser::handleSizeChange()
 		}
 		lastItem = item;
 	}
+	m_itemsContainer->getContent()->setPadding(20.f);
 }

@@ -11,7 +11,7 @@ private:
 
 
 public:
-	FileBrowserItem(ScrollContainer* p_parent, AvoGUI::Rectangle<float> const& p_rectangle) :
+	FileBrowserItem(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_rectangle) :
 		View(p_parent, p_rectangle)
 	{
 		setCornerRadius(6.f);
