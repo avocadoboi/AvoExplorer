@@ -17,9 +17,9 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	m_pathEditor = new FileBrowserPathEditor(this);
 
 	m_itemsContainer = new ScrollContainer(this);
-	for (uint32 a = 0; a < 20; a++)
+	for (uint32 a = 0; a < 30; a++)
 	{
-		FileBrowserItem* item = new FileBrowserItem(m_itemsContainer->getContent(), AvoGUI::Rectangle<float>(0.f, 0.f, 300.f, 200.f));
+		FileBrowserItem* item = new FileBrowserItem(m_itemsContainer->getContent(), AvoGUI::Rectangle<float>(0.f, 0.f, 200.f, 40.f));
 	}
 }
 
@@ -35,13 +35,13 @@ void FileBrowser::handleSizeChange()
 	{
 		if (lastItem)
 		{
-			if (lastItem->getRight() + 30.f + item->getWidth() > m_itemsContainer->getWidth() - 20.f)
+			if (lastItem->getRight() + 20.f + item->getWidth() > m_itemsContainer->getWidth() - 20.f)
 			{
-				item->setTopLeft(20.f, lastItem->getBottom() + 30.f);
+				item->setTopLeft(20.f, lastItem->getBottom() + 20.f);
 			}
 			else
 			{
-				item->setTopLeft(lastItem->getRight() + 30.f, lastItem->getTop());
+				item->setTopLeft(lastItem->getRight() + 20.f, lastItem->getTop());
 			}
 		}
 		else

@@ -22,6 +22,7 @@ private:
 
 	Orientation m_orientation;
 	bool m_isDragging;
+	float m_dragAnchorPosition;
 
 	bool m_isHovering;
 	float m_opacityAnimationTime;
@@ -37,6 +38,7 @@ public:
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
 		m_isDragging = true;
+		m_dragAnchorPosition = m_orientation == Orientation::Vertical ? p_event.y : p_event.x;
 	}
 	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override;
 	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override;
@@ -64,20 +66,7 @@ private:
 
 	AvoGUI::View* m_content;
 
-	void updateScrollbars()
-	{
-		m_verticalScrollbar->setIsVisible(m_content->getHeight() > getHeight());
-		if (m_content->getHeight() > getHeight())
-		{
-			m_verticalScrollbar->setHeight(getHeight()*getHeight() / m_content->getHeight());
-		}
-
-		m_horizontalScrollbar->setIsVisible(m_content->getWidth() > getWidth());
-		if (m_content->getWidth() > getWidth())
-		{
-			m_horizontalScrollbar->setWidth(getWidth()*getWidth() / m_content->getWidth());
-		}
-	}
+	void updateScrollbars();
 
 public:
 	ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>());
@@ -100,26 +89,8 @@ public:
 		setHorizontalScrollPosition(p_positionX);
 		setVerticalScrollPosition(p_positionY);
 	}
-	void setHorizontalScrollPosition(float p_position)
-	{
-		if (m_horizontalScrollbar->getIsVisible())
-		{
-			p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getWidth() - getWidth(), p_position));
-
-			m_content->setLeft(-p_position);
-			m_horizontalScrollbar->setLeft(p_position * (getWidth() - m_horizontalScrollbar->getWidth()) / (m_content->getWidth() - getWidth()));
-		}
-	}
-	void setVerticalScrollPosition(float p_position)
-	{
-		if (m_verticalScrollbar->getIsVisible())
-		{
-			p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getHeight() - getHeight(), p_position));
-
-			m_content->setTop(-p_position);
-			m_verticalScrollbar->setTop(p_position * (getHeight() - m_verticalScrollbar->getHeight()) / (m_content->getHeight() - getHeight()));
-		}
-	}
+	void setHorizontalScrollPosition(float p_position);
+	void setVerticalScrollPosition(float p_position);
 
 	AvoGUI::Point<float> const& getScrollPosition()
 	{
@@ -136,14 +107,8 @@ public:
 
 	//------------------------------
 
-	void moveHorizontalScrollbar(float p_offset)
-	{
-		setHorizontalScrollPosition((m_horizontalScrollbar->getLeft() + p_offset) * m_content->getWidth() / getWidth());
-	}
-	void moveVerticalScrollbar(float p_offset)
-	{
-		setVerticalScrollPosition((m_verticalScrollbar->getTop() + p_offset) * m_content->getHeight() / getHeight());
-	}
+	void moveHorizontalScrollbar(float p_offset);
+	void moveVerticalScrollbar(float p_offset);
 
 	//------------------------------
 
@@ -154,6 +119,9 @@ public:
 	void handleViewSizeChange(AvoGUI::View* p_view, float p_previousWidth, float p_previousHeight) override
 	{
 		updateScrollbars();
+		setVerticalScrollPosition(-m_content->getTop());
+		setHorizontalScrollPosition(-m_content->getLeft());
+		invalidate();
 	}
 	void handleSizeChange() override;
 
