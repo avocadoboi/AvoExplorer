@@ -73,6 +73,14 @@ public:
 
 	//------------------------------
 
+	void setContentView(AvoGUI::View* p_content)
+	{
+		m_content->setParent(0);
+		m_content->forget();
+
+		m_content = p_content;
+		m_content->setParent(this);
+	}
 	View* getContent()
 	{
 		return m_content;

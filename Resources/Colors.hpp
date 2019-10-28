@@ -24,7 +24,7 @@ namespace Colors
 	AvoGUI::Color const fileBrowserPathEditorBackground(0.06f);
 	AvoGUI::Color const fileBrowserPathEditorBorder(0.3f);
 
-	AvoGUI::Color const fileBrowserItemBackground(0.2f);
+	AvoGUI::Color const fileBrowserItemBackground(0.5f, 0.7f, 1.f, 0.2f);
 
 	AvoGUI::Color const scrollbar(0.7f);
 };

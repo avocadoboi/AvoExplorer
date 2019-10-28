@@ -145,6 +145,12 @@ void ScrollContainer::setHorizontalScrollPosition(float p_position)
 		m_content->setLeft(-p_position);
 		m_horizontalScrollbar->setLeft(SCROLLBAR_MARGIN + p_position * (getWidth() - m_horizontalScrollbar->getWidth() - 2.f*SCROLLBAR_MARGIN) / (m_content->getWidth() - getWidth()));
 	}
+	else
+	{
+		p_position = 0.f;
+		m_content->setLeft(0.f);
+		m_horizontalScrollbar->setLeft(SCROLLBAR_MARGIN);
+	}
 }
 void ScrollContainer::setVerticalScrollPosition(float p_position)
 {
@@ -154,6 +160,12 @@ void ScrollContainer::setVerticalScrollPosition(float p_position)
 
 		m_content->setTop(-p_position);
 		m_verticalScrollbar->setTop(SCROLLBAR_MARGIN + p_position * (getHeight() - m_verticalScrollbar->getHeight() - 2.f * SCROLLBAR_MARGIN) / (m_content->getHeight() - getHeight()));
+	}
+	else
+	{
+		p_position = 0.f;
+		m_content->setTop(0.f);
+		m_verticalScrollbar->setTop(SCROLLBAR_MARGIN);
 	}
 }
 

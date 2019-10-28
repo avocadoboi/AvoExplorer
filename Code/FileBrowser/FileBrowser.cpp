@@ -1,12 +1,19 @@
 #include "FileBrowser.hpp"
 
 #include "FileBrowserPathEditor/FileBrowserPathEditor.hpp"
-#include "FileBrowserItem/FileBrowserItem.hpp"
+#include "FileBrowserItems/FileBrowserItems.hpp"
 
 //------------------------------
 
-float const FILE_BROWSER_PADDING_HORIZONTAL = 2	* 8.f;
-float const FILE_BROWSER_PADDING_TOP = 2		* 8.f;
+float const FILE_BROWSER_PADDING_HORIZONTAL = 2			* 8.f;
+float const FILE_BROWSER_PADDING_TOP = 2				* 8.f;
+
+//------------------------------
+
+//bool getIsPathLessThan(std::filesystem::path const& p_a, std::filesystem::path const& p_b)
+//{
+//	return p_a < p_b;
+//}
 
 //------------------------------
 
@@ -15,40 +22,27 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	m_pathEditor(0), m_button_changeView(0), m_button_add(0)
 {
 	m_pathEditor = new FileBrowserPathEditor(this);
+	ScrollContainer* scrollContainer = new ScrollContainer(this);
+	m_items = new FileBrowserItems(scrollContainer);
+	scrollContainer->setContentView(m_items);
 
-	m_itemsContainer = new ScrollContainer(this);
-	for (uint32 a = 0; a < 30; a++)
-	{
-		FileBrowserItem* item = new FileBrowserItem(m_itemsContainer->getContent(), AvoGUI::Rectangle<float>(0.f, 0.f, 200.f, 40.f));
-	}
+	setWorkingDirectory("C:/");
 }
+
+//------------------------------
+
+void FileBrowser::setWorkingDirectory(std::filesystem::path const& p_path)
+{
+	m_items->setWorkingDirectory(p_path);
+}
+
+//------------------------------
 
 void FileBrowser::handleSizeChange()
 {
 	m_pathEditor->setTopLeft(FILE_BROWSER_PADDING_HORIZONTAL, FILE_BROWSER_PADDING_TOP);
 	m_pathEditor->setWidth(getRight() - FILE_BROWSER_PADDING_HORIZONTAL * 2.f);
 
-	m_itemsContainer->setBounds(0, m_pathEditor->getBottom(), getWidth(), getHeight());
-
-	FileBrowserItem* lastItem = 0;
-	for (FileBrowserItem* item : (std::vector<FileBrowserItem*> const&)m_itemsContainer->getContent()->getChildren())
-	{
-		if (lastItem)
-		{
-			if (lastItem->getRight() + 20.f + item->getWidth() > m_itemsContainer->getWidth() - 20.f)
-			{
-				item->setTopLeft(20.f, lastItem->getBottom() + 20.f);
-			}
-			else
-			{
-				item->setTopLeft(lastItem->getRight() + 20.f, lastItem->getTop());
-			}
-		}
-		else
-		{
-			item->setTopLeft(20.f, 20.f);
-		}
-		lastItem = item;
-	}
-	m_itemsContainer->getContent()->setPadding(20.f);
+	m_items->getParent()->setBounds(0, m_pathEditor->getBottom(), getWidth(), getHeight());
+	m_items->updateLayout();
 }

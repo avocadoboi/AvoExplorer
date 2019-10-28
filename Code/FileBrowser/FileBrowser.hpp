@@ -5,7 +5,13 @@
 
 //------------------------------
 
+#include <filesystem>
+
+//------------------------------
+
 class FileBrowserPathEditor;
+class FileBrowserItems;
+class FileBrowserItem;
 
 class FileBrowser :
 	public AvoGUI::View
@@ -17,10 +23,14 @@ private:
 	AvoGUI::Button* m_button_changeView;
 	AvoGUI::Button* m_button_add;
 
-	ScrollContainer* m_itemsContainer;
+	FileBrowserItems* m_items;
 
 public:
 	FileBrowser(AvoExplorer* p_parent);
+
+	//------------------------------
+
+	void setWorkingDirectory(std::filesystem::path const& p_path);
 
 	//------------------------------
 
