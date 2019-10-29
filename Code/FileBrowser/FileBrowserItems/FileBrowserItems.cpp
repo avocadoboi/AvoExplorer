@@ -4,11 +4,12 @@
 
 //------------------------------
 
-float const FILE_BROWSER_ITEMS_PADDING = 1 * 8.f;
-float const FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL = 1 * 8.f;
-float const FILE_BROWSER_ITEMS_MARGIN_VERTICAL = 2 * 8.f;
-float const FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP = 2 * 8.f;
-float const FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM = 1 * 8.f;
+float constexpr FILE_BROWSER_ITEMS_PADDING_TOP = 2			* 8.f;
+float constexpr FILE_BROWSER_ITEMS_PADDING = 3				* 8.f;
+float constexpr FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL = 1	* 8.f;
+float constexpr FILE_BROWSER_ITEMS_MARGIN_VERTICAL = 2		* 8.f;
+float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP = 3		* 8.f;
+float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM = 2	* 8.f;
 
 //------------------------------
 
@@ -49,6 +50,11 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 	{
 		m_fileItems.push_back(new FileBrowserItem(this, path, true));
 	}
+
+	if (getParent()->getWidth() && getParent()->getHeight())
+	{
+		updateLayout();
+	}
 }
 
 void FileBrowserItems::updateLayout()
@@ -58,7 +64,7 @@ void FileBrowserItems::updateLayout()
 	float width = 0.f;
 	float height = 0.f;
 
-	m_text_directories->setTopLeft(FILE_BROWSER_ITEMS_PADDING);
+	m_text_directories->setTopLeft(FILE_BROWSER_ITEMS_PADDING, FILE_BROWSER_ITEMS_PADDING_TOP);
 	for (FileBrowserItem* item : m_directoryItems)
 	{
 		if (lastItem)
@@ -88,23 +94,22 @@ void FileBrowserItems::updateLayout()
 		}
 		lastItem = item;
 	}
-	m_text_files->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP : FILE_BROWSER_ITEMS_PADDING);
+	m_text_files->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP : FILE_BROWSER_ITEMS_PADDING_TOP);
 	for (FileBrowserItem* item : m_fileItems)
 	{
 		if (lastItem)
 		{
-			if (lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL + item->getWidth() > getParent()->getWidth() - FILE_BROWSER_ITEMS_PADDING)
+			if (item == m_fileItems[0])
 			{
-				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, lastItem->getBottom() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL);
+				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_text_files->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM);
 				if (item->getBottom() > height)
 				{
 					height = item->getBottom();
 				}
-
 			}
-			else if (item == m_fileItems[0])
+			else if (lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL + item->getWidth() > getParent()->getWidth() - FILE_BROWSER_ITEMS_PADDING)
 			{
-				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_text_files->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM);
+				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, lastItem->getBottom() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL);
 				if (item->getBottom() > height)
 				{
 					height = item->getBottom();
@@ -126,5 +131,5 @@ void FileBrowserItems::updateLayout()
 		}
 		lastItem = item;
 	}
-	setSize(width, height);
+	setSize(width, height + FILE_BROWSER_ITEMS_PADDING);
 }

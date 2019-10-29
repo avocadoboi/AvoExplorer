@@ -2,14 +2,14 @@
 
 //------------------------------
 
-float const ACTION_MENU_ITEM_HEIGHT = 4.f			*8.f;
-float const ACTION_MENU_ITEM_LEFT_PADDING = 2.f		*8.f;
-float const ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	*8.f;
+float constexpr ACTION_MENU_ITEM_HEIGHT = 4.f			*8.f;
+float constexpr ACTION_MENU_ITEM_LEFT_PADDING = 2.f		*8.f;
+float constexpr ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	*8.f;
 
-float const ACTION_MENU_MIN_PARENT_MARGIN = 3.f		*8.f;
-float const ACTION_MENU_VERTICAL_PADDING = 1.f		*8.f;
+float constexpr ACTION_MENU_MIN_PARENT_MARGIN = 3.f		*8.f;
+float constexpr ACTION_MENU_VERTICAL_PADDING = 1.f		*8.f;
 
-float const ACTION_MENU_ANIMATION_SPEED = 0.1f;
+float constexpr ACTION_MENU_ANIMATION_SPEED = 0.1f;
 
 //
 // Class ActionMenuItem

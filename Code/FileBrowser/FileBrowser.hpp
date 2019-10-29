@@ -27,10 +27,14 @@ private:
 
 public:
 	FileBrowser(AvoExplorer* p_parent);
+	~FileBrowser()
+	{
+		return;
+	}
 
 	//------------------------------
 
-	void setWorkingDirectory(std::filesystem::path const& p_path);
+	void setWorkingDirectory(std::filesystem::path p_path);
 
 	//------------------------------
 

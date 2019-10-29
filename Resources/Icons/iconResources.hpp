@@ -1,0 +1,2 @@
+
+#define RESOURCE_ICON_CHEVRON 1

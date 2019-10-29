@@ -10,6 +10,8 @@
 */
 namespace Colors
 {
+	AvoGUI::Color const label(0.8f);
+
 	AvoGUI::Color const avoExplorerOnBackground(1.f);
 	AvoGUI::Color const avoExplorerBackground(0.1f);
 	AvoGUI::Color const avoExplorerShadow(0.f, 0.3f);
@@ -24,7 +26,7 @@ namespace Colors
 	AvoGUI::Color const fileBrowserPathEditorBackground(0.06f);
 	AvoGUI::Color const fileBrowserPathEditorBorder(0.3f);
 
-	AvoGUI::Color const fileBrowserItemBackground(0.5f, 0.7f, 1.f, 0.2f);
+	AvoGUI::Color const fileBrowserItemBackground(0.2f);
 
 	AvoGUI::Color const scrollbar(0.7f);
 };

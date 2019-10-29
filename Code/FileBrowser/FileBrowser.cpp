@@ -5,8 +5,8 @@
 
 //------------------------------
 
-float const FILE_BROWSER_PADDING_HORIZONTAL = 2			* 8.f;
-float const FILE_BROWSER_PADDING_TOP = 2				* 8.f;
+float constexpr FILE_BROWSER_PADDING_HORIZONTAL = 2			* 8.f;
+float constexpr FILE_BROWSER_PADDING_TOP = 2				* 8.f;
 
 //------------------------------
 
@@ -22,18 +22,26 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	m_pathEditor(0), m_button_changeView(0), m_button_add(0)
 {
 	m_pathEditor = new FileBrowserPathEditor(this);
+
 	ScrollContainer* scrollContainer = new ScrollContainer(this);
-	m_items = new FileBrowserItems(scrollContainer);
+	m_items = new FileBrowserItems(scrollContainer, this);
 	scrollContainer->setContentView(m_items);
 
-	setWorkingDirectory("C:/");
+	setWorkingDirectory("C:");
 }
 
 //------------------------------
 
-void FileBrowser::setWorkingDirectory(std::filesystem::path const& p_path)
+void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 {
+	if (p_path.string().back() != '/' && p_path.string().back() != '\\')
+	{
+		p_path += '/';
+	}
+
+	m_pathEditor->setWorkingDirectory(p_path);
 	m_items->setWorkingDirectory(p_path);
+	invalidate();
 }
 
 //------------------------------

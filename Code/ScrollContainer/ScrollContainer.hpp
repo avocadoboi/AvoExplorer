@@ -70,15 +70,21 @@ private:
 
 public:
 	ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>());
+	~ScrollContainer()
+	{
+		m_content->removeViewListener(this);
+	}
 
 	//------------------------------
 
 	void setContentView(AvoGUI::View* p_content)
 	{
+		m_content->removeViewListener(this);
 		m_content->setParent(0);
 		m_content->forget();
 
 		m_content = p_content;
+		m_content->addViewListener(this);
 		m_content->setParent(this);
 	}
 	View* getContent()

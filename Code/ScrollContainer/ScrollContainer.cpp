@@ -2,13 +2,13 @@
 
 //------------------------------
 
-float const SCROLLBAR_OPACITY_NORMAL = 0.3f;
-float const SCROLLBAR_OPACITY_HOVERING = 0.6f;
+float constexpr SCROLLBAR_OPACITY_NORMAL = 0.3f;
+float constexpr SCROLLBAR_OPACITY_HOVERING = 0.6f;
 
-float const SCROLLBAR_WIDTH = 1		* 8.f;
-float const SCROLLBAR_MARGIN = 0.5	* 8.f;
+float constexpr SCROLLBAR_WIDTH = 1		* 8.f;
+float constexpr SCROLLBAR_MARGIN = 0.5	* 8.f;
 
-float const SCROLL_STEP_SIZE = 4	* 8.f;
+float constexpr SCROLL_STEP_SIZE = 4	* 8.f;
 
 //------------------------------
 // class Scrollbar

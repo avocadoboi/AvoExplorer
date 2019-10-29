@@ -1,8 +1,10 @@
 #pragma once
 
-#include <AvoGUI.hpp>
 #include "../Resources/Colors.hpp"
 #include "../Resources/Strings.hpp"
+
+#include <AvoGUI.hpp>
+#include <wincodec.h>
 
 //------------------------------
 
@@ -20,14 +22,21 @@ private:
 
 	ContextMenu* m_contextMenu;
 
+	IWICImagingFactory2* m_windowsImagingFactory;
+
 public:
 	AvoExplorer();
+	~AvoExplorer();
 
 	//------------------------------
 
 	ContextMenu* getContextMenu()
 	{
 		return m_contextMenu;
+	}
+	IWICImagingFactory2* getWindowsImagingFactory()
+	{
+		return m_windowsImagingFactory;
 	}
 
 	//------------------------------

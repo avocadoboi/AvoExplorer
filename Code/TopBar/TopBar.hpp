@@ -28,10 +28,10 @@ public:
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setColor(getThemeColor("background"));
+		p_context->setColor(Colors::topBarBackground);
 		p_context->fillRectangle(getSize());
 
-		p_context->setColor(getThemeColor("on background"));
+		p_context->setColor(Colors::label);
 		p_context->drawText(m_title);
 	}
 };
