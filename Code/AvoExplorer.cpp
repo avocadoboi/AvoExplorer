@@ -42,6 +42,7 @@ void AvoExplorer::createContent()
 	setThemeColor("background", Colors::avoExplorerBackground);
 	setThemeColor("on background", Colors::avoExplorerOnBackground);
 	setThemeColor("shadow", Colors::avoExplorerShadow);
+	setThemeColor("selection", Colors::selection);
 
 	setThemeValue("hover animation speed", 0.4f);
 

@@ -124,6 +124,7 @@ void FileBrowserItem::loadIcon(IImageList2* p_imageList, IThumbnailCache* p_thum
 			newIcon->setBoundsPositioning(0.5f, 0.5f);
 			newIcon->setCenterY(FOLDER_HEIGHT * 0.5f);
 			newIcon->setLeft(newIcon->getTop());
+			m_text_name->setLeft(newIcon->getRight() + newIcon->getLeft());
 		}
 		m_text_name->setCenterY(FOLDER_HEIGHT * 0.5f);
 	}

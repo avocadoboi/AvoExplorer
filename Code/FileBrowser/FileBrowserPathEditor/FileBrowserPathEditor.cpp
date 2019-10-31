@@ -9,8 +9,8 @@ float constexpr HEIGHT = 6 * 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_HORIZONTAL = 1		* 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 
-float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 1 * 8.f;
-float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 2 * 8.f;
+float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 1		* 8.f;
+float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
 
 //------------------------------
 // class FileBrowserPathEditorDirectoryButton
@@ -21,8 +21,13 @@ FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(FileB
 	m_path(p_path), m_text(0), m_ripple(0)
 {
 	m_text = getGUI()->getDrawingContext()->createText(p_name.c_str(), 16.f);
+	m_text->setIsTopTrimmed(false);
+	m_text->fitSizeToText();
+
 	setSize(m_text->getWidth() + 2.f*DIRECTORY_BUTTON_PADDING_HORIZONTAL, 16.f + 2.f*DIRECTORY_BUTTON_PADDING_VERTICAL);
-	m_text->setCenter(getCenter());
+
+	m_text->setCenterX(getCenterX());
+	m_text->setTop(DIRECTORY_BUTTON_PADDING_VERTICAL);
 
 	m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor("on background"), 0.2f));
 
@@ -35,7 +40,10 @@ FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(FileB
 
 void FileBrowserPathEditorDirectoryButton::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	m_pathEditor->getFileBrowser()->setWorkingDirectory(m_path);
+	if (p_event.x > 0.f && p_event.x < getWidth() && p_event.y > 0.f && p_event.y < getHeight())
+	{
+		m_pathEditor->getFileBrowser()->setWorkingDirectory(m_path);
+	}
 }
 
 //------------------------------
@@ -57,6 +65,7 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	m_directorySeparatorIcon->setSize(0.f, PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT);
 	m_directorySeparatorIcon->setWidth(m_directorySeparatorIcon->getInnerWidth());
 	m_directorySeparatorIcon->setCenterY(getHeight() * 0.5f);
+	m_directorySeparatorIcon->setOpacity(0.7f);
 }
 
 //------------------------------
@@ -77,7 +86,7 @@ void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_p
 	{
 		if (a == pathString.size() || pathString[a] == '/' || pathString[a] == '\\')
 		{
-			FileBrowserPathEditorDirectoryButton* button = new FileBrowserPathEditorDirectoryButton(this, pathString.substr(0, a) + '/', pathString.substr(directoryStartIndex, a - directoryStartIndex));
+			FileBrowserPathEditorDirectoryButton* button = new FileBrowserPathEditorDirectoryButton(this, std::filesystem::u8path(pathString.substr(0, a) + '/'), pathString.substr(directoryStartIndex, a - directoryStartIndex));
 			button->setCenterY(getHeight() * 0.5f);
 			if (m_directoryButtons.size())
 			{

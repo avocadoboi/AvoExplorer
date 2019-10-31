@@ -17,7 +17,9 @@ private:
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
 
-	bool m_isSelected;
+	float m_hoverAnimationTime;
+	float m_hoverAnimationValue;
+	bool m_isHovering;
 
 public:
 	FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::path const& p_path, bool p_isFile);
@@ -35,9 +37,35 @@ public:
 
 	//------------------------------
 
+	void loadIcon(IImageList2* p_imageList, IThumbnailCache* p_thumbnailCache);
+	bool getHasLoadedIcon()
+	{
+		return m_icon;
+	}
+
+	//------------------------------
+
+	void handleMouseEnter(AvoGUI::MouseEvent const& p_event) override
+	{
+		m_isHovering = true;
+		queueAnimationUpdate();
+	}
+	void handleMouseLeave(AvoGUI::MouseEvent const& p_event) override
+	{
+		m_isHovering = false;
+		queueAnimationUpdate();
+	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-
+		if (m_fileBrowserItems->getSelectedItem() != this)
+		{
+			if (m_fileBrowserItems->getSelectedItem())
+			{
+				m_fileBrowserItems->getSelectedItem()->invalidate();
+			}
+			m_fileBrowserItems->setSelectedItem(this);
+			invalidate();
+		}
 	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{
@@ -53,6 +81,37 @@ public:
 
 	//------------------------------
 
+	void updateAnimations()
+	{
+		if (m_isHovering)
+		{
+			if (m_hoverAnimationTime < 1.f)
+			{
+				m_hoverAnimationValue = getThemeEasing("in out").easeValue(m_hoverAnimationTime += getThemeValue("hover animation speed"));
+				queueAnimationUpdate();
+			}
+			else
+			{
+				m_hoverAnimationTime = 1.f;
+			}
+		}
+		else
+		{
+			if (m_hoverAnimationTime > 0.f)
+			{
+				m_hoverAnimationValue = getThemeEasing("in out").easeValue(m_hoverAnimationTime -= getThemeValue("hover animation speed"));
+				queueAnimationUpdate();
+			}
+			else
+			{
+				m_hoverAnimationTime = 0.f;
+			}
+		}
+		invalidate();
+	}
+
+	//------------------------------
+
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::fileBrowserItemBackground);
@@ -63,5 +122,14 @@ public:
 		{
 			p_context->drawImage(m_icon);
 		}
+		if (m_fileBrowserItems->getSelectedItem() == this)
+		{
+			p_context->setColor(AvoGUI::Color(getThemeColor("selection")));
+		}
+		else
+		{
+			p_context->setColor(AvoGUI::Color(getThemeColor("on background"), m_hoverAnimationValue * 0.2f));
+		}
+		p_context->fillRectangle(getSize());
 	}
 };

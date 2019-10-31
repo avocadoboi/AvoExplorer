@@ -53,7 +53,7 @@ void Scrollbar::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 	{
 		m_isHovering = false;
 		m_opacityAnimationTime = 1.f;
-		m_scrollContainer->queueAnimationUpdate();
+		queueAnimationUpdate();
 	}
 	m_isDragging = false;
 }
@@ -79,16 +79,30 @@ void Scrollbar::updateAnimations()
 	{
 		if (m_opacityAnimationTime < 1.f)
 		{
-			m_opacity = AvoGUI::interpolate(SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING, m_scrollContainer->getThemeEasing("in out").easeValue(m_opacityAnimationTime += 0.1f));
+			m_opacity = AvoGUI::interpolate(
+				SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING, 
+				m_scrollContainer->getThemeEasing("in out").easeValue(m_opacityAnimationTime += getThemeValue("hover animation speed"))
+			);
 			queueAnimationUpdate();
+		}
+		else
+		{
+			m_opacityAnimationTime = 1.f;
 		}
 	}
 	else
 	{
 		if (m_opacityAnimationTime > 0.f)
 		{
-			m_opacity = AvoGUI::interpolate(SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING, m_scrollContainer->getThemeEasing("in out").easeValue(m_opacityAnimationTime -= 0.1f));
+			m_opacity = AvoGUI::interpolate(
+				SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING, 
+				m_scrollContainer->getThemeEasing("in out").easeValue(m_opacityAnimationTime -= getThemeValue("hover animation speed"))
+			);
 			queueAnimationUpdate();
+		}
+		else
+		{
+			m_opacityAnimationTime = 0.f;
 		}
 	}
 	invalidate();

@@ -34,7 +34,7 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 {
-	if (p_path.string().back() != '/' && p_path.string().back() != '\\')
+	if (p_path.u8string().back() != '/' && p_path.u8string().back() != '\\')
 	{
 		p_path += '/';
 	}
