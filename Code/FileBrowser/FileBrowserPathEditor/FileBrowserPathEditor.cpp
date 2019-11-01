@@ -9,7 +9,7 @@ float constexpr HEIGHT = 6 * 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_HORIZONTAL = 1		* 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 
-float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 1		* 8.f;
+float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 0.5	* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
 
 //------------------------------

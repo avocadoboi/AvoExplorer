@@ -43,6 +43,8 @@ FileBrowserItem::FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::pa
 	//------------------------------
 
 	m_text_name = getGUI()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
+	m_text_name->setIsTopTrimmed(true);
+	m_text_name->fitHeightToText();
 	if (p_isFile)
 	{
 		m_text_name->setBottomLeft(FILE_NAME_PADDING*1.1f, getHeight() - FILE_NAME_PADDING);
@@ -128,5 +130,11 @@ void FileBrowserItem::loadIcon(IImageList2* p_imageList, IThumbnailCache* p_thum
 		m_text_name->setCenterY(FOLDER_HEIGHT * 0.5f);
 	}
 	m_icon = newIcon;
+
+	// This method is called from an icon loading thread seperate from both the event thread and the animation/drawing thread.
+	// The mutex used by those threads needs to be locked when invalidating here, since the resources used during invalidation 
+	// in the GUI are also used in the animation thread when drawing.
+	getGUI()->excludeAnimationThread();
 	invalidate();
+	getGUI()->includeAnimationThread();
 }

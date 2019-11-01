@@ -29,5 +29,5 @@ namespace Colors
 
 	AvoGUI::Color const scrollbar(0.7f);
 
-	AvoGUI::Color const selection(0.5f, 1.f, 0.8f, 0.15f);
+	AvoGUI::Color const selection(0.7f, 1.f, 0.9f, 0.2f);
 };

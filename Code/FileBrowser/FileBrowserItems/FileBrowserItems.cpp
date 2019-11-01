@@ -27,6 +27,18 @@ FileBrowserItems::~FileBrowserItems()
 	{
 		m_selectedItem->forget();
 	}
+	if (m_thumbnailCache)
+	{
+		m_thumbnailCache->Release();
+	}
+	if (m_iconList_large)
+	{
+		m_iconList_large->Release();
+	}
+	if (m_iconList_jumbo)
+	{
+		m_iconList_jumbo->Release();
+	}
 }
 
 //------------------------------
@@ -50,22 +62,12 @@ void FileBrowserItems::loadIcons()
 {
 	m_isIconLoadingThreadRunning = true;
 
-	// CoInitialize is on current thread.
-	CoInitialize(0);
-
-	IThumbnailCache* thumbnailCache = 0;
-	CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&thumbnailCache);
-
 	while (m_needsToLoadMoreIcons)
 	{
 		m_needsToLoadMoreIcons = false;
 
-		IImageList2* imageList = 0;
-
 		if (m_directoryItems.size())
 		{
-			SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&imageList);
-
 			int32 numberOfColumns = floor((getWidth() - FILE_BROWSER_ITEMS_PADDING + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL) / (m_directoryItems[0]->getWidth() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL));
 			int32 firstVisibleDirectoryItemIndex = numberOfColumns*floor((-getTop() - m_text_directories->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
 			int32 lastVisibleDirectoryItemIndex = numberOfColumns*floor(1 + (-getTop() + getParent()->getHeight() - m_text_directories->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
@@ -73,16 +75,13 @@ void FileBrowserItems::loadIcons()
 			{
 				if (!m_directoryItems[a]->getHasLoadedIcon())
 				{
-					m_directoryItems[a]->loadIcon(imageList, thumbnailCache);
+					m_directoryItems[a]->loadIcon(m_iconList_large, m_thumbnailCache);
 				}
 			}
-			imageList->Release();
 		}
 
 		if (m_fileItems.size())
 		{
-			SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&imageList);
-
 			int32 numberOfColumns = floor((getWidth() - FILE_BROWSER_ITEMS_PADDING + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL) / (m_fileItems[0]->getWidth() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL));
 			int32 firstVisibleFileItemIndex = numberOfColumns * floor((-getTop() - m_text_files->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
 			int32 lastVisibleFileItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_files->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
@@ -90,14 +89,11 @@ void FileBrowserItems::loadIcons()
 			{
 				if (!m_fileItems[a]->getHasLoadedIcon())
 				{
-					m_fileItems[a]->loadIcon(imageList, thumbnailCache);
+					m_fileItems[a]->loadIcon(m_iconList_jumbo, m_thumbnailCache);
 				}
 			}
-			imageList->Release();
 		}
 	}
-
-	thumbnailCache->Release();
 
 	m_isIconLoadingThreadRunning = false;
 }
