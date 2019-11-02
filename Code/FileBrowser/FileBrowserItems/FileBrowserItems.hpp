@@ -20,7 +20,6 @@ class FileBrowserItems :
 private:
 	FileBrowser* m_fileBrowser;
 
-	IThumbnailCache* m_thumbnailCache;
 	IImageList2* m_iconList_large;
 	IImageList2* m_iconList_jumbo;
 
@@ -37,13 +36,11 @@ private:
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent), m_fileBrowser(p_fileBrowser),
-		m_thumbnailCache(0), m_iconList_large(0), m_iconList_jumbo(0),
+		m_iconList_large(0), m_iconList_jumbo(0),
 		m_selectedItem(0),
 		m_text_directories(0), m_text_files(0),
 		m_isIconLoadingThreadRunning(false), m_needsToLoadMoreIcons(false)
 	{
-		CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);
-
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_iconList_large);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_iconList_jumbo);
 

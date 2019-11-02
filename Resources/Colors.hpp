@@ -16,6 +16,10 @@ namespace Colors
 	AvoGUI::Color const avoExplorerBackground(0.1f);
 	AvoGUI::Color const avoExplorerShadow(0.f, 0.3f);
 
+	AvoGUI::Color const titleBarBackground(0.1f);
+	AvoGUI::Color const titleBarOnBackground(0.7f);
+	AvoGUI::Color const titleBarCloseButton(0.8f, 0.f, 0.1f);
+
 	AvoGUI::Color const topBarBackground(0.17f);
 	AvoGUI::Color const topBarBookmarksBackground(0.1f);
 	AvoGUI::Color const topBarBookmarksBorder(0.3f);

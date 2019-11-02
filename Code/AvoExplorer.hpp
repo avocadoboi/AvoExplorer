@@ -8,6 +8,7 @@
 
 //------------------------------
 
+class TitleBar;
 class TopBar;
 class FileBrowser;
 
@@ -17,6 +18,7 @@ class AvoExplorer :
 	public AvoGUI::GUI
 {
 private:
+	TitleBar* m_titleBar;
 	TopBar* m_topBar;
 	FileBrowser* m_fileBrowser;
 
@@ -44,4 +46,6 @@ public:
 	void createContent() override;
 
 	void handleSizeChange() override;
+
+	AvoGUI::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y) override;
 };

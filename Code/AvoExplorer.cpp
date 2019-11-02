@@ -1,5 +1,6 @@
 #include "AvoExplorer.hpp"
 
+#include "TitleBar/TitleBar.hpp"
 #include "TopBar/TopBar.hpp"
 #include "FileBrowser/FileBrowser.hpp"
 
@@ -20,7 +21,7 @@ AvoExplorer::AvoExplorer() :
 	CoInitialize(0);
 	CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));
 
-	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::DefaultCustom);
+	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::DefaultCustom | AvoGUI::WindowStyleFlags::MaximizeButton);
 }
 AvoExplorer::~AvoExplorer()
 {
@@ -31,11 +32,11 @@ AvoExplorer::~AvoExplorer()
 
 void AvoExplorer::createContent()
 {
-	AvoGUI::DrawingContext* context = getDrawingContext();
+	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
 
 	//------------------------------
 
-	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
+	AvoGUI::DrawingContext* context = getDrawingContext();
 
 	context->setBackgroundColor(Colors::avoExplorerBackground);
 	
@@ -62,6 +63,7 @@ void AvoExplorer::createContent()
 
 	//------------------------------
 
+	m_titleBar = new TitleBar(this);
 	m_topBar = new TopBar(this);
 	m_fileBrowser = new FileBrowser(this);
 
@@ -72,6 +74,20 @@ void AvoExplorer::createContent()
 
 void AvoExplorer::handleSizeChange()
 {
+	m_titleBar->setWidth(getWidth());
+
+	m_topBar->setTop(m_titleBar->getBottom());
 	m_topBar->setWidth(getWidth());
+
 	m_fileBrowser->setBounds(0.f, m_topBar->getBottom(), getWidth(), getHeight());
+}
+
+AvoGUI::WindowBorderArea AvoExplorer::getWindowBorderAreaAtPosition(float p_x, float p_y)
+{
+	AvoGUI::WindowBorderArea area = GUI::getWindowBorderAreaAtPosition(p_x, p_y);
+	if (area == AvoGUI::WindowBorderArea::None && m_titleBar->getIsContaining(p_x, p_y))
+	{
+		return m_titleBar->getWindowBorderAreaAtPosition(p_x, p_y);
+	}
+	return area;
 }

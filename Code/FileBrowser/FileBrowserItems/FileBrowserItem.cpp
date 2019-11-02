@@ -4,7 +4,7 @@
 
 float constexpr FILE_WIDTH = 18			* 8.f;
 float constexpr FILE_HEIGHT = 16		* 8.f;
-float constexpr FILE_NAME_PADDING = 2	* 8.f;
+float constexpr FILE_NAME_PADDING = 1	* 8.f;
 
 float constexpr FOLDER_WIDTH = 24		* 8.f;
 float constexpr FOLDER_HEIGHT = 6		* 8.f;

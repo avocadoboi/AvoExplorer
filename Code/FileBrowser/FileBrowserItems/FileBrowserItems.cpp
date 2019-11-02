@@ -27,10 +27,6 @@ FileBrowserItems::~FileBrowserItems()
 	{
 		m_selectedItem->forget();
 	}
-	if (m_thumbnailCache)
-	{
-		m_thumbnailCache->Release();
-	}
 	if (m_iconList_large)
 	{
 		m_iconList_large->Release();
@@ -62,6 +58,8 @@ void FileBrowserItems::loadIcons()
 {
 	m_isIconLoadingThreadRunning = true;
 
+	IThumbnailCache* thumbnailCache = 0;
+
 	while (m_needsToLoadMoreIcons)
 	{
 		m_needsToLoadMoreIcons = false;
@@ -75,7 +73,13 @@ void FileBrowserItems::loadIcons()
 			{
 				if (!m_directoryItems[a]->getHasLoadedIcon())
 				{
-					m_directoryItems[a]->loadIcon(m_iconList_large, m_thumbnailCache);
+					if (!thumbnailCache)
+					{
+						// CoInitialize is on current thread.
+						CoInitialize(0);
+						CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&thumbnailCache);
+					}
+					m_directoryItems[a]->loadIcon(m_iconList_large, thumbnailCache);
 				}
 			}
 		}
@@ -89,10 +93,21 @@ void FileBrowserItems::loadIcons()
 			{
 				if (!m_fileItems[a]->getHasLoadedIcon())
 				{
-					m_fileItems[a]->loadIcon(m_iconList_jumbo, m_thumbnailCache);
+					if (!thumbnailCache)
+					{
+						// CoInitialize is on current thread.
+						CoInitialize(0);
+						CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&thumbnailCache);
+					}
+					m_fileItems[a]->loadIcon(m_iconList_jumbo, thumbnailCache);
 				}
 			}
 		}
+	}
+
+	if (thumbnailCache)
+	{
+		thumbnailCache->Release();
 	}
 
 	m_isIconLoadingThreadRunning = false;
