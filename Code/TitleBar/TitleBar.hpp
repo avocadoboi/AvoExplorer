@@ -2,6 +2,8 @@
 
 #include "../AvoExplorer.hpp"
 
+#include "../utilities.hpp"
+
 //------------------------------
 
 class TitleBar;
@@ -39,6 +41,10 @@ public:
 		queueAnimationUpdate();
 	}
 	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override;
+
+	//------------------------------
+
+	void setIcon(AvoGUI::Image* p_icon);
 
 	//------------------------------
 
@@ -92,7 +98,8 @@ public:
 //------------------------------
 
 class TitleBar :
-	public AvoGUI::View
+	public AvoGUI::View,
+	public AvoGUI::WindowListener
 {
 private:
 	AvoExplorer* m_avoExplorer;
@@ -104,6 +111,17 @@ private:
 
 public:
 	TitleBar(AvoExplorer* p_parent);
+
+	//------------------------------
+
+	void handleWindowMaximize(AvoGUI::WindowEvent const& p_event)
+	{
+		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_RESTORE, getGUI()->getDrawingContext()));
+	}
+	void handleWindowRestore(AvoGUI::WindowEvent const& p_event)
+	{
+		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGUI()->getDrawingContext()));
+	}
 
 	//------------------------------
 

@@ -1,7 +1,5 @@
 #include "TitleBar.hpp"
 
-#include "../utilities.hpp"
-
 //------------------------------
 
 float const HEIGHT = 3				* 8.f;
@@ -19,14 +17,14 @@ TitleBarWindowButton::TitleBarWindowButton(TitleBar* p_parent, AvoGUI::Image* p_
 {
 	setSize(BUTTON_WIDTH_FACTOR * HEIGHT, HEIGHT);
 	m_icon->setSize(BUTTON_ICON_SIZE);
-	m_icon->setCenter(getCenter());
-	m_icon->setOpacity(0.8f);
+	m_icon->setCenter(getSize()*0.5f);
+	m_icon->setOpacity(0.9f);
 
 	setThemeColor("background", p_isCloseButton ? Colors::titleBarCloseButton : AvoGUI::Color(getThemeColor("on background"), 0.2f));
 
 	m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor("on background"), p_isCloseButton ? 0.5f : 0.2f));
 	m_ripple->setHasHoverEffect(false);
-	
+
 	enableMouseEvents();
 }
 
@@ -39,6 +37,20 @@ void TitleBarWindowButton::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 }
 
 //------------------------------
+
+void TitleBarWindowButton::setIcon(AvoGUI::Image* p_icon)
+{
+	if (m_icon)
+	{
+		m_icon->forget();
+	}
+	m_icon = p_icon;
+	m_icon->setSize(BUTTON_ICON_SIZE);
+	m_icon->setCenter(getSize()*0.5f);
+	m_icon->setOpacity(0.9f);
+}
+
+//------------------------------
 // class TitleBar
 //------------------------------
 
@@ -46,6 +58,8 @@ TitleBar::TitleBar(AvoExplorer* p_parent) :
 	View(p_parent, AvoGUI::Rectangle<float>(0, 0, 0, HEIGHT)), m_avoExplorer(p_parent),
 	m_title(0)
 {
+	p_parent->addWindowListener(this);
+
 	m_title = p_parent->getDrawingContext()->createText("AvoExplorer", 11.f);
 	m_title->setFontWeight(AvoGUI::FontWeight::SemiBold);
 	m_title->setCharacterSpacing(0.5f);
