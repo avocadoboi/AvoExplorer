@@ -4,6 +4,10 @@
 
 //------------------------------
 
+#include <hash_map>
+#include <deque>
+#include <atomic>
+
 #include <CommCtrl.h>
 #include <commoncontrols.h>
 #include <thumbcache.h>
@@ -27,11 +31,18 @@ private:
 	std::vector<FileBrowserItem*> m_directoryItems;
 	FileBrowserItem* m_selectedItem;
 
+	std::hash_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
+	std::hash_map<uint32, AvoGUI::Image*> m_uniqueLoadedFileIcons;
+	std::deque<FileBrowserItem*> m_filesToLoadIconFor;
+	std::deque<FileBrowserItem*> m_directoriesToLoadIconFor;
+
 	AvoGUI::Text* m_text_directories;
 	AvoGUI::Text* m_text_files;
 
-	bool m_isIconLoadingThreadRunning;
-	bool m_needsToLoadMoreIcons;
+	std::filesystem::path m_path;
+	/*std::atomic<*/bool m_wantsToChangeDirectory;
+	/*std::atomic<*/bool m_isIconLoadingThreadRunning;
+	/*std::atomic<*/bool m_needsToLoadMoreIcons;
 
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
@@ -39,7 +50,7 @@ public:
 		m_iconList_large(0), m_iconList_jumbo(0),
 		m_selectedItem(0),
 		m_text_directories(0), m_text_files(0),
-		m_isIconLoadingThreadRunning(false), m_needsToLoadMoreIcons(false)
+		m_wantsToChangeDirectory(false), m_isIconLoadingThreadRunning(false), m_needsToLoadMoreIcons(false)
 	{
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_iconList_large);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_iconList_jumbo);
@@ -60,18 +71,7 @@ public:
 
 	//------------------------------
 
-	void tellIconLoadingThreadToLoadMoreIcons()
-	{
-		if (m_isIconLoadingThreadRunning)
-		{
-			m_needsToLoadMoreIcons = true;
-		}
-		else
-		{
-			m_needsToLoadMoreIcons = true;
-			std::thread(&FileBrowserItems::loadIcons, this).detach();
-		}
-	}
+	void tellIconLoadingThreadToLoadMoreIcons();
 	void loadIcons();
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
 	{

@@ -16,6 +16,7 @@ private:
 	std::filesystem::path m_name;
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
+	bool m_hasThumbnail;
 
 	float m_hoverAnimationTime;
 	float m_hoverAnimationValue;
@@ -37,10 +38,31 @@ public:
 
 	//------------------------------
 
-	void loadIcon(IImageList2* p_imageList, IThumbnailCache* p_thumbnailCache);
+	void setIcon(AvoGUI::Image* p_image)
+	{
+		p_image->remember();
+		m_icon = p_image;
+		if (m_isFile)
+		{
+			m_text_name->setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
+		}
+		else
+		{
+			m_text_name->setCenterY(FOLDER_HEIGHT * 0.5f);
+		}
+		invalidate();
+	}
 	bool getHasLoadedIcon()
 	{
 		return m_icon;
+	}
+	bool getIsIconThumbnail()
+	{
+		return m_hasThumbnail
+	}
+	bool getIsFile()
+	{
+		return m_isFile;
 	}
 
 	//------------------------------
@@ -120,6 +142,26 @@ public:
 		p_context->drawText(m_text_name);
 		if (m_icon)
 		{
+			if (m_isFile)
+			{
+				if (m_icon)
+				{
+					m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
+					m_icon->setBoundsPositioning(0.5f, 0.5f);
+					m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
+				}
+			}
+			else
+			{
+				if (m_icon)
+				{
+					m_icon->setSize(FOLDER_ICON_WIDTH);
+					m_icon->setBoundsPositioning(0.5f, 0.5f);
+					m_icon->setCenterY(FOLDER_HEIGHT * 0.5f);
+					m_icon->setLeft(m_icon->getTop());
+				}
+			}
+
 			p_context->drawImage(m_icon);
 		}
 		if (m_fileBrowserItems->getSelectedItem() == this)
