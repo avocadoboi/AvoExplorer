@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../AvoExplorer.hpp"
+#include <AvoGUI.hpp>
 
-#include "../utilities.hpp"
+#include "../../Resources/Colors.hpp"
 
 //------------------------------
 
@@ -20,9 +20,10 @@ private:
 	AvoGUI::Color m_backgroundColor;
 	float m_hoverAnimationTime;
 	bool m_isHovering;
+	bool m_isEnabled;
 
 public:
-	TitleBarWindowButton(TitleBar* p_parent, AvoGUI::Image* p_icon, bool p_isCloseButton);
+	TitleBarWindowButton(TitleBar* p_parent, AvoGUI::Image* p_icon, bool p_isCloseButton, bool p_isEnabled = true);
 	~TitleBarWindowButton()
 	{
 		m_icon->forget();
@@ -50,36 +51,39 @@ public:
 
 	void updateAnimations()
 	{
-		if (m_isHovering)
+		if (m_isEnabled)
 		{
-			if (m_hoverAnimationTime < 1.f)
+			if (m_isHovering)
 			{
-				m_backgroundColor = AvoGUI::interpolate(
-					AvoGUI::Color(0.f, 0.f), getThemeColor("background"), 
-					getThemeEasing("in out").easeValue(m_hoverAnimationTime += getThemeValue("hover animation speed"))
-				);
-				queueAnimationUpdate();
-				invalidate();
+				if (m_hoverAnimationTime < 1.f)
+				{
+					m_backgroundColor = AvoGUI::interpolate(
+						AvoGUI::Color(0.f, 0.f), getThemeColor("background"),
+						getThemeEasing("in out").easeValue(m_hoverAnimationTime += getThemeValue("hover animation speed"))
+					);
+					queueAnimationUpdate();
+					invalidate();
+				}
+				else
+				{
+					m_hoverAnimationTime = 1.f;
+				}
 			}
 			else
 			{
-				m_hoverAnimationTime = 1.f;
-			}
-		}
-		else
-		{
-			if (m_hoverAnimationTime > 0.f)
-			{
-				m_backgroundColor = AvoGUI::interpolate(
-					AvoGUI::Color(0.f, 0.f), getThemeColor("background"),
-					getThemeEasing("in out").easeValue(m_hoverAnimationTime -= getThemeValue("hover animation speed"))
-				);
-				queueAnimationUpdate();
-				invalidate();
-			}
-			else
-			{
-				m_hoverAnimationTime = 0.f;
+				if (m_hoverAnimationTime > 0.f)
+				{
+					m_backgroundColor = AvoGUI::interpolate(
+						AvoGUI::Color(0.f, 0.f), getThemeColor("background"),
+						getThemeEasing("in out").easeValue(m_hoverAnimationTime -= getThemeValue("hover animation speed"))
+					);
+					queueAnimationUpdate();
+					invalidate();
+				}
+				else
+				{
+					m_hoverAnimationTime = 0.f;
+				}
 			}
 		}
 	}
@@ -102,26 +106,19 @@ class TitleBar :
 	public AvoGUI::WindowListener
 {
 private:
-	AvoExplorer* m_avoExplorer;
-
 	AvoGUI::Text* m_title;
 	TitleBarWindowButton* m_minimizeButton;
 	TitleBarWindowButton* m_maximizeButton;
 	TitleBarWindowButton* m_closeButton;
+	bool m_isMaximizeEnabled;
 
 public:
-	TitleBar(AvoExplorer* p_parent);
+	TitleBar(AvoGUI::GUI* p_parent);
 
 	//------------------------------
 
-	void handleWindowMaximize(AvoGUI::WindowEvent const& p_event)
-	{
-		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_RESTORE, getGUI()->getDrawingContext()));
-	}
-	void handleWindowRestore(AvoGUI::WindowEvent const& p_event)
-	{
-		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGUI()->getDrawingContext()));
-	}
+	void handleWindowMaximize(AvoGUI::WindowEvent const& p_event);
+	void handleWindowRestore(AvoGUI::WindowEvent const& p_event);
 
 	//------------------------------
 
@@ -141,7 +138,7 @@ public:
 		{
 			getGUI()->getWindow()->minimize();
 		}
-		else
+		else if (m_isMaximizeEnabled)
 		{
 			if (getGUI()->getWindow()->getState() == AvoGUI::WindowState::Maximized)
 			{
