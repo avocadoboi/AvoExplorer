@@ -21,6 +21,7 @@ TitleBarWindowButton::TitleBarWindowButton(TitleBar* p_parent, AvoGUI::Image* p_
 	m_icon->setOpacity(0.9f);
 
 	setThemeColor("background", p_isCloseButton ? Colors::titleBarCloseButton : AvoGUI::Color(getThemeColor("on background"), 0.2f));
+	m_backgroundColor.alpha = 0.f;
 
 	m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor("on background"), p_isCloseButton ? 0.5f : 0.2f));
 	m_ripple->setHasHoverEffect(false);

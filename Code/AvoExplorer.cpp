@@ -10,7 +10,7 @@
 
 uint32 constexpr WINDOW_WIDTH_MIN = 260;
 uint32 constexpr WINDOW_HEIGHT_MIN = 200;
-uint32 constexpr WINDOW_WIDTH_START = 800;
+uint32 constexpr WINDOW_WIDTH_START = 850;
 uint32 constexpr WINDOW_HEIGHT_START = 560;
 
 //------------------------------

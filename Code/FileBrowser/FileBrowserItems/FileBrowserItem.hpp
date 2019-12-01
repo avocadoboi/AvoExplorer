@@ -38,31 +38,22 @@ public:
 
 	//------------------------------
 
-	void setIcon(AvoGUI::Image* p_image)
-	{
-		p_image->remember();
-		m_icon = p_image;
-		if (m_isFile)
-		{
-			m_text_name->setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
-		}
-		else
-		{
-			m_text_name->setCenterY(FOLDER_HEIGHT * 0.5f);
-		}
-		invalidate();
-	}
+	void setIcon(AvoGUI::Image* p_image);
 	bool getHasLoadedIcon()
 	{
 		return m_icon;
 	}
 	bool getIsIconThumbnail()
 	{
-		return m_hasThumbnail
+		return m_hasThumbnail;
 	}
 	bool getIsFile()
 	{
 		return m_isFile;
+	}
+	std::filesystem::path const& getPath()
+	{
+		return m_path;
 	}
 
 	//------------------------------
@@ -134,44 +125,5 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context) override
-	{
-		p_context->setColor(Colors::fileBrowserItemBackground);
-		p_context->fillRectangle(getSize());
-		p_context->setColor(getThemeColor("on background"));
-		p_context->drawText(m_text_name);
-		if (m_icon)
-		{
-			if (m_isFile)
-			{
-				if (m_icon)
-				{
-					m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
-					m_icon->setBoundsPositioning(0.5f, 0.5f);
-					m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
-				}
-			}
-			else
-			{
-				if (m_icon)
-				{
-					m_icon->setSize(FOLDER_ICON_WIDTH);
-					m_icon->setBoundsPositioning(0.5f, 0.5f);
-					m_icon->setCenterY(FOLDER_HEIGHT * 0.5f);
-					m_icon->setLeft(m_icon->getTop());
-				}
-			}
-
-			p_context->drawImage(m_icon);
-		}
-		if (m_fileBrowserItems->getSelectedItem() == this)
-		{
-			p_context->setColor(AvoGUI::Color(getThemeColor("selection")));
-		}
-		else
-		{
-			p_context->setColor(AvoGUI::Color(getThemeColor("on background"), m_hoverAnimationValue * 0.2f));
-		}
-		p_context->fillRectangle(getSize());
-	}
+	void draw(AvoGUI::DrawingContext* p_context) override;
 };
