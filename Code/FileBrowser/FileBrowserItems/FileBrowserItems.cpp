@@ -25,6 +25,7 @@ void FileBrowserItems::thread_loadIcons()
 		m_needsToLoadMoreIconsConditionVariable.wait(mutexLock, [=] { return (bool)m_needsToLoadMoreIcons; });
 		m_needsToLoadMoreIcons = false;
 
+		std::cout << "Loading icons!\n";
 		std::deque<FileBrowserItem*> filesToLoadIconFor = std::move(m_filesToLoadIconFor);
 		std::deque<FileBrowserItem*> directoriesToLoadIconFor = std::move(m_directoriesToLoadIconFor);
 

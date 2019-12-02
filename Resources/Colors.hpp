@@ -12,8 +12,12 @@ namespace Colors
 {
 	AvoGUI::Color const label(0.8f);
 
-	AvoGUI::Color const avoExplorerOnBackground(1.f);
+	AvoGUI::Color const selection(0.6f, 1.f, 0.8f, 0.2f);
+	AvoGUI::Color const primary(0.1f, 0.8f, 0.4f);
+	AvoGUI::Color const primaryOnBackground(0.5f, 1.f, 0.8f);
+
 	AvoGUI::Color const avoExplorerBackground(0.12f);
+	AvoGUI::Color const avoExplorerOnBackground(1.f);
 	AvoGUI::Color const avoExplorerShadow(0.f, 0.3f);
 
 	AvoGUI::Color const titleBarBackground(0.23f);
@@ -33,5 +37,6 @@ namespace Colors
 
 	AvoGUI::Color const scrollbar(0.7f);
 
-	AvoGUI::Color const selection(0.6f, 1.f, 0.8f, 0.2f);
+	AvoGUI::Color const dialogBoxBackground(0.1f);
+	AvoGUI::Color const dialogBoxOnBackground(1.f);
 };

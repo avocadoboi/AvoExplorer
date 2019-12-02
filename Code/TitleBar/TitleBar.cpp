@@ -45,7 +45,7 @@ void TitleBarWindowButton::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
 	if (m_bounds.createCopyAtOrigin().getIsContaining(p_event.x, p_event.y))
 	{
-		m_titleBar->handleWindowButtonClick(this);
+		m_titleBar->handleTitleBarButtonClick(this);
 	}
 }
 
