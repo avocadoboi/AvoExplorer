@@ -2,6 +2,6 @@
 
 int main()
 {
-	AvoExplorer* app = new AvoExplorer();
-	AvoGUI::GUI::run();
+	new AvoExplorer();
 }
+

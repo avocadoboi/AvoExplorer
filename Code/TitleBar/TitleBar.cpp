@@ -72,6 +72,7 @@ TitleBar::TitleBar(AvoGUI::GUI* p_parent) :
 	m_title(0)
 {
 	p_parent->addWindowListener(this);
+	enableMouseEvents();
 
 	m_isMaximizeEnabled = bool(getGUI()->getWindow()->getStyles() & AvoGUI::WindowStyleFlags::ResizeBorder);
 

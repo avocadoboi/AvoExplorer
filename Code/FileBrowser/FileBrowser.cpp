@@ -41,21 +41,25 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 
 	try
 	{
-		std::filesystem::directory_iterator(p_path)++;
+		std::filesystem::directory_iterator iterator(p_path);
+		if (!iterator._At_end())
+		{
+			iterator++;
+		}
 	}
 	catch (std::filesystem::filesystem_error error)
 	{
 		if (error.code().value() == 5)
 		{
-			DialogBox* dialog = new DialogBox(getGUI(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
-			dialog->addButton("Restart", AvoGUI::Button::Emphasis::High);
-			dialog->addButton("No", AvoGUI::Button::Emphasis::Medium);
-			dialog->setDialogBoxListener(this);
+			m_dialog = new DialogBox(getGUI(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
+			m_dialog->addButton("Restart", AvoGUI::Button::Emphasis::High);
+			m_dialog->addButton("No", AvoGUI::Button::Emphasis::Medium);
+			m_dialog->setDialogBoxListener(this);
+			m_dialog->detachFromParent();
 			getGUI()->getWindow()->disableUserInteraction();
 			return;
 		}
 	}
-	//std::filesystem::status(p_path).permissions 
 
 	m_pathEditor->setWorkingDirectory(p_path);
 	m_items->setWorkingDirectory(p_path);

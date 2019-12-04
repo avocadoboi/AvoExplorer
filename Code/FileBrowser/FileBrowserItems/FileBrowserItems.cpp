@@ -21,11 +21,23 @@ void FileBrowserItems::thread_loadIcons()
 
 	while (true)
 	{
-		std::unique_lock<std::mutex> mutexLock(m_needsToLoadMoreIconsMutex);
-		m_needsToLoadMoreIconsConditionVariable.wait(mutexLock, [=] { return (bool)m_needsToLoadMoreIcons; });
+		if (m_wantsToExitIconLoadingThread)
+		{
+			break;
+		}
+
+		{
+			std::unique_lock<std::mutex> mutexLock(m_needsToLoadMoreIconsMutex);
+			m_needsToLoadMoreIconsConditionVariable.wait(mutexLock, [=] { return (bool)m_needsToLoadMoreIcons; });
+		}
+
+		if (m_wantsToExitIconLoadingThread)
+		{
+			break;
+		}
+
 		m_needsToLoadMoreIcons = false;
 
-		std::cout << "Loading icons!\n";
 		std::deque<FileBrowserItem*> filesToLoadIconFor = std::move(m_filesToLoadIconFor);
 		std::deque<FileBrowserItem*> directoriesToLoadIconFor = std::move(m_directoriesToLoadIconFor);
 
@@ -130,6 +142,13 @@ void FileBrowserItems::thread_loadIcons()
 
 FileBrowserItems::~FileBrowserItems()
 {
+	m_wantsToExitIconLoadingThread = true;
+	m_needsToLoadMoreIcons = true;
+	m_needsToLoadMoreIconsMutex.lock();
+	m_needsToLoadMoreIconsConditionVariable.notify_one();
+	m_needsToLoadMoreIconsMutex.unlock();
+	m_iconLoadingThread.join();
+
 	for (auto& icon : m_uniqueLoadedFileIcons)
 	{
 		icon.second->forget();

@@ -29,6 +29,8 @@ private:
 
 	FileBrowserItems* m_items;
 
+	DialogBox* m_dialog;
+
 public:
 	FileBrowser(AvoExplorer* p_parent);
 	~FileBrowser()

@@ -22,6 +22,7 @@ AvoExplorer::AvoExplorer() :
 	CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));
 
 	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::DefaultCustom | AvoGUI::WindowStyleFlags::MaximizeButton);
+	waitForFinish();
 }
 AvoExplorer::~AvoExplorer()
 {

@@ -49,6 +49,8 @@ private:
 	std::mutex m_needsToLoadMoreIconsMutex;
 	std::atomic<bool> m_needsToLoadMoreIcons;
 
+	std::atomic<bool> m_wantsToExitIconLoadingThread;
+	std::thread m_iconLoadingThread;
 	void thread_loadIcons();
 
 public:
@@ -57,7 +59,7 @@ public:
 		m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
 		m_selectedItem(0),
 		m_text_directories(0), m_text_files(0),
-		m_needsToLoadMoreIcons(false)
+		m_needsToLoadMoreIcons(false), m_wantsToExitIconLoadingThread(false)
 	{
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
@@ -66,7 +68,7 @@ public:
 		m_text_files = getGUI()->getDrawingContext()->createText(Strings::files, 16.f);
 		enableMouseEvents();
 
-		std::thread(&FileBrowserItems::thread_loadIcons, this).detach();
+		m_iconLoadingThread = std::thread(&FileBrowserItems::thread_loadIcons, this);
 	}
 	~FileBrowserItems();
 
