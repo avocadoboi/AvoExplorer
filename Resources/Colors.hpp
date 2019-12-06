@@ -12,9 +12,9 @@ namespace Colors
 {
 	AvoGUI::Color const label(0.8f);
 
-	AvoGUI::Color const selection(0.6f, 1.f, 0.8f, 0.2f);
-	AvoGUI::Color const primary(0.1f, 0.8f, 0.4f);
-	AvoGUI::Color const primaryOnBackground(0.5f, 1.f, 0.8f);
+	AvoGUI::Color const selection(0.2f, 1.f, 0.5f, 0.3f);
+	AvoGUI::Color const primary(0.1f, 0.7f, 0.35f);
+	AvoGUI::Color const primaryOnBackground(0.2f, 1.f, 0.5f);
 
 	AvoGUI::Color const avoExplorerBackground(0.12f);
 	AvoGUI::Color const avoExplorerOnBackground(1.f);

@@ -126,7 +126,7 @@ public:
 
 	AvoGUI::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y)
 	{
-		return p_y < getHeight() && p_x < m_minimizeButton->getLeft() ? AvoGUI::WindowBorderArea::Dragging : AvoGUI::WindowBorderArea::None;
+		return p_y < getHeight() && p_x < (m_minimizeButton ? m_minimizeButton : m_closeButton)->getLeft() ? AvoGUI::WindowBorderArea::Dragging : AvoGUI::WindowBorderArea::None;
 	}
 	void handleTitleBarButtonClick(TitleBarWindowButton* p_button)
 	{

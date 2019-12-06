@@ -27,12 +27,14 @@ private:
 
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
-	FileBrowserItem* m_selectedItem;
+	std::vector<FileBrowserItem*> m_selectedItems;
 
 	AvoGUI::Text* m_text_directories;
 	AvoGUI::Text* m_text_files;
 
 	std::filesystem::path m_path;
+
+	AvoGUI::LinearGradient* m_fileNameEndGradient;
 
 	//------------------------------
 	// Icon loading
@@ -42,14 +44,15 @@ private:
 
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedFileIcons;
-	std::deque<FileBrowserItem*> m_filesToLoadIconFor;
-	std::deque<FileBrowserItem*> m_directoriesToLoadIconFor;
 
 	std::condition_variable m_needsToLoadMoreIconsConditionVariable;
 	std::mutex m_needsToLoadMoreIconsMutex;
 	std::atomic<bool> m_needsToLoadMoreIcons;
 
-	std::atomic<bool> m_wantsToExitIconLoadingThread;
+	bool m_needsToChangeDirectory;
+
+	std::mutex m_itemsMutex;
+	std::atomic<bool> m_needsToExitIconLoadingThread;
 	std::thread m_iconLoadingThread;
 	void thread_loadIcons();
 
@@ -57,16 +60,28 @@ public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent), m_fileBrowser(p_fileBrowser),
 		m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
-		m_selectedItem(0),
+		m_selectedItems(0),
 		m_text_directories(0), m_text_files(0),
-		m_needsToLoadMoreIcons(false), m_wantsToExitIconLoadingThread(false)
+		m_fileNameEndGradient(0),
+		m_needsToLoadMoreIcons(false), 
+		m_needsToChangeDirectory(false),
+		m_needsToExitIconLoadingThread(false)
 	{
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
 
-		m_text_directories = getGUI()->getDrawingContext()->createText(Strings::directories, 16.f);
-		m_text_files = getGUI()->getDrawingContext()->createText(Strings::files, 16.f);
-		enableMouseEvents();
+		AvoGUI::DrawingContext* context = getGUI()->getDrawingContext();
+
+		m_text_directories = context->createText(Strings::directories, 16.f);
+		m_text_files = context->createText(Strings::files, 16.f);
+
+		m_fileNameEndGradient = context->createLinearGradient(
+			{ 
+				{ getThemeColor("on background"), 0.f }, 
+				{ AvoGUI::Color(0.f, 0.f), 1.f } 
+			}, 
+			-20.f, 0.f, 0.f, 0.f
+		);
 
 		m_iconLoadingThread = std::thread(&FileBrowserItems::thread_loadIcons, this);
 	}
@@ -75,9 +90,13 @@ public:
 	//------------------------------
 
 	void setSelectedItem(FileBrowserItem* p_item);
-	FileBrowserItem* getSelectedItem()
+	void addSelectedItem(FileBrowserItem* p_item);
+
+	//------------------------------
+
+	AvoGUI::LinearGradient* getFileNameEndGradient()
 	{
-		return m_selectedItem;
+		return m_fileNameEndGradient;
 	}
 
 	//------------------------------

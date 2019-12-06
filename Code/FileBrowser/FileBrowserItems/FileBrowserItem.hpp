@@ -21,6 +21,7 @@ private:
 	float m_hoverAnimationTime;
 	float m_hoverAnimationValue;
 	bool m_isHovering;
+	bool m_isSelected;
 
 public:
 	FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::path const& p_path, bool p_isFile);
@@ -34,6 +35,23 @@ public:
 		{
 			m_text_name->forget();
 		}
+	}
+
+	//------------------------------
+
+	void select()
+	{
+		m_isSelected = true;
+		invalidate();
+	}
+	void deselect()
+	{
+		m_isSelected = false;
+		invalidate();
+	}
+	bool getIsSelected()
+	{
+		return m_isSelected;
 	}
 
 	//------------------------------
@@ -70,15 +88,7 @@ public:
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (m_fileBrowserItems->getSelectedItem() != this)
-		{
-			if (m_fileBrowserItems->getSelectedItem())
-			{
-				m_fileBrowserItems->getSelectedItem()->invalidate();
-			}
-			m_fileBrowserItems->setSelectedItem(this);
-			invalidate();
-		}
+		m_fileBrowserItems->setSelectedItem(this);
 	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{

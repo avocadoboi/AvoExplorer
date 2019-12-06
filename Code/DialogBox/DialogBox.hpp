@@ -90,6 +90,7 @@ public:
 
 	void createContent() override
 	{
+		enableMouseEvents();
 		setThemeColor("background", Colors::dialogBoxBackground);
 		setThemeColor("on background", Colors::dialogBoxOnBackground);
 		setThemeColor("primary", Colors::primary);
@@ -131,7 +132,7 @@ public:
 	}
 	void drawOverlay(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setColor(getThemeColor("on background"));
-		p_context->strokeRectangle(getBounds(), 1.f);
+		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.1));
+		p_context->strokeRectangle(getBounds());
 	}
 };
