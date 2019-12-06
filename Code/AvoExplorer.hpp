@@ -26,8 +26,10 @@ private:
 
 	IWICImagingFactory2* m_windowsImagingFactory;
 
+	char const* m_initialPath;
+
 public:
-	AvoExplorer();
+	AvoExplorer(char const* p_initialPath);
 	~AvoExplorer();
 
 	//------------------------------

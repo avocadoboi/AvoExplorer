@@ -15,8 +15,8 @@ uint32 constexpr WINDOW_HEIGHT_START = 560;
 
 //------------------------------
 
-AvoExplorer::AvoExplorer() :
-	m_topBar(0), m_fileBrowser(0), m_contextMenu(0)
+AvoExplorer::AvoExplorer(char const* p_initialPath) :
+	m_topBar(0), m_fileBrowser(0), m_contextMenu(0), m_initialPath(p_initialPath)
 {
 	CoInitialize(0);
 	CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));
@@ -67,6 +67,11 @@ void AvoExplorer::createContent()
 	m_titleBar = new TitleBar(this);
 	m_topBar = new TopBar(this);
 	m_fileBrowser = new FileBrowser(this);
+
+	if (m_initialPath[0])
+	{
+		m_fileBrowser->setWorkingDirectory(m_initialPath);
+	}
 
 	//------------------------------
 

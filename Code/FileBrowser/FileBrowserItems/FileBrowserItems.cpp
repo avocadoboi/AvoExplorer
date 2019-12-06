@@ -36,7 +36,7 @@ void FileBrowserItems::thread_loadIcons()
 		if (m_needsToChangeDirectory)
 		{
 			getGUI()->excludeAnimationThread();
-			setWorkingDirectory(m_path);
+			setWorkingDirectory(m_fileBrowser->getPath());
 			getGUI()->includeAnimationThread();
 		}
 
@@ -113,15 +113,19 @@ void FileBrowserItems::thread_loadIcons()
 						WTS_CACHEFLAGS flags;
 						thumbnailCache->GetThumbnail(item, 128, WTS_EXTRACT, &bitmap, &flags, 0);
 
-						HBITMAP bitmapHandle;
-						bitmap->GetSharedBitmap(&bitmapHandle);
+						if (bitmap)
+						{
+							HBITMAP bitmapHandle;
+							bitmap->GetSharedBitmap(&bitmapHandle);
 
-						AvoGUI::Image* newIcon = getGUI()->getDrawingContext()->createImage(bitmapHandle);
-						fileItem->setIcon(newIcon);
-						newIcon->forget();
+							AvoGUI::Image* newIcon = getGUI()->getDrawingContext()->createImage(bitmapHandle);
+							fileItem->setIcon(newIcon);
+							newIcon->forget();
 
-						DeleteObject(bitmapHandle);
-						bitmap->Release();
+							DeleteObject(bitmapHandle);
+							bitmap->Release();
+						}
+
 						item->Release();
 					}
 					else
@@ -225,11 +229,117 @@ void FileBrowserItems::setSelectedItem(FileBrowserItem* p_item)
 			p_item->select();
 		}
 	}
+	if (p_item)
+	{
+		m_lastSelectedItem = p_item;
+	}
 }
 void FileBrowserItems::addSelectedItem(FileBrowserItem* p_item)
 {
 	m_selectedItems.push_back(p_item);
 	p_item->select();
+	m_lastSelectedItem = p_item;
+}
+void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item)
+{
+	if (!p_item || p_item == m_lastSelectedItem)
+	{
+		return;
+	}
+
+	uint32 firstIndex = 0;
+	uint32 lastIndex = 0;
+	if (m_lastSelectedItem)
+	{
+		if (m_lastSelectedItem->getIndex() < p_item->getIndex())
+		{
+			firstIndex = m_lastSelectedItem->getIndex();
+			lastIndex = p_item->getIndex();
+		}
+		else
+		{
+			firstIndex = p_item->getIndex();
+			lastIndex = m_lastSelectedItem->getIndex();
+		}
+	}
+	else
+	{
+		lastIndex = p_item->getIndex();
+	}
+
+	for (uint32 a = firstIndex; a <= lastIndex; a++)
+	{
+		FileBrowserItem* item = (FileBrowserItem*)getChild(a);
+		if (!item->getIsSelected())
+		{
+			item->select();
+			m_selectedItems.push_back(item);
+		}
+	}
+	m_lastSelectedItem = p_item;
+}
+void FileBrowserItems::removeSelectedItem(FileBrowserItem* p_item)
+{
+	p_item->deselect();
+	AvoGUI::removeVectorElementWithoutKeepingOrder(m_selectedItems, p_item);
+	m_lastSelectedItem = p_item;
+}
+
+//------------------------------
+
+void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
+{
+	if (m_isMouseOnBackground && p_event.modifierKeys == AvoGUI::ModifierKeyFlags::LeftMouse)
+	{
+		for (FileBrowserItem* item : m_selectedItems)
+		{
+			item->deselect();
+		}
+		m_selectedItems.clear();
+	}
+	getGUI()->setKeyboardFocus(this);
+}
+
+//------------------------------
+
+void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event)
+{
+	if (p_event.key == AvoGUI::KeyboardKey::Delete)
+	{
+		wchar_t pathBuffer[MAX_PATH + 1]; // MAX_PATH includes first 1 terminator, we want 2 null terminators
+		for (uint32 a = 0; a < m_selectedItems.size(); a++)
+		{
+			std::wstring pathString = m_selectedItems[a]->getPath();
+
+			memcpy(pathBuffer, pathString.data(), pathString.size() * 2);
+			pathBuffer[pathString.size()] = 0;
+			pathBuffer[pathString.size() + 1] = 0;
+
+			SHFILEOPSTRUCTW fileOperation = { 0 };
+			fileOperation.fFlags = FOF_ALLOWUNDO;
+			fileOperation.wFunc = FO_DELETE;
+			fileOperation.pFrom = pathBuffer;
+			SHFileOperationW(&fileOperation);
+
+			if (fileOperation.fAnyOperationsAborted)
+			{
+				continue;
+			}
+
+			if (m_selectedItems[a]->getIsFile())
+			{
+				m_fileItems.erase(m_fileItems.begin() + m_selectedItems[a]->getIndex() - m_directoryItems.size());
+			}
+			else
+			{
+				m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
+			}
+			removeChild(m_selectedItems[a]->getIndex());
+		}
+		m_selectedItems.clear();
+		updateLayout();
+		invalidate();
+	}
 }
 
 //------------------------------
@@ -247,8 +357,6 @@ void FileBrowserItems::tellIconLoadingThreadToLoadMoreIcons()
 
 void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 {
-	m_path = p_path;
-
 	if (!m_needsToChangeDirectory)
 	{
 		m_needsToChangeDirectory = true;

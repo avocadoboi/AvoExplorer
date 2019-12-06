@@ -74,7 +74,6 @@ FileBrowserItem::FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::pa
 		m_text_name->setCenterY(FOLDER_HEIGHT*0.5f);
 		m_text_name->setLeft(FOLDER_HEIGHT);
 	}
-	m_text_name->setRight(getWidth(), false);
 }
 
 void FileBrowserItem::setIcon(AvoGUI::Image* p_image)
@@ -88,21 +87,23 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 {
 	p_context->setColor(Colors::fileBrowserItemBackground);
 	p_context->fillRectangle(getSize());
-	p_context->setColor(getThemeColor("on background"));
 
 	if (m_isSelected)
 	{
 		p_context->setColor(AvoGUI::Color(getThemeColor("selection")));
+		p_context->fillRectangle(getSize());
+	}
+
+	AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
+	if (m_text_name->getRight() - getWidth() > gradient->getStartPositionX())
+	{
+		gradient->setOffsetX(getWidth());
+		p_context->setGradient(gradient);
 	}
 	else
 	{
-		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), m_hoverAnimationValue * 0.2f));
+		p_context->setColor(getThemeColor("on background"));
 	}
-	p_context->fillRectangle(getSize());
-
-	AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
-	gradient->setOffsetX(getWidth());
-	p_context->setGradient(gradient);
 	p_context->drawText(m_text_name);
 
 	if (m_icon)
@@ -129,4 +130,7 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 
 		p_context->drawImage(m_icon);
 	}
+
+	p_context->setColor(AvoGUI::Color(getThemeColor("on background"), m_hoverAnimationValue * 0.15f));
+	p_context->fillRectangle(getSize());
 }

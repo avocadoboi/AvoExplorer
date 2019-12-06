@@ -2,8 +2,8 @@
 
 //------------------------------
 
-uint32 const INITIAL_WIDTH = 400;
-uint32 const INITIAL_HEIGHT = 250;
+uint32 constexpr INITIAL_WIDTH = 400;
+uint32 constexpr INITIAL_HEIGHT = 250;
 
 //------------------------------
 

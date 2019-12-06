@@ -32,6 +32,18 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 //------------------------------
 
+void FileBrowser::handleDialogBoxChoice(std::string const& p_text)
+{
+	if (p_text == Strings::restart)
+	{
+		wchar_t executablePath[MAX_PATH];
+		GetModuleFileNameW(0, executablePath, MAX_PATH);
+		ShellExecuteW(0, L"runas", executablePath, m_path.c_str(), 0, SW_SHOWNORMAL);
+
+		getGUI()->getWindow()->close();
+	}
+}
+
 void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 {
 	if (p_path.u8string().back() != '/' && p_path.u8string().back() != '\\')
@@ -61,6 +73,7 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 		}
 	}
 
+	m_path = p_path;
 	m_pathEditor->setWorkingDirectory(p_path);
 	m_items->setWorkingDirectory(p_path);
 	invalidate();

@@ -4,9 +4,9 @@
 
 //------------------------------
 
-float const HEIGHT = 3				* 8.f;
-float const BUTTON_ICON_SIZE = 2	* 8.f;
-float const BUTTON_WIDTH_FACTOR = 1.2f;
+float constexpr HEIGHT = 3				* 8.f;
+float constexpr BUTTON_ICON_SIZE = 2	* 8.f;
+float constexpr BUTTON_WIDTH_FACTOR = 1.2f;
 
 //------------------------------
 // class TitleBarWindowButton

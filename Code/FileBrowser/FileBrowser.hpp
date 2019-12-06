@@ -31,6 +31,8 @@ private:
 
 	DialogBox* m_dialog;
 
+	std::filesystem::path m_path;
+
 public:
 	FileBrowser(AvoExplorer* p_parent);
 	~FileBrowser()
@@ -43,15 +45,13 @@ public:
 	{
 		getGUI()->getWindow()->enableUserInteraction();
 	}
-	void handleDialogBoxChoice(std::string const& p_text)
-	{
-		if (p_text == Strings::restart)
-		{
-
-		}
-	}
+	void handleDialogBoxChoice(std::string const& p_text);
 
 	void setWorkingDirectory(std::filesystem::path p_path);
+	std::filesystem::path const& getPath()
+	{
+		return m_path;
+	}
 
 	//------------------------------
 

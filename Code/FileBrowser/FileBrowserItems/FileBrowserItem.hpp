@@ -88,7 +88,25 @@ public:
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-		m_fileBrowserItems->setSelectedItem(this);
+		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
+		{
+			if (m_isSelected)
+			{
+				m_fileBrowserItems->removeSelectedItem(this);
+			}
+			else
+			{
+				m_fileBrowserItems->addSelectedItem(this);
+			}
+		}
+		else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+		{
+			m_fileBrowserItems->selectItemsTo(this);
+		}
+		else
+		{
+			m_fileBrowserItems->setSelectedItem(this);
+		}
 	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{
