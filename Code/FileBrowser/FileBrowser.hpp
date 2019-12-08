@@ -43,7 +43,7 @@ public:
 
 	void handleDialogBoxClose()
 	{
-		getGUI()->getWindow()->enableUserInteraction();
+		getGui()->getWindow()->enableUserInteraction();
 	}
 	void handleDialogBoxChoice(std::string const& p_text);
 

@@ -40,7 +40,7 @@ void FileBrowser::handleDialogBoxChoice(std::string const& p_text)
 		GetModuleFileNameW(0, executablePath, MAX_PATH);
 		ShellExecuteW(0, L"runas", executablePath, m_path.c_str(), 0, SW_SHOWNORMAL);
 
-		getGUI()->getWindow()->close();
+		getGui()->getWindow()->close();
 	}
 }
 
@@ -63,12 +63,12 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 	{
 		if (error.code().value() == 5)
 		{
-			m_dialog = new DialogBox(getGUI(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
+			m_dialog = new DialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
 			m_dialog->addButton("Restart", AvoGUI::Button::Emphasis::High);
 			m_dialog->addButton("No", AvoGUI::Button::Emphasis::Medium);
 			m_dialog->setDialogBoxListener(this);
 			m_dialog->detachFromParent();
-			getGUI()->getWindow()->disableUserInteraction();
+			getGui()->getWindow()->disableUserInteraction();
 			return;
 		}
 	}

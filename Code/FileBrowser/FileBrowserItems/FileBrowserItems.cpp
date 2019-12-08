@@ -35,9 +35,9 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_needsToChangeDirectory)
 		{
-			getGUI()->excludeAnimationThread();
+			getGui()->excludeAnimationThread();
 			setWorkingDirectory(m_fileBrowser->getPath());
-			getGUI()->includeAnimationThread();
+			getGui()->includeAnimationThread();
 		}
 
 		if (m_needsToExitIconLoadingThread)
@@ -69,7 +69,7 @@ void FileBrowserItems::thread_loadIcons()
 						HICON icon;
 						m_windowsDirectoryIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-						AvoGUI::Image* newIcon = getGUI()->getDrawingContext()->createImage(icon);
+						AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
 						directoryItem->setIcon(newIcon);
 						m_uniqueLoadedDirectoryIcons[fileInfo.iIcon] = newIcon;
 
@@ -118,7 +118,7 @@ void FileBrowserItems::thread_loadIcons()
 							HBITMAP bitmapHandle;
 							bitmap->GetSharedBitmap(&bitmapHandle);
 
-							AvoGUI::Image* newIcon = getGUI()->getDrawingContext()->createImage(bitmapHandle);
+							AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(bitmapHandle);
 							fileItem->setIcon(newIcon);
 							newIcon->forget();
 
@@ -138,7 +138,7 @@ void FileBrowserItems::thread_loadIcons()
 							HICON icon;
 							m_windowsFileIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-							AvoGUI::Image* newIcon = getGUI()->getDrawingContext()->createImage(icon);
+							AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
 							fileItem->setIcon(newIcon);
 							m_uniqueLoadedFileIcons[fileInfo.iIcon] = newIcon;
 
@@ -297,14 +297,16 @@ void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 		}
 		m_selectedItems.clear();
 	}
-	getGUI()->setKeyboardFocus(this);
+	getGui()->setKeyboardFocus(this);
 }
 
 //------------------------------
 
 void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event)
 {
-	if (p_event.key == AvoGUI::KeyboardKey::Delete)
+	switch (p_event.key)
+	{
+	case AvoGUI::KeyboardKey::Delete:
 	{
 		wchar_t pathBuffer[MAX_PATH + 1]; // MAX_PATH includes first 1 terminator, we want 2 null terminators
 		for (uint32 a = 0; a < m_selectedItems.size(); a++)
@@ -339,6 +341,31 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 		m_selectedItems.clear();
 		updateLayout();
 		invalidate();
+		break;
+	}
+	case AvoGUI::KeyboardKey::A:
+	{
+		if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
+		{
+			for (uint32 a = 0; a < m_directoryItems.size(); a++)
+			{
+				if (!m_directoryItems[a]->getIsSelected())
+				{
+					m_directoryItems[a]->select();
+					m_selectedItems.push_back(m_directoryItems[a]);
+				}
+			}
+			for (uint32 a = 0; a < m_fileItems.size(); a++)
+			{
+				if (!m_fileItems[a]->getIsSelected())
+				{
+					m_fileItems[a]->select();
+					m_selectedItems.push_back(m_fileItems[a]);
+				}
+			}
+		}
+		break;
+	}
 	}
 }
 

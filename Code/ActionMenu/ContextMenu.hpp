@@ -21,7 +21,7 @@ public:
 		View(p_parent, p_bounds), m_contextMenu(0),
 		m_contextMenuWidth(150.f), m_isMouseHoveringBackground(false)
 	{
-		m_contextMenu = ((AvoExplorer*)getGUI())->getContextMenu();
+		m_contextMenu = ((AvoExplorer*)getGui())->getContextMenu();
 	}
 
 	//------------------------------
@@ -63,7 +63,7 @@ private:
 	ContextView* m_currentContextView;
 
 public:
-	ContextMenu(AvoGUI::GUI* p_gui) :
+	ContextMenu(AvoGUI::Gui* p_gui) :
 		ActionMenu(p_gui),
 		m_currentContextView(0)
 	{
@@ -82,6 +82,6 @@ public:
 		setActions(p_contextView->getContextMenuItems());
 		m_currentContextView = p_contextView;
 
-		ActionMenu::open(getGUI()->getWindow()->getMousePosition());
+		ActionMenu::open(getGui()->getWindow()->getMousePosition());
 	}
 };

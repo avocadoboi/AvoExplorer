@@ -75,7 +75,7 @@ public:
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
 
-		AvoGUI::DrawingContext* context = getGUI()->getDrawingContext();
+		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
 
 		m_text_directories = context->createText(Strings::directories, 16.f);
 		m_text_files = context->createText(Strings::files, 16.f);

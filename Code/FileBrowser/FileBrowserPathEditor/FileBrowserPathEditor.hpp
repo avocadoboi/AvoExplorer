@@ -17,7 +17,7 @@ private:
 	AvoGUI::Ripple* m_ripple;
 
 public:
-	FileBrowserPathEditorDirectoryButton(FileBrowserPathEditor* p_parent, std::filesystem::path const& p_path, std::string const& p_name);
+	FileBrowserPathEditorDirectoryButton(AvoGUI::View* p_parent, FileBrowserPathEditor* p_pathEditor, std::filesystem::path const& p_path, std::string const& p_name);
 	~FileBrowserPathEditorDirectoryButton()
 	{
 		m_text->forget();
@@ -38,21 +38,50 @@ public:
 
 //------------------------------
 
-class FileBrowserPathEditor :
+class FileBrowserPathEditorPath :
 	public AvoGUI::View
 {
 private:
-	FileBrowser* m_fileBrowser;
+	FileBrowserPathEditor* m_pathEditor;
 
 	AvoGUI::Image* m_directorySeparatorIcon;
 	std::vector<FileBrowserPathEditorDirectoryButton*> m_directoryButtons;
 
 public:
-	FileBrowserPathEditor(FileBrowser* p_parent);
-	~FileBrowserPathEditor()
+	FileBrowserPathEditorPath(FileBrowserPathEditor* p_parent);
+	~FileBrowserPathEditorPath()
 	{
 		m_directorySeparatorIcon->forget();
 	}
+
+	void setWorkingDirectory(std::filesystem::path const& p_path);
+	
+	void draw(AvoGUI::DrawingContext* p_context) override;
+};
+
+//------------------------------
+
+class FileBrowserPathEditor :
+	public AvoGUI::View,
+	public AvoGUI::ButtonListener
+{
+private:
+	FileBrowser* m_fileBrowser;
+	FileBrowserPathEditorPath* m_path;
+
+	AvoGUI::Image* m_bookmarkIcon_hollow;
+	AvoGUI::Image* m_bookmarkIcon_filled;
+	AvoGUI::Button* m_bookmarkButton;
+
+public:
+	FileBrowserPathEditor(FileBrowser* p_parent);
+	~FileBrowserPathEditor()
+	{
+		m_bookmarkIcon_hollow->forget();
+		m_bookmarkIcon_filled->forget();
+	}
+
+	void handleSizeChange() override;
 
 	//------------------------------
 
@@ -62,6 +91,11 @@ public:
 	}
 
 	//------------------------------
+
+	void handleButtonClick(AvoGUI::Button* p_button) override
+	{
+
+	}
 
 	void setWorkingDirectory(std::filesystem::path const& p_path);
 

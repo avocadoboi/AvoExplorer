@@ -37,7 +37,7 @@ public:
 		View((AvoGUI::View*)p_parent), m_parent(p_parent),
 		m_text_action(0), m_text_shortcut(0)
 	{
-		AvoGUI::DrawingContext* context = getGUI()->getDrawingContext();
+		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
 
 		m_text_action = context->createText(p_action, getThemeValue("font size"));
 		if (*p_shortcut)
@@ -124,7 +124,7 @@ public:
 		setElevation(8.f);
 		setIsVisible(false);
 
-		getGUI()->addGlobalMouseListener(this);
+		getGui()->addGlobalMouseListener(this);
 
 		enableMouseEvents();
 	}

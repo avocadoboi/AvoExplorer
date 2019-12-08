@@ -112,7 +112,7 @@ public:
 	{
 		if (m_isFile)
 		{
-			ShellExecuteW((HWND)getGUI()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, 0, SHOW_OPENWINDOW);
+			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, 0, SHOW_OPENWINDOW);
 		}
 		else
 		{

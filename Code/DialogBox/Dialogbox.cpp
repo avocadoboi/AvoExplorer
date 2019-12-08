@@ -7,7 +7,7 @@ uint32 constexpr INITIAL_HEIGHT = 250;
 
 //------------------------------
 
-DialogBox::DialogBox(AvoGUI::GUI* p_parentGUI, char const* p_title, char const* p_text) :
+DialogBox::DialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_text) :
 	m_titleBar(0), m_titleText(0), m_text(0), m_titleTextString(p_title), m_textString(p_text),
 	m_listener(0)
 {

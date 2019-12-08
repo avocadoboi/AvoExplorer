@@ -24,6 +24,13 @@ public:
 
 	//------------------------------
 
+	Bookmarks* getBookmarks()
+	{
+		return m_bookmarks;
+	}
+
+	//------------------------------
+
 	void handleSizeChange() override;
 
 	void draw(AvoGUI::DrawingContext* p_context) override

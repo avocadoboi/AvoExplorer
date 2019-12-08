@@ -62,7 +62,7 @@ FileBrowserItem::FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::pa
 
 	//------------------------------
 
-	m_text_name = getGUI()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
+	m_text_name = getGui()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
 	m_text_name->setIsTopTrimmed(true);
 	m_text_name->fitHeightToText();
 	if (p_isFile)

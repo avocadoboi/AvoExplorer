@@ -2,9 +2,12 @@
 
 #include "TitleBar/TitleBar.hpp"
 #include "TopBar/TopBar.hpp"
+#include "TopBar/Bookmarks/Bookmarks.hpp"
 #include "FileBrowser/FileBrowser.hpp"
 
 #include "ActionMenu/ContextMenu.hpp"
+
+#include <fstream>
 
 //------------------------------
 
@@ -13,7 +16,44 @@ uint32 constexpr WINDOW_HEIGHT_MIN = 200;
 uint32 constexpr WINDOW_WIDTH_START = 850;
 uint32 constexpr WINDOW_HEIGHT_START = 560;
 
-//------------------------------
+constexpr char const* BOOKMARKS_DATA_PATH = "data";
+
+//
+// Private
+//
+
+void AvoExplorer::loadBookmarkPaths()
+{
+	if (std::filesystem::exists(BOOKMARKS_DATA_PATH))
+	{
+		std::wifstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
+
+		m_bookmarkPaths.reserve(10);
+		while (!fileStream.ate)
+		{
+			std::wstring pathString;
+			std::getline(fileStream, pathString, (wchar_t)0);
+			m_bookmarkPaths.push_back(pathString);
+		}
+
+		fileStream.close();
+	}
+}
+void AvoExplorer::saveBookmarkPaths()
+{
+	std::wofstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
+
+	for (uint32 a = 0; a < m_bookmarkPaths.size(); a++)
+	{
+		fileStream.write(m_bookmarkPaths[a].c_str(), m_bookmarkPaths[a].wstring().size() + 1);
+	}
+
+	fileStream.close();
+}
+
+//
+// Public
+//
 
 AvoExplorer::AvoExplorer(char const* p_initialPath) :
 	m_topBar(0), m_fileBrowser(0), m_contextMenu(0), m_initialPath(p_initialPath)
@@ -31,8 +71,21 @@ AvoExplorer::~AvoExplorer()
 
 //------------------------------
 
+void AvoExplorer::addBookmark(std::filesystem::path const& p_path)
+{
+	Bookmarks* bookmarks = getViewById<Bookmarks>(Ids::bookmarks);
+	bookmarks->addBookmark(p_path);
+	saveBookmarkPaths();
+}
+
+//------------------------------
+
 void AvoExplorer::createContent()
 {
+	loadBookmarkPaths();
+
+	//------------------------------
+
 	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
 
 	//------------------------------
@@ -90,7 +143,7 @@ void AvoExplorer::handleSizeChange()
 
 AvoGUI::WindowBorderArea AvoExplorer::getWindowBorderAreaAtPosition(float p_x, float p_y)
 {
-	AvoGUI::WindowBorderArea area = GUI::getWindowBorderAreaAtPosition(p_x, p_y);
+	AvoGUI::WindowBorderArea area = Gui::getWindowBorderAreaAtPosition(p_x, p_y);
 	if (area == AvoGUI::WindowBorderArea::None && m_titleBar->getIsContaining(p_x, p_y))
 	{
 		return m_titleBar->getWindowBorderAreaAtPosition(p_x, p_y);

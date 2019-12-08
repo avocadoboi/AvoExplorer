@@ -16,7 +16,7 @@ public:
 //------------------------------
 
 class DialogBox : 
-	public AvoGUI::GUI,
+	public AvoGUI::Gui,
 	public AvoGUI::ButtonListener
 {
 private:
@@ -46,7 +46,7 @@ private:
 	}
 
 public:
-	DialogBox(AvoGUI::GUI* p_parentGUI, char const* p_title, char const* p_text);
+	DialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_text);
 	~DialogBox()
 	{
 		if (m_listener)

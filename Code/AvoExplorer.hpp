@@ -2,9 +2,11 @@
 
 #include "../Resources/Colors.hpp"
 #include "../Resources/Strings.hpp"
+#include "../Resources/Ids.hpp"
 
 #include <AvoGUI.hpp>
 #include <wincodec.h>
+#include <filesystem>
 
 //------------------------------
 
@@ -15,7 +17,7 @@ class FileBrowser;
 class ContextMenu;
 
 class AvoExplorer : 
-	public AvoGUI::GUI
+	public AvoGUI::Gui
 {
 private:
 	TitleBar* m_titleBar;
@@ -24,6 +26,10 @@ private:
 
 	ContextMenu* m_contextMenu;
 
+	std::vector<std::filesystem::path> m_bookmarkPaths;
+	void loadBookmarkPaths();
+	void saveBookmarkPaths();
+
 	IWICImagingFactory2* m_windowsImagingFactory;
 
 	char const* m_initialPath;
@@ -31,6 +37,11 @@ private:
 public:
 	AvoExplorer(char const* p_initialPath);
 	~AvoExplorer();
+
+	//------------------------------
+
+	void addBookmark(std::filesystem::path const& p_path);
+	std::vector<std::filesystem::path> const& getBookmarkPaths();
 
 	//------------------------------
 

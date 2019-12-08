@@ -113,7 +113,7 @@ private:
 	bool m_isMaximizeEnabled;
 
 public:
-	TitleBar(AvoGUI::GUI* p_parent);
+	TitleBar(AvoGUI::Gui* p_parent);
 
 	//------------------------------
 
@@ -132,21 +132,21 @@ public:
 	{
 		if (p_button == m_closeButton)
 		{
-			getGUI()->getWindow()->close();
+			getGui()->getWindow()->close();
 		}
 		else if (p_button == m_minimizeButton)
 		{
-			getGUI()->getWindow()->minimize();
+			getGui()->getWindow()->minimize();
 		}
 		else if (m_isMaximizeEnabled)
 		{
-			if (getGUI()->getWindow()->getState() == AvoGUI::WindowState::Maximized)
+			if (getGui()->getWindow()->getState() == AvoGUI::WindowState::Maximized)
 			{
-				getGUI()->getWindow()->restore();
+				getGui()->getWindow()->restore();
 			}
 			else
 			{
-				getGUI()->getWindow()->maximize();
+				getGui()->getWindow()->maximize();
 			}
 		}
 	}

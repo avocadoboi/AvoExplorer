@@ -12,15 +12,17 @@ float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 0.5	* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
 
+float constexpr PATH_EDITOR_PATH_PADDING_RIGHT = 80;
+
 //------------------------------
 // class FileBrowserPathEditorDirectoryButton
 //------------------------------
 
-FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(FileBrowserPathEditor* p_parent, std::filesystem::path const& p_path, std::string const& p_name) :
-	View(p_parent), m_pathEditor(p_parent),
+FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(AvoGUI::View* p_parent, FileBrowserPathEditor* p_editor, std::filesystem::path const& p_path, std::string const& p_name) :
+	View(p_parent), m_pathEditor(p_editor),
 	m_path(p_path), m_text(0), m_ripple(0)
 {
-	m_text = getGUI()->getDrawingContext()->createText(p_name.c_str(), 16.f);
+	m_text = getGui()->getDrawingContext()->createText(p_name.c_str(), 16.f);
 	m_text->setIsTopTrimmed(false);
 	m_text->fitSizeToText();
 
@@ -47,30 +49,22 @@ void FileBrowserPathEditorDirectoryButton::handleMouseUp(AvoGUI::MouseEvent cons
 }
 
 //------------------------------
-// class FileBrowserPathEditor
+// class FileBrowserPathEditorPath
 //------------------------------
 
-FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
-	View(p_parent), m_fileBrowser(p_parent),
-	m_directorySeparatorIcon(0)
+FileBrowserPathEditorPath::FileBrowserPathEditorPath(FileBrowserPathEditor* p_parent) :
+	View(p_parent), 
+	m_pathEditor(p_parent), m_directorySeparatorIcon(0)
 {
-	setHeight(HEIGHT);
-	setCornerRadius(4.f);
-	setElevation(3.f);
-
-	enableMouseEvents();
-
-	m_directorySeparatorIcon = loadImageFromResource(RESOURCE_ICON_CHEVRON, getGUI()->getDrawingContext());
+	m_directorySeparatorIcon = loadImageFromResource(RESOURCE_ICON_CHEVRON, getGui()->getDrawingContext());
 	m_directorySeparatorIcon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Fill);
 	m_directorySeparatorIcon->setSize(0.f, PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT);
 	m_directorySeparatorIcon->setWidth(m_directorySeparatorIcon->getInnerWidth());
-	m_directorySeparatorIcon->setCenterY(getHeight() * 0.5f);
+	m_directorySeparatorIcon->setCenterY(HEIGHT * 0.5f);
 	m_directorySeparatorIcon->setOpacity(0.7f);
 }
 
-//------------------------------
-
-void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
+void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const& p_path)
 {
 	std::string pathString = p_path.u8string();
 
@@ -86,7 +80,7 @@ void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_p
 	{
 		if (a == pathString.size() || pathString[a] == '/' || pathString[a] == '\\')
 		{
-			FileBrowserPathEditorDirectoryButton* button = new FileBrowserPathEditorDirectoryButton(this, std::filesystem::u8path(pathString.substr(0, a) + '/'), pathString.substr(directoryStartIndex, a - directoryStartIndex));
+			FileBrowserPathEditorDirectoryButton* button = new FileBrowserPathEditorDirectoryButton(this, m_pathEditor, std::filesystem::u8path(pathString.substr(0, a) + '/'), pathString.substr(directoryStartIndex, a - directoryStartIndex));
 			button->setCenterY(getHeight() * 0.5f);
 			if (m_directoryButtons.size())
 			{
@@ -107,16 +101,55 @@ void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_p
 	}
 }
 
+void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
+{
+	for (uint32 a = 0; a < m_directoryButtons.size() - 1; a++)
+	{
+		m_directorySeparatorIcon->setLeft(m_directoryButtons[a]->getRight() + PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN);
+		p_context->drawImage(m_directorySeparatorIcon);
+	}
+}
+
+//------------------------------
+// class FileBrowserPathEditor
+//------------------------------
+
+FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
+	View(p_parent), m_fileBrowser(p_parent)
+{
+	enableMouseEvents();
+
+	m_path = new FileBrowserPathEditorPath(this);
+	m_path->setHeight(HEIGHT);
+
+	m_bookmarkIcon_filled = loadImageFromResource(RESOURCE_ICON_BOOKMARK_FILLED, getGui()->getDrawingContext());
+	m_bookmarkIcon_hollow = loadImageFromResource(RESOURCE_ICON_BOOKMARK_HOLLOW, getGui()->getDrawingContext());
+	m_bookmarkButton = new AvoGUI::Button(this, "", AvoGUI::Button::Emphasis::Low);
+
+	setCornerRadius(4.f);
+	setElevation(3.f);
+	setHeight(HEIGHT);
+}
+
+void FileBrowserPathEditor::handleSizeChange() 
+{
+	if (getWidth())
+	{
+		m_path->setWidth(getWidth() - PATH_EDITOR_PATH_PADDING_RIGHT);
+	}
+}
+
+//------------------------------
+
+void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
+{
+	m_path->setWorkingDirectory(p_path);
+}
+
 void FileBrowserPathEditor::draw(AvoGUI::DrawingContext* p_context)
 {
 	p_context->setColor(Colors::fileBrowserPathEditorBackground);
 	p_context->fillRectangle(getSize());
 	p_context->setColor(Colors::fileBrowserPathEditorBorder);
 	p_context->strokeRoundedRectangle(getSize(), getCorners().topLeftSizeX, 3.f);
-
-	for (uint32 a = 0; a < m_directoryButtons.size() - 1; a++)
-	{
-		m_directorySeparatorIcon->setLeft(m_directoryButtons[a]->getRight() + PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN);
-		p_context->drawImage(m_directorySeparatorIcon);
-	}
 }

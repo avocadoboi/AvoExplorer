@@ -67,15 +67,15 @@ void TitleBarWindowButton::setIcon(AvoGUI::Image* p_icon)
 // class TitleBar
 //------------------------------
 
-TitleBar::TitleBar(AvoGUI::GUI* p_parent) :
+TitleBar::TitleBar(AvoGUI::Gui* p_parent) :
 	View(p_parent, AvoGUI::Rectangle<float>(0, 0, 0, HEIGHT)), 
 	m_title(0), m_minimizeButton(0), m_maximizeButton(0), m_closeButton(0), m_isMaximizeEnabled(false)
 {
 	p_parent->addWindowListener(this);
 
-	m_isMaximizeEnabled = bool(getGUI()->getWindow()->getStyles() & AvoGUI::WindowStyleFlags::ResizeBorder);
+	m_isMaximizeEnabled = bool(getGui()->getWindow()->getStyles() & AvoGUI::WindowStyleFlags::ResizeBorder);
 
-	m_title = p_parent->getDrawingContext()->createText(getGUI()->getWindow()->getTitle().c_str(), 11.f);
+	m_title = p_parent->getDrawingContext()->createText(getGui()->getWindow()->getTitle().c_str(), 11.f);
 	m_title->setFontWeight(AvoGUI::FontWeight::SemiBold);
 	m_title->setCharacterSpacing(0.5f);
 	m_title->setIsTopTrimmed(true);
@@ -85,14 +85,14 @@ TitleBar::TitleBar(AvoGUI::GUI* p_parent) :
 
 	if (!p_parent->getParent())
 	{
-		m_minimizeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_MINIMIZE, getGUI()->getDrawingContext()), false);
+		m_minimizeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_MINIMIZE, getGui()->getDrawingContext()), false);
 		m_minimizeButton->setCenterY(HEIGHT * 0.5f);
 
-		m_maximizeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGUI()->getDrawingContext()), false, m_isMaximizeEnabled);
+		m_maximizeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGui()->getDrawingContext()), false, m_isMaximizeEnabled);
 		m_maximizeButton->setCenterY(HEIGHT * 0.5f);
 	}
 
-	m_closeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_CLOSE, getGUI()->getDrawingContext()), true);
+	m_closeButton = new TitleBarWindowButton(this, loadImageFromResource(RESOURCE_ICON_CLOSE, getGui()->getDrawingContext()), true);
 	m_closeButton->setCenterY(HEIGHT * 0.5f);
 }
 
@@ -102,14 +102,14 @@ void TitleBar::handleWindowMaximize(AvoGUI::WindowEvent const& p_event)
 {
 	if (m_maximizeButton)
 	{
-		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_RESTORE, getGUI()->getDrawingContext()));
+		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_RESTORE, getGui()->getDrawingContext()));
 	}
 }
 void TitleBar::handleWindowRestore(AvoGUI::WindowEvent const& p_event)
 {
 	if (m_maximizeButton)
 	{
-		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGUI()->getDrawingContext()));
+		m_maximizeButton->setIcon(loadImageFromResource(RESOURCE_ICON_MAXIMIZE, getGui()->getDrawingContext()));
 	}
 }
 
