@@ -2,5 +2,6 @@
 
 namespace Ids
 {
-	char const* const bookmarks = 0;
+	uint64 const bookmarks = 0;
+	uint64 const fileBrowserItems = 1;
 }

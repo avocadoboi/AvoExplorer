@@ -41,11 +41,13 @@ private:
 	//------------------------------
 	// Icon loading
 
+	IThumbnailCache* m_thumbnailCache;
 	IImageList2* m_windowsDirectoryIconList;
 	IImageList2* m_windowsFileIconList;
 
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedFileIcons;
+	std::vector<FileBrowserItem*> m_itemsToLoadIconFor;
 
 	std::condition_variable m_needsToLoadMoreIconsConditionVariable;
 	std::mutex m_needsToLoadMoreIconsMutex;
@@ -58,20 +60,25 @@ private:
 	std::thread m_iconLoadingThread;
 	void thread_loadIcons();
 
+	//------------------------------
+
+	void loadIconForItem(FileBrowserItem* p_item);
+
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
-		View(p_parent), m_fileBrowser(p_fileBrowser),
-		m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
+		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
 		m_lastSelectedItem(0),
 		m_isMouseOnBackground(false),
 		m_text_directories(0), m_text_files(0),
 		m_fileNameEndGradient(0),
+		m_thumbnailCache(0), m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
 		m_needsToLoadMoreIcons(false), 
 		m_needsToChangeDirectory(false),
 		m_needsToExitIconLoadingThread(false)
 	{
 		enableMouseEvents();
 
+		CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);
 		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
 		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
 
@@ -124,6 +131,7 @@ public:
 
 	//------------------------------
 
+	void tellIconLoadingThreadToLoadIconForItem(FileBrowserItem* p_item);
 	void tellIconLoadingThreadToLoadMoreIcons();
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
 	{

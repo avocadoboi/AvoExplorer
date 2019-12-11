@@ -1,14 +1,20 @@
 #pragma once
 
 #include "FileBrowserItems.hpp"
+#include "../../TopBar/Bookmarks/Bookmarks.hpp"
 
 //------------------------------
+
+/*
+	This class is used in both the Bookmarks section and the FileBrowserItems section to represent a directory or file.
+*/
 
 class FileBrowserItem :
 	public AvoGUI::View
 {
 private:
 	FileBrowserItems* m_fileBrowserItems;
+	Bookmarks* m_bookmarks;
 
 	AvoGUI::Image* m_icon;
 
@@ -17,6 +23,7 @@ private:
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
 	bool m_hasThumbnail;
+	bool m_isBookmark;
 
 	float m_hoverAnimationTime;
 	float m_hoverAnimationValue;
@@ -24,7 +31,7 @@ private:
 	bool m_isSelected;
 
 public:
-	FileBrowserItem(FileBrowserItems* p_parent, std::filesystem::path const& p_path, bool p_isFile);
+	FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark);
 	~FileBrowserItem()
 	{
 		if (m_icon)
@@ -35,6 +42,17 @@ public:
 		{
 			m_text_name->forget();
 		}
+	}
+
+	//------------------------------
+
+	void setIsBookmark(bool p_isBookmark)
+	{
+		m_isBookmark = p_isBookmark;
+	}
+	bool getIsBookmark()
+	{
+		return m_isBookmark;
 	}
 
 	//------------------------------
@@ -88,31 +106,34 @@ public:
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
+		if (!m_isBookmark)
 		{
-			if (m_isSelected)
+			if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
 			{
-				m_fileBrowserItems->removeSelectedItem(this);
+				if (m_isSelected)
+				{
+					m_fileBrowserItems->removeSelectedItem(this);
+				}
+				else
+				{
+					m_fileBrowserItems->addSelectedItem(this);
+				}
+			}
+			else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+			{
+				m_fileBrowserItems->selectItemsTo(this);
 			}
 			else
 			{
-				m_fileBrowserItems->addSelectedItem(this);
+				m_fileBrowserItems->setSelectedItem(this);
 			}
-		}
-		else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
-		{
-			m_fileBrowserItems->selectItemsTo(this);
-		}
-		else
-		{
-			m_fileBrowserItems->setSelectedItem(this);
 		}
 	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{
 		if (m_isFile)
 		{
-			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, 0, SHOW_OPENWINDOW);
+			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
 		}
 		else
 		{

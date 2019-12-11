@@ -17,8 +17,6 @@ float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM = 2	* 8.f;
 
 void FileBrowserItems::thread_loadIcons()
 {
-	IThumbnailCache* thumbnailCache = 0;
-
 	while (true)
 	{
 	start:
@@ -58,28 +56,7 @@ void FileBrowserItems::thread_loadIcons()
 				{
 					goto start;
 				}
-				FileBrowserItem* directoryItem = m_directoryItems[a];
-				if (!directoryItem->getHasLoadedIcon())
-				{
-					SHFILEINFOW fileInfo = { 0 };
-					DWORD_PTR result = SHGetFileInfoW(directoryItem->getPath().c_str(), 0, &fileInfo, sizeof(SHFILEINFOW), SHGFI_SYSICONINDEX);
-
-					if (m_uniqueLoadedDirectoryIcons.find(fileInfo.iIcon) == m_uniqueLoadedDirectoryIcons.end())
-					{
-						HICON icon;
-						m_windowsDirectoryIconList->GetIcon(fileInfo.iIcon, 0, &icon);
-
-						AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
-						directoryItem->setIcon(newIcon);
-						m_uniqueLoadedDirectoryIcons[fileInfo.iIcon] = newIcon;
-
-						DestroyIcon(icon);
-					}
-					else
-					{
-						directoryItem->setIcon(m_uniqueLoadedDirectoryIcons[fileInfo.iIcon]);
-					}
-				}
+				loadIconForItem(m_directoryItems[a]);
 			}
 		}
 
@@ -94,69 +71,94 @@ void FileBrowserItems::thread_loadIcons()
 				{
 					goto start;
 				}
-				FileBrowserItem* fileItem = m_fileItems[a];
-				if (!fileItem->getHasLoadedIcon())
-				{
-					if (fileItem->getIsIconThumbnail())
-					{
-						if (!thumbnailCache)
-						{
-							// CoInitialize is on current thread.
-							CoInitialize(0);
-							CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&thumbnailCache);
-						}
-						IShellItem* item = 0;
+				loadIconForItem(m_fileItems[a]);
+			}
+		}
 
-						HRESULT result = SHCreateItemFromParsingName(fileItem->getPath().c_str(), 0, IID_PPV_ARGS(&item));
-
-						ISharedBitmap* bitmap = 0;
-						WTS_CACHEFLAGS flags;
-						thumbnailCache->GetThumbnail(item, 128, WTS_EXTRACT, &bitmap, &flags, 0);
-
-						if (bitmap)
-						{
-							HBITMAP bitmapHandle;
-							bitmap->GetSharedBitmap(&bitmapHandle);
-
-							AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(bitmapHandle);
-							fileItem->setIcon(newIcon);
-							newIcon->forget();
-
-							DeleteObject(bitmapHandle);
-							bitmap->Release();
-						}
-
-						item->Release();
-					}
-					else
-					{
-						SHFILEINFOW fileInfo = { 0 };
-						DWORD_PTR result = SHGetFileInfoW(fileItem->getPath().c_str(), 0, &fileInfo, sizeof(SHFILEINFOW), SHGFI_SYSICONINDEX);
-
-						if (m_uniqueLoadedFileIcons.find(fileInfo.iIcon) == m_uniqueLoadedFileIcons.end())
-						{
-							HICON icon;
-							m_windowsFileIconList->GetIcon(fileInfo.iIcon, 0, &icon);
-
-							AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
-							fileItem->setIcon(newIcon);
-							m_uniqueLoadedFileIcons[fileInfo.iIcon] = newIcon;
-
-							DestroyIcon(icon);
-						}
-						else
-						{
-							fileItem->setIcon(m_uniqueLoadedFileIcons[fileInfo.iIcon]);
-						}
-					}
-				}
+		if (m_itemsToLoadIconFor.size())
+		{
+			std::vector<FileBrowserItem*> items = std::move(m_itemsToLoadIconFor);
+			for (FileBrowserItem* item : items)
+			{
+				loadIconForItem(item);
 			}
 		}
 	}
+}
 
-	if (thumbnailCache)
+void FileBrowserItems::loadIconForItem(FileBrowserItem* p_item)
+{
+	if (!p_item->getHasLoadedIcon())
 	{
-		thumbnailCache->Release();
+		if (p_item->getIsFile())
+		{
+			if (p_item->getIsIconThumbnail())
+			{
+				IShellItem* item = 0;
+
+				HRESULT result = SHCreateItemFromParsingName(p_item->getPath().c_str(), 0, IID_PPV_ARGS(&item));
+
+				ISharedBitmap* bitmap = 0;
+				WTS_CACHEFLAGS flags;
+				m_thumbnailCache->GetThumbnail(item, 128, WTS_EXTRACT, &bitmap, &flags, 0);
+
+				if (bitmap)
+				{
+					HBITMAP bitmapHandle;
+					bitmap->GetSharedBitmap(&bitmapHandle);
+
+					AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(bitmapHandle);
+					p_item->setIcon(newIcon);
+					newIcon->forget();
+
+					DeleteObject(bitmapHandle);
+					bitmap->Release();
+				}
+
+				item->Release();
+			}
+			else
+			{
+				SHFILEINFOW fileInfo = { 0 };
+				DWORD_PTR result = SHGetFileInfoW(p_item->getPath().c_str(), 0, &fileInfo, sizeof(SHFILEINFOW), SHGFI_SYSICONINDEX);
+
+				if (m_uniqueLoadedFileIcons.find(fileInfo.iIcon) == m_uniqueLoadedFileIcons.end())
+				{
+					HICON icon;
+					m_windowsFileIconList->GetIcon(fileInfo.iIcon, 0, &icon);
+
+					AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
+					p_item->setIcon(newIcon);
+					m_uniqueLoadedFileIcons[fileInfo.iIcon] = newIcon;
+
+					DestroyIcon(icon);
+				}
+				else
+				{
+					p_item->setIcon(m_uniqueLoadedFileIcons[fileInfo.iIcon]);
+				}
+			}
+		}
+		else
+		{
+			SHFILEINFOW fileInfo = { 0 };
+			DWORD_PTR result = SHGetFileInfoW(p_item->getPath().c_str(), 0, &fileInfo, sizeof(SHFILEINFOW), SHGFI_SYSICONINDEX);
+
+			if (m_uniqueLoadedDirectoryIcons.find(fileInfo.iIcon) == m_uniqueLoadedDirectoryIcons.end())
+			{
+				HICON icon;
+				m_windowsDirectoryIconList->GetIcon(fileInfo.iIcon, 0, &icon);
+
+				AvoGUI::Image* newIcon = getGui()->getDrawingContext()->createImage(icon);
+				p_item->setIcon(newIcon);
+				m_uniqueLoadedDirectoryIcons[fileInfo.iIcon] = newIcon;
+				DestroyIcon(icon);
+			}
+			else
+			{
+				p_item->setIcon(m_uniqueLoadedDirectoryIcons[fileInfo.iIcon]);
+			}
+		}
 	}
 }
 
@@ -197,6 +199,10 @@ FileBrowserItems::~FileBrowserItems()
 	if (m_windowsFileIconList)
 	{
 		m_windowsFileIconList->Release();
+	}
+	if (m_thumbnailCache)
+	{
+		m_thumbnailCache->Release();
 	}
 }
 
@@ -371,6 +377,11 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 //------------------------------
 
+void FileBrowserItems::tellIconLoadingThreadToLoadIconForItem(FileBrowserItem* p_item)
+{
+	m_itemsToLoadIconFor.push_back(p_item);
+	tellIconLoadingThreadToLoadMoreIcons();
+}
 void FileBrowserItems::tellIconLoadingThreadToLoadMoreIcons()
 {
 	if (!m_needsToLoadMoreIcons)
@@ -429,7 +440,7 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 	}
 	for (auto path : filePaths)
 	{
-		m_fileItems.push_back(new FileBrowserItem(this, path, true));
+		m_fileItems.push_back(new FileBrowserItem(this, path, false));
 	}
 
 	if (getParent()->getWidth() && getParent()->getHeight())

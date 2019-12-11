@@ -1,10 +1,11 @@
 #pragma once
 
 #include "../TopBar.hpp"
+#include "../../ScrollContainer/ScrollContainer.hpp"
 
 //------------------------------
 
-class Bookmark;
+class FileBrowserItem;
 
 class Bookmarks :
 	public AvoGUI::View
@@ -12,13 +13,16 @@ class Bookmarks :
 private:
 	TopBar* m_topBar;
 
-	std::vector<Bookmark*> m_bookmarks;
+	std::vector<FileBrowserItem*> m_bookmarks;
+	ScrollContainer* m_bookmarksScrollContainer;
+	FileBrowserItem* m_draggedBookmark;
 
 	AvoGUI::Geometry* m_borderGeometry;
 
 public:
 	Bookmarks(TopBar* p_topBar) :
-		View(p_topBar, Ids::bookmarks), m_topBar(p_topBar)
+		View(p_topBar, Ids::bookmarks), m_topBar(p_topBar),
+		m_draggedBookmark(0), m_borderGeometry(0)
 	{
 		enableMouseEvents();
 
@@ -26,13 +30,25 @@ public:
 		m_borderGeometry = getGui()->getDrawingContext()->createRoundedRectangleGeometry(getSize(), getCorners().topLeftSizeX);
 
 		setThemeColor("background", Colors::topBarBookmarksBackground);
+
+		m_bookmarksScrollContainer = new ScrollContainer(this);
 	}
 	~Bookmarks()
 	{
 		m_borderGeometry->forget();
 	}
 
+
+	void handleSizeChange()
+	{
+		m_bookmarksScrollContainer->setSize(getSize());
+	}
+
+	//------------------------------
+
 	void addBookmark(std::filesystem::path const& p_path);
+
+	//------------------------------
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{

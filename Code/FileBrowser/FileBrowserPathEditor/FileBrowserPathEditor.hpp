@@ -72,6 +72,19 @@ private:
 	AvoGUI::Image* m_bookmarkIcon_hollow;
 	AvoGUI::Image* m_bookmarkIcon_filled;
 	AvoGUI::Button* m_bookmarkButton;
+	bool m_isBookmark;
+
+	void updateBookmarkButton()
+	{
+		if (m_isBookmark)
+		{
+			m_bookmarkButton->setIcon(m_bookmarkIcon_hollow);
+		}
+		else
+		{
+			m_bookmarkButton->setIcon(m_bookmarkIcon_filled);
+		}
+	}
 
 public:
 	FileBrowserPathEditor(FileBrowser* p_parent);

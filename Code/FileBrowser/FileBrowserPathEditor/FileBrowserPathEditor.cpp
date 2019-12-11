@@ -115,7 +115,7 @@ void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 //------------------------------
 
 FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
-	View(p_parent), m_fileBrowser(p_parent)
+	View(p_parent), m_fileBrowser(p_parent), m_isBookmark(false)
 {
 	enableMouseEvents();
 
@@ -125,6 +125,7 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	m_bookmarkIcon_filled = loadImageFromResource(RESOURCE_ICON_BOOKMARK_FILLED, getGui()->getDrawingContext());
 	m_bookmarkIcon_hollow = loadImageFromResource(RESOURCE_ICON_BOOKMARK_HOLLOW, getGui()->getDrawingContext());
 	m_bookmarkButton = new AvoGUI::Button(this, "", AvoGUI::Button::Emphasis::Low);
+	updateBookmarkButton();
 
 	setCornerRadius(4.f);
 	setElevation(3.f);
@@ -143,6 +144,8 @@ void FileBrowserPathEditor::handleSizeChange()
 
 void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
 {
+	m_isBookmark = std::filesystem::is_directory(p_path);
+
 	m_path->setWorkingDirectory(p_path);
 }
 
