@@ -28,12 +28,14 @@ void AvoExplorer::loadBookmarkPaths()
 	{
 		std::wifstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
 
-		m_bookmarkPaths.reserve(10);
-		while (!fileStream.ate)
+		while (!fileStream.eof())
 		{
 			std::wstring pathString;
 			std::getline(fileStream, pathString, (wchar_t)0);
-			m_bookmarkPaths.push_back(pathString);
+			if (pathString != L"")
+			{
+				addBookmark(pathString);
+			}
 		}
 
 		fileStream.close();
@@ -56,7 +58,8 @@ void AvoExplorer::saveBookmarkPaths()
 //
 
 AvoExplorer::AvoExplorer(char const* p_initialPath) :
-	m_topBar(0), m_fileBrowser(0), m_contextMenu(0), m_initialPath(p_initialPath)
+	m_titleBar(0), m_topBar(0), m_fileBrowser(0), m_contextMenu(0), 
+	m_windowsImagingFactory(0), m_initialPath(p_initialPath)
 {
 	CoInitialize(0);
 	CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));
@@ -73,8 +76,14 @@ AvoExplorer::~AvoExplorer()
 
 void AvoExplorer::addBookmark(std::filesystem::path const& p_path)
 {
-	Bookmarks* bookmarks = getViewById<Bookmarks>(Ids::bookmarks);
-	bookmarks->addBookmark(p_path);
+	getViewById<Bookmarks>(Ids::bookmarks)->addBookmark(p_path);
+	m_bookmarkPaths.push_back(p_path);
+	saveBookmarkPaths();
+}
+void AvoExplorer::removeBookmark(uint32 p_index)
+{
+	getViewById<Bookmarks>(Ids::bookmarks)->removeBookmark(p_index);
+	m_bookmarkPaths.erase(m_bookmarkPaths.begin() + p_index);
 	saveBookmarkPaths();
 }
 
@@ -82,10 +91,6 @@ void AvoExplorer::addBookmark(std::filesystem::path const& p_path)
 
 void AvoExplorer::createContent()
 {
-	loadBookmarkPaths();
-
-	//------------------------------
-
 	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
 
 	//------------------------------
@@ -98,6 +103,8 @@ void AvoExplorer::createContent()
 	setThemeColor("on background", Colors::avoExplorerOnBackground);
 	setThemeColor("shadow", Colors::avoExplorerShadow);
 	setThemeColor("selection", Colors::selection);
+	setThemeColor("primary", Colors::primary);
+	setThemeColor("primary on background", Colors::primaryOnBackground);
 
 	setThemeValue("hover animation speed", 0.4f);
 
@@ -118,13 +125,14 @@ void AvoExplorer::createContent()
 	//------------------------------
 
 	m_titleBar = new TitleBar(this);
-	m_topBar = new TopBar(this);
-	m_fileBrowser = new FileBrowser(this);
 
-	if (m_initialPath[0])
-	{
-		m_fileBrowser->setWorkingDirectory(m_initialPath);
-	}
+	m_fileBrowser = new FileBrowser(this);
+	m_topBar = new TopBar(this);
+
+	m_bookmarkPaths.reserve(10);
+	loadBookmarkPaths();
+
+	m_fileBrowser->setWorkingDirectory(m_initialPath);
 
 	//------------------------------
 

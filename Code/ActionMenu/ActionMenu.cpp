@@ -122,7 +122,7 @@ void ActionMenu::updateAnimations()
 		}
 	}
 
-	setThemeValue("opacity", AvoGUI::square(AvoGUI::max(m_openAnimationValue * 7.f - 6.f, 0.f)));
+	setOpacity(AvoGUI::max(m_openAnimationValue * 7.f - 6.f, 0.f));
 
 	invalidate();
 }

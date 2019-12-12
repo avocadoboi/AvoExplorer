@@ -16,6 +16,7 @@ private:
 	std::vector<FileBrowserItem*> m_bookmarks;
 	ScrollContainer* m_bookmarksScrollContainer;
 	FileBrowserItem* m_draggedBookmark;
+	void updateLayout();
 
 	AvoGUI::Geometry* m_borderGeometry;
 
@@ -38,15 +39,12 @@ public:
 		m_borderGeometry->forget();
 	}
 
-
-	void handleSizeChange()
-	{
-		m_bookmarksScrollContainer->setSize(getSize());
-	}
+	void handleSizeChange(float p_previousWidth, float p_previousHeight) override;
 
 	//------------------------------
 
 	void addBookmark(std::filesystem::path const& p_path);
+	void removeBookmark(uint32 p_index);
 
 	//------------------------------
 

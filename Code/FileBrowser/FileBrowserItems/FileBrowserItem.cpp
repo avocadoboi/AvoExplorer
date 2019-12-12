@@ -8,20 +8,17 @@ float constexpr FILE_NAME_PADDING = 1	* 8.f;
 
 float constexpr FOLDER_WIDTH = 24		* 8.f;
 float constexpr FOLDER_HEIGHT = 6		* 8.f;
-float constexpr FOLDER_ICON_WIDTH = 4	* 8.f;
 
 float constexpr BOOKMARK_HEIGHT = 5		* 8.f;
 
 //------------------------------
 
 FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark) :
-	View(p_parent), m_fileBrowserItems(0),
+	ContextView(p_parent), m_fileBrowserItems(0),
 	m_icon(0), m_text_name(0), m_isFile(false), m_hasThumbnail(false), m_isBookmark(p_isBookmark),
 	m_hoverAnimationTime(0), m_hoverAnimationValue(0), m_isHovering(false), 
 	m_isSelected(false)
 {
-	m_isFile = !std::filesystem::is_directory(p_path);
-
 	std::wstring pathString = p_path.native();
 	for (uint32 a = 0; a < pathString.size(); a++)
 	{
@@ -31,6 +28,16 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 		}
 	}
 	m_path = pathString;
+
+	// I got a _Sharing_Violation on some files for some reason, probaly a bug because it doesn't happen when iterating the directory
+	try
+	{
+		m_isFile = std::filesystem::is_regular_file(m_path);
+	}
+	catch (std::filesystem::filesystem_error)
+	{
+		m_isFile = true;
+	}
 
 	std::string extension = m_path.extension().u8string();
 	m_hasThumbnail = 
@@ -46,29 +53,32 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 
 	//------------------------------
 
+	if (m_isFile)
+	{
+		m_name = p_path.filename();
+	}
+	else
+	{
+		if (p_path.has_filename())
+		{
+			m_name = p_path.filename();
+		}
+		else if (p_path.has_parent_path())
+		{
+			m_name = p_path.parent_path().filename();
+		}
+	}
 	if (m_isBookmark)
 	{
 		setHeight(BOOKMARK_HEIGHT);
 	}
+	else if (m_isFile)
+	{
+		setSize(FILE_WIDTH, FILE_HEIGHT);
+	}
 	else
 	{
-		if (m_isFile)
-		{
-			m_name = p_path.filename();
-			setSize(FILE_WIDTH, FILE_HEIGHT);
-		}
-		else
-		{
-			if (p_path.has_filename())
-			{
-				m_name = p_path.filename();
-			}
-			else if (p_path.has_parent_path())
-			{
-				m_name = p_path.parent_path().filename();
-			}
-			setSize(FOLDER_WIDTH, FOLDER_HEIGHT);
-		}
+		setSize(FOLDER_WIDTH, FOLDER_HEIGHT);
 	}
 
 	//------------------------------
@@ -81,22 +91,25 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 	m_text_name = getGui()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
 	m_text_name->setIsTopTrimmed(true);
 	m_text_name->fitHeightToText();
-	if (m_isBookmark)
+	if (m_isFile && !m_isBookmark)
 	{
-		setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
+		m_text_name->setBottomLeft(FILE_NAME_PADDING*1.1f, getHeight() - FILE_NAME_PADDING);
 	}
 	else
 	{
-		if (m_isFile)
-		{
-			m_text_name->setBottomLeft(FILE_NAME_PADDING*1.1f, getHeight() - FILE_NAME_PADDING);
-		}
-		else
-		{
-			m_text_name->setCenterY(FOLDER_HEIGHT*0.5f);
-			m_text_name->setLeft(FOLDER_HEIGHT);
-		}
+		m_text_name->setCenterY(getHeight()*0.5f);
+		m_text_name->setLeft(getHeight());
 	}
+
+	if (m_isBookmark)
+	{
+		setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
+		m_fileBrowserItems->tellIconLoadingThreadToLoadIconForItem(this);
+	}
+
+	m_contextMenuItems.push_back(ActionMenuItemData("Copy", "Ctrl + C"));
+	m_contextMenuItems.push_back(ActionMenuItemData("Cut", "Ctrl + X"));
+	m_contextMenuItems.push_back(ActionMenuItemData("Remove", "del"));
 }
 
 void FileBrowserItem::setIcon(AvoGUI::Image* p_image)
@@ -117,29 +130,25 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 		p_context->fillRectangle(getSize());
 	}
 
-	if (!m_isBookmark)
+	AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
+	if (!m_isBookmark && m_text_name->getRight() - getWidth() > gradient->getStartPositionX())
 	{
-		AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
-		if (m_text_name->getRight() - getWidth() > gradient->getStartPositionX())
-		{
-			gradient->setOffsetX(getWidth());
-			p_context->setGradient(gradient);
-		}
-		else
-		{
-			p_context->setColor(getThemeColor("on background"));
-		}
-		p_context->drawText(m_text_name);
+		gradient->setOffsetX(getWidth());
+		p_context->setGradient(gradient);
 	}
+	else
+	{
+		p_context->setColor(getThemeColor("on background"));
+	}
+	p_context->drawText(m_text_name);
 
 	if (m_icon)
 	{
-		if (m_isFile)
+		if (m_isFile && !m_isBookmark)
 		{
 			if (m_icon)
 			{
 				m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
-				m_icon->setBoundsPositioning(0.5f, 0.5f);
 				m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
 			}
 		}
@@ -147,9 +156,8 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 		{
 			if (m_icon)
 			{
-				m_icon->setSize(FOLDER_ICON_WIDTH);
-				m_icon->setBoundsPositioning(0.5f, 0.5f);
-				m_icon->setCenterY(FOLDER_HEIGHT * 0.5f);
+				m_icon->setSize(getHeight()*0.7f);
+				m_icon->setCenterY(getHeight() * 0.5f);
 				m_icon->setLeft(m_icon->getTop());
 			}
 		}

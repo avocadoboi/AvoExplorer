@@ -53,10 +53,8 @@ public:
 		enableMouseEvents();
 	}
 	ActionMenuItem(ActionMenu* p_parent, ActionMenuItemData const& p_itemData) :
-		View((AvoGUI::View*)p_parent),
-		m_text_action(0), m_text_shortcut(0)
+		ActionMenuItem(p_parent, p_itemData.action, p_itemData.shortcut) 
 	{
-		ActionMenuItem(p_parent, p_itemData.action, p_itemData.shortcut);
 	}
 
 	//------------------------------
@@ -213,9 +211,9 @@ public:
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setOpacity(m_openAnimationValue);
 		p_context->setColor(getThemeColor("background"));
 		p_context->fillRectangle(getSize());
-		p_context->setOpacity(1.f);
+		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.1));
+		p_context->strokeRectangle(getSize(), getCorners());
 	}
 };

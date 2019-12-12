@@ -19,15 +19,17 @@ float constexpr FILE_BROWSER_PADDING_TOP = 2				* 8.f;
 
 FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	View(p_parent), m_avoExplorer(p_parent),
-	m_pathEditor(0), m_button_changeView(0), m_button_add(0)
+	m_pathEditor(0), m_button_changeView(0), m_button_add(0),
+	m_items(0), m_dialog(0)
 {
+	enableMouseEvents();
+
 	m_pathEditor = new FileBrowserPathEditor(this);
 
 	ScrollContainer* scrollContainer = new ScrollContainer(this);
+	scrollContainer->enableMouseEvents();
 	m_items = new FileBrowserItems(scrollContainer, this);
 	scrollContainer->setContentView(m_items);
-
-	setWorkingDirectory("C:");
 }
 
 //------------------------------

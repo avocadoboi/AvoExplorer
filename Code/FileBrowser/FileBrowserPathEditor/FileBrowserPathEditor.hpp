@@ -74,15 +74,19 @@ private:
 	AvoGUI::Button* m_bookmarkButton;
 	bool m_isBookmark;
 
-	void updateBookmarkButton()
+	void updateBookmarkButtonIcon()
 	{
-		if (m_isBookmark)
+		AvoGUI::Image* newIcon = m_isBookmark ? m_bookmarkIcon_filled : m_bookmarkIcon_hollow;
+		if (newIcon != m_bookmarkButton->getIcon())
 		{
-			m_bookmarkButton->setIcon(m_bookmarkIcon_hollow);
-		}
-		else
-		{
-			m_bookmarkButton->setIcon(m_bookmarkIcon_filled);
+			newIcon->setSize(16);
+			newIcon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
+
+			if (m_bookmarkButton->getIcon())
+			{
+				m_bookmarkButton->getIcon()->remember();
+			}
+			m_bookmarkButton->setIcon(newIcon);
 		}
 	}
 
@@ -107,7 +111,17 @@ public:
 
 	void handleButtonClick(AvoGUI::Button* p_button) override
 	{
+		if (m_isBookmark)
+		{
+			getGui<AvoExplorer>()->removeBookmark(m_fileBrowser->getPath());
+		}
+		else
+		{
+			getGui<AvoExplorer>()->addBookmark(m_fileBrowser->getPath());
+		}
 
+		m_isBookmark = !m_isBookmark;
+		updateBookmarkButtonIcon();
 	}
 
 	void setWorkingDirectory(std::filesystem::path const& p_path);

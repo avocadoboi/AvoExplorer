@@ -28,7 +28,7 @@ namespace Colors
 	AvoGUI::Color const topBarBookmarksBackground(0.12f);
 	AvoGUI::Color const topBarBookmarksBorder(0.3f);
 
-	AvoGUI::Color const actionMenuBackground(0.2f);
+	AvoGUI::Color const actionMenuBackground(0.1f);
 	AvoGUI::Color const actionMenuShortcut(0.6f);
 
 	AvoGUI::Color const fileBrowserPathEditorBackground(0.12f);

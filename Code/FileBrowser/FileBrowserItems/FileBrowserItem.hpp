@@ -2,6 +2,7 @@
 
 #include "FileBrowserItems.hpp"
 #include "../../TopBar/Bookmarks/Bookmarks.hpp"
+#include "../../ActionMenu/ContextMenu.hpp"
 
 //------------------------------
 
@@ -10,7 +11,7 @@
 */
 
 class FileBrowserItem :
-	public AvoGUI::View
+	public ContextView
 {
 private:
 	FileBrowserItems* m_fileBrowserItems;
@@ -106,38 +107,48 @@ public:
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (!m_isBookmark)
+		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
+			if (!m_isBookmark)
 			{
-				if (m_isSelected)
+				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
 				{
-					m_fileBrowserItems->removeSelectedItem(this);
+					if (m_isSelected)
+					{
+						m_fileBrowserItems->removeSelectedItem(this);
+					}
+					else
+					{
+						m_fileBrowserItems->addSelectedItem(this);
+					}
+				}
+				else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+				{
+					m_fileBrowserItems->selectItemsTo(this);
 				}
 				else
 				{
-					m_fileBrowserItems->addSelectedItem(this);
+					m_fileBrowserItems->setSelectedItem(this);
 				}
 			}
-			else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
-			{
-				m_fileBrowserItems->selectItemsTo(this);
-			}
-			else
-			{
-				m_fileBrowserItems->setSelectedItem(this);
-			}
+		}
+		else
+		{
+			ContextView::handleMouseDown(p_event);
 		}
 	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (m_isFile)
+		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
-		}
-		else
-		{
-			m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
+			if (m_isFile)
+			{
+				ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
+			}
+			else
+			{
+				m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
+			}
 		}
 	}
 

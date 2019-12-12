@@ -12,8 +12,6 @@ float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 0.5	* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
 
-float constexpr PATH_EDITOR_PATH_PADDING_RIGHT = 80;
-
 //------------------------------
 // class FileBrowserPathEditorDirectoryButton
 //------------------------------
@@ -42,7 +40,7 @@ FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(AvoGU
 
 void FileBrowserPathEditorDirectoryButton::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	if (p_event.x > 0.f && p_event.x < getWidth() && p_event.y > 0.f && p_event.y < getHeight())
+	if (p_event.mouseButton == AvoGUI::MouseButton::Left && p_event.x > 0.f && p_event.x < getWidth() && p_event.y > 0.f && p_event.y < getHeight())
 	{
 		m_pathEditor->getFileBrowser()->setWorkingDirectory(m_path);
 	}
@@ -56,6 +54,8 @@ FileBrowserPathEditorPath::FileBrowserPathEditorPath(FileBrowserPathEditor* p_pa
 	View(p_parent), 
 	m_pathEditor(p_parent), m_directorySeparatorIcon(0)
 {
+	enableMouseEvents();
+
 	m_directorySeparatorIcon = loadImageFromResource(RESOURCE_ICON_CHEVRON, getGui()->getDrawingContext());
 	m_directorySeparatorIcon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Fill);
 	m_directorySeparatorIcon->setSize(0.f, PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT);
@@ -125,7 +125,10 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	m_bookmarkIcon_filled = loadImageFromResource(RESOURCE_ICON_BOOKMARK_FILLED, getGui()->getDrawingContext());
 	m_bookmarkIcon_hollow = loadImageFromResource(RESOURCE_ICON_BOOKMARK_HOLLOW, getGui()->getDrawingContext());
 	m_bookmarkButton = new AvoGUI::Button(this, "", AvoGUI::Button::Emphasis::Low);
-	updateBookmarkButton();
+	m_bookmarkButton->setSize(32, 32);
+	m_bookmarkButton->setCornerRadius(16);
+	m_bookmarkButton->addButtonListener(this);
+	updateBookmarkButtonIcon();
 
 	setCornerRadius(4.f);
 	setElevation(3.f);
@@ -134,17 +137,17 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 
 void FileBrowserPathEditor::handleSizeChange() 
 {
-	if (getWidth())
-	{
-		m_path->setWidth(getWidth() - PATH_EDITOR_PATH_PADDING_RIGHT);
-	}
+	m_bookmarkButton->setRight(getWidth() - m_bookmarkButton->getTop());
+	m_bookmarkButton->setCenterY(getHeight() * 0.5f);
+	m_path->setWidth(m_bookmarkButton->getLeft() - m_bookmarkButton->getTop());
 }
 
 //------------------------------
 
 void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
 {
-	m_isBookmark = std::filesystem::is_directory(p_path);
+	m_isBookmark = getGui<AvoExplorer>()->getIsPathBookmarked(p_path);
+	updateBookmarkButtonIcon();
 
 	m_path->setWorkingDirectory(p_path);
 }

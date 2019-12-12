@@ -17,6 +17,12 @@ float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM = 2	* 8.f;
 
 void FileBrowserItems::thread_loadIcons()
 {
+	CoInitialize(0);
+	CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);
+
+	SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
+	SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
+
 	while (true)
 	{
 	start:
@@ -84,6 +90,9 @@ void FileBrowserItems::thread_loadIcons()
 			}
 		}
 	}
+	m_thumbnailCache->Release();
+	m_windowsDirectoryIconList->Release();
+	m_windowsFileIconList->Release();
 }
 
 void FileBrowserItems::loadIconForItem(FileBrowserItem* p_item)
@@ -191,18 +200,6 @@ FileBrowserItems::~FileBrowserItems()
 	if (m_text_files)
 	{
 		m_text_files->forget();
-	}
-	if (m_windowsDirectoryIconList)
-	{
-		m_windowsDirectoryIconList->Release();
-	}
-	if (m_windowsFileIconList)
-	{
-		m_windowsFileIconList->Release();
-	}
-	if (m_thumbnailCache)
-	{
-		m_thumbnailCache->Release();
 	}
 }
 
@@ -336,11 +333,25 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 			if (m_selectedItems[a]->getIsFile())
 			{
-				m_fileItems.erase(m_fileItems.begin() + m_selectedItems[a]->getIndex() - m_directoryItems.size());
+				if (m_fileItems.size() > 1)
+				{
+					m_fileItems.erase(m_fileItems.begin() + m_selectedItems[a]->getIndex() - m_directoryItems.size());
+				}
+				else
+				{
+					m_fileItems.clear();
+				}
 			}
 			else
 			{
-				m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
+				if (m_directoryItems.size() > 1)
+				{
+					m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
+				}
+				else
+				{
+					m_directoryItems.clear();
+				}
 			}
 			removeChild(m_selectedItems[a]->getIndex());
 		}

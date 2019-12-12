@@ -73,7 +73,7 @@ TitleBar::TitleBar(AvoGUI::Gui* p_parent) :
 {
 	p_parent->addWindowListener(this);
 
-	m_isMaximizeEnabled = bool(getGui()->getWindow()->getStyles() & AvoGUI::WindowStyleFlags::ResizeBorder);
+	m_isMaximizeEnabled = bool(getGui()->getWindow()->getStyles() & AvoGUI::WindowStyleFlags::MaximizeButton);
 
 	m_title = p_parent->getDrawingContext()->createText(getGui()->getWindow()->getTitle().c_str(), 11.f);
 	m_title->setFontWeight(AvoGUI::FontWeight::SemiBold);

@@ -78,10 +78,6 @@ public:
 	{
 		enableMouseEvents();
 
-		CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);
-		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
-		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
-
 		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
 
 		m_text_directories = context->createText(Strings::directories, 16.f);
@@ -110,6 +106,7 @@ public:
 
 	void handleMouseBackgroundEnter(AvoGUI::MouseEvent const& p_event) override
 	{
+		View::handleMouseBackgroundEnter(p_event);
 		m_isMouseOnBackground = true;
 	}
 	void handleMouseBackgroundLeave(AvoGUI::MouseEvent const& p_event) override

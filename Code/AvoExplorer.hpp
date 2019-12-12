@@ -41,7 +41,26 @@ public:
 	//------------------------------
 
 	void addBookmark(std::filesystem::path const& p_path);
-	std::vector<std::filesystem::path> const& getBookmarkPaths();
+	void removeBookmark(uint32 p_index);
+	void removeBookmark(std::filesystem::path const& p_path)
+	{
+		for (uint32 a = 0; a < m_bookmarkPaths.size(); a++)
+		{
+			if (m_bookmarkPaths[a] == p_path)
+			{
+				removeBookmark(a);
+				break;
+			}
+		}
+	}
+	std::vector<std::filesystem::path> const& getBookmarkPaths()
+	{
+		return m_bookmarkPaths;
+	}
+	bool getIsPathBookmarked(std::filesystem::path const& p_path)
+	{
+		return std::find(m_bookmarkPaths.begin(), m_bookmarkPaths.end(), p_path) != m_bookmarkPaths.end();
+	}
 
 	//------------------------------
 
