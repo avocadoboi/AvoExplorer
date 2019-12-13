@@ -4,7 +4,7 @@
 
 //------------------------------
 
-float constexpr TOP_BAR_HEIGHT = 13.f							*8.f;
+float constexpr TOP_BAR_HEIGHT = 11.f							*8.f;
 float constexpr TOP_BAR_BOOKMARKS_MARGIN_HORIZONTAL = 2.f		*8.f;
 float constexpr TOP_BAR_BOOKMARKS_MARGIN_TOP = 4.f				*8.f;
 float constexpr TOP_BAR_BOOKMARKS_MARGIN_BOTTOM = 1.f			*8.f;

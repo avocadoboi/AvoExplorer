@@ -12,6 +12,8 @@ float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 0.5	* 8.f;
 float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
 
+float constexpr PATH_FADE_GRADIENT_WIDTH = 2.f * 8.f;
+
 //------------------------------
 // class FileBrowserPathEditorDirectoryButton
 //------------------------------
@@ -99,6 +101,7 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 			directoryStartIndex = a + 1;
 		}
 	}
+	setWidth(m_directoryButtons.back()->getRight());
 }
 
 void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
@@ -119,6 +122,8 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 {
 	enableMouseEvents();
 
+	setThemeColor("background", Colors::fileBrowserPathEditorBackground);
+
 	m_path = new FileBrowserPathEditorPath(this);
 	m_path->setHeight(HEIGHT);
 
@@ -130,6 +135,11 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	m_bookmarkButton->addButtonListener(this);
 	updateBookmarkButtonIcon();
 
+	m_pathFadeGradient = getGui()->getDrawingContext()->createLinearGradient(
+		{ { getThemeColor("background"), 0.f }, { AvoGUI::Color(getThemeColor("background"), 0.f), 1.f } },
+		0.f, 0.f, PATH_FADE_GRADIENT_WIDTH, 0
+	);
+
 	setCornerRadius(4.f);
 	setElevation(3.f);
 	setHeight(HEIGHT);
@@ -139,7 +149,8 @@ void FileBrowserPathEditor::handleSizeChange()
 {
 	m_bookmarkButton->setRight(getWidth() - m_bookmarkButton->getTop());
 	m_bookmarkButton->setCenterY(getHeight() * 0.5f);
-	m_path->setWidth(m_bookmarkButton->getLeft() - m_bookmarkButton->getTop());
+
+	updateLayout();
 }
 
 //------------------------------
@@ -150,12 +161,22 @@ void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_p
 	updateBookmarkButtonIcon();
 
 	m_path->setWorkingDirectory(p_path);
+	updateLayout();
 }
 
 void FileBrowserPathEditor::draw(AvoGUI::DrawingContext* p_context)
 {
-	p_context->setColor(Colors::fileBrowserPathEditorBackground);
+	p_context->setColor(getThemeColor("background"));
 	p_context->fillRectangle(getSize());
+}
+void FileBrowserPathEditor::drawOverlay(AvoGUI::DrawingContext* p_context)
+{
+	if (m_path->getLeft() < 0.f)
+	{
+		p_context->setGradient(m_pathFadeGradient);
+		p_context->fillRectangle(0, m_path->getTop(), PATH_FADE_GRADIENT_WIDTH, m_path->getBottom());
+	}
+
 	p_context->setColor(Colors::fileBrowserPathEditorBorder);
 	p_context->strokeRoundedRectangle(getSize(), getCorners().topLeftSizeX, 3.f);
 }
