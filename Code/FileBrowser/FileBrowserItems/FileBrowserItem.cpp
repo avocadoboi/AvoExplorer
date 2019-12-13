@@ -9,14 +9,15 @@ float constexpr FILE_NAME_PADDING = 1	* 8.f;
 float constexpr FOLDER_WIDTH = 24		* 8.f;
 float constexpr FOLDER_HEIGHT = 6		* 8.f;
 
-float constexpr BOOKMARK_HEIGHT = 5		* 8.f;
+float constexpr BOOKMARK_HEIGHT = 4		* 8.f;
 
 //------------------------------
 
 FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark) :
 	ContextView(p_parent), m_fileBrowserItems(0),
-	m_icon(0), m_text_name(0), m_isFile(false), m_hasThumbnail(false), m_isBookmark(p_isBookmark),
-	m_hoverAnimationTime(0), m_hoverAnimationValue(0), m_isHovering(false), 
+	m_icon(0), m_text_name(0), m_isFile(false), m_hasThumbnail(false), 
+	m_isBookmark(p_isBookmark), //m_positionAnimationTime(0.f),
+	m_hoverAnimationTime(0.f), m_hoverAnimationValue(0.f), m_isHovering(false), 
 	m_isSelected(false)
 {
 	std::wstring pathString = p_path.native();
@@ -156,7 +157,7 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 		{
 			if (m_icon)
 			{
-				m_icon->setSize(getHeight()*0.7f);
+				m_icon->setSize(getHeight()*0.65f);
 				m_icon->setCenterY(getHeight() * 0.5f);
 				m_icon->setLeft(m_icon->getTop());
 			}

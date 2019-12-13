@@ -8,11 +8,16 @@
 
 void Bookmarks::updateLayout()
 {
-	for (uint32 a = 0; a < m_bookmarks.size(); a++)
+	if (m_bookmarks.size())
 	{
-		float padding = 0.5f * (getHeight() - m_bookmarks[a]->getHeight());
-		m_bookmarks[a]->setTopLeft((a ? m_bookmarks[a - 1]->getRight() : 0) + padding, padding);
-		m_bookmarks[a]->invalidate();
+		bool isScrollbarShown = (m_bookmarksContainer->getWidth() > m_bookmarksScrollContainer->getWidth());
+		m_currentPadding = 0.5f * (getHeight() - m_bookmarks[0]->getHeight()) - isScrollbarShown*2.f;
+		for (uint32 a = 0; a < m_bookmarks.size(); a++)
+		{
+			m_bookmarks[a]->setTargetPosition((a ? m_bookmarks[a - 1]->getTargetPosition().x + m_bookmarks[a - 1]->getWidth() : 0) + m_currentPadding, m_currentPadding);
+		}
+		m_bookmarksContainer->setWidth(m_bookmarks.back()->getTargetPosition().x + m_bookmarks.back()->getWidth() + m_currentPadding + (isScrollbarShown*2.f*(m_bookmarks.size() + 1)));
+		m_bookmarksContainer->setHeight(m_currentPadding + m_bookmarks[0]->getHeight());
 	}
 }
 
@@ -23,7 +28,7 @@ void Bookmarks::updateLayout()
 void Bookmarks::handleSizeChange(float p_previousWidth, float p_previousHeight)
 {
 	m_bookmarksScrollContainer->setSize(getSize());
-	if (p_previousHeight != getHeight())
+	if (p_previousHeight != getHeight() || (p_previousWidth > m_bookmarksContainer->getWidth()) != (getWidth() < m_bookmarksContainer->getWidth()))
 	{
 		updateLayout();
 	}
@@ -33,13 +38,14 @@ void Bookmarks::handleSizeChange(float p_previousWidth, float p_previousHeight)
 
 void Bookmarks::addBookmark(std::filesystem::path const& p_path)
 {
-	m_bookmarks.push_back(new FileBrowserItem(m_bookmarksScrollContainer, p_path, true));
+	m_bookmarks.push_back(new FileBrowserItem(m_bookmarksContainer, p_path, true));
 	updateLayout();
+	m_bookmarks.back()->invalidate();
 }
 void Bookmarks::removeBookmark(uint32 p_index)
 {
 	m_bookmarks[p_index]->invalidate();
-	m_bookmarksScrollContainer->removeChild(m_bookmarks[p_index]);
+	m_bookmarksContainer->removeChild(m_bookmarks[p_index]->getIndex());
 	m_bookmarks.erase(m_bookmarks.begin() + p_index);
 	updateLayout();
 }

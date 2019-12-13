@@ -63,6 +63,7 @@ class ScrollContainer :
 private:
 	Scrollbar* m_horizontalScrollbar;
 	Scrollbar* m_verticalScrollbar;
+	float m_scrollbarMargin;
 
 	AvoGUI::View* m_content;
 
@@ -72,16 +73,22 @@ public:
 	ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>());
 	~ScrollContainer()
 	{
-		m_content->removeViewListener(this);
+		if (m_content)
+		{
+			m_content->removeViewListener(this);
+		}
 	}
 
 	//------------------------------
 
 	void setContentView(AvoGUI::View* p_content)
 	{
-		m_content->removeViewListener(this);
-		m_content->setParent(0);
-		m_content->forget();
+		if (m_content)
+		{
+			m_content->removeViewListener(this);
+			m_content->setParent(0);
+			m_content->forget();
+		}
 
 		m_content = p_content;
 		m_content->addViewListener(this);
@@ -91,6 +98,10 @@ public:
 	{
 		return m_content;
 	}
+
+	//------------------------------
+
+	void setScrollbarMargin(float p_margin);
 
 	//------------------------------
 

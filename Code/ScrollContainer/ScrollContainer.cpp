@@ -5,7 +5,7 @@
 float constexpr SCROLLBAR_OPACITY_NORMAL = 0.3f;
 float constexpr SCROLLBAR_OPACITY_HOVERING = 0.6f;
 
-float constexpr SCROLLBAR_WIDTH = 1		* 8.f;
+float constexpr SCROLLBAR_WIDTH = 0.5	* 8.f;
 float constexpr SCROLLBAR_MARGIN = 0.5	* 8.f;
 
 float constexpr SCROLL_STEP_SIZE = 4	* 8.f;
@@ -121,13 +121,13 @@ void ScrollContainer::updateScrollbars()
 	m_verticalScrollbar->setIsVisible(m_content->getHeight() > getHeight());
 	if (m_content->getHeight() > getHeight())
 	{
-		m_verticalScrollbar->setHeight((getHeight() - 2.f*SCROLLBAR_MARGIN) * getHeight() / m_content->getHeight());
+		m_verticalScrollbar->setHeight((getHeight() - 2.f* m_scrollbarMargin) * getHeight() / m_content->getHeight());
 	}
 
 	m_horizontalScrollbar->setIsVisible(m_content->getWidth() > getWidth());
 	if (m_content->getWidth() > getWidth())
 	{
-		m_horizontalScrollbar->setWidth((getWidth() - 2.f*SCROLLBAR_MARGIN) * getWidth() / m_content->getWidth());
+		m_horizontalScrollbar->setWidth((getWidth() - 2.f* m_scrollbarMargin) * getWidth() / m_content->getWidth());
 	}
 }
 
@@ -137,7 +137,8 @@ void ScrollContainer::updateScrollbars()
 
 ScrollContainer::ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds) :
 	AvoGUI::View(p_parent, p_bounds),
-	m_horizontalScrollbar(0), m_verticalScrollbar(0), m_content(0)
+	m_horizontalScrollbar(0), m_verticalScrollbar(0), m_scrollbarMargin(SCROLLBAR_MARGIN),
+	m_content(0)
 {
 	enableMouseEvents();
 
@@ -150,6 +151,14 @@ ScrollContainer::ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float
 
 //------------------------------
 
+void ScrollContainer::setScrollbarMargin(float p_margin)
+{
+	m_scrollbarMargin = p_margin;
+	handleSizeChange();
+}
+
+//------------------------------
+
 void ScrollContainer::setHorizontalScrollPosition(float p_position)
 {
 	if (m_horizontalScrollbar->getIsVisible())
@@ -157,13 +166,13 @@ void ScrollContainer::setHorizontalScrollPosition(float p_position)
 		p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getWidth() - getWidth(), p_position));
 
 		m_content->setLeft(-p_position);
-		m_horizontalScrollbar->setLeft(SCROLLBAR_MARGIN + p_position * (getWidth() - m_horizontalScrollbar->getWidth() - 2.f*SCROLLBAR_MARGIN) / (m_content->getWidth() - getWidth()));
+		m_horizontalScrollbar->setLeft(m_scrollbarMargin + p_position * (getWidth() - m_horizontalScrollbar->getWidth() - 2.f* m_scrollbarMargin) / (m_content->getWidth() - getWidth()));
 	}
 	else
 	{
 		p_position = 0.f;
 		m_content->setLeft(0.f);
-		m_horizontalScrollbar->setLeft(SCROLLBAR_MARGIN);
+		m_horizontalScrollbar->setLeft(m_scrollbarMargin);
 	}
 }
 void ScrollContainer::setVerticalScrollPosition(float p_position)
@@ -173,13 +182,13 @@ void ScrollContainer::setVerticalScrollPosition(float p_position)
 		p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getHeight() - getHeight(), p_position));
 
 		m_content->setTop(-p_position);
-		m_verticalScrollbar->setTop(SCROLLBAR_MARGIN + p_position * (getHeight() - m_verticalScrollbar->getHeight() - 2.f * SCROLLBAR_MARGIN) / (m_content->getHeight() - getHeight()));
+		m_verticalScrollbar->setTop(m_scrollbarMargin + p_position * (getHeight() - m_verticalScrollbar->getHeight() - 2.f * m_scrollbarMargin) / (m_content->getHeight() - getHeight()));
 	}
 	else
 	{
 		p_position = 0.f;
 		m_content->setTop(0.f);
-		m_verticalScrollbar->setTop(SCROLLBAR_MARGIN);
+		m_verticalScrollbar->setTop(m_scrollbarMargin);
 	}
 }
 
@@ -187,11 +196,11 @@ void ScrollContainer::setVerticalScrollPosition(float p_position)
 
 void ScrollContainer::moveHorizontalScrollbar(float p_offset)
 {
-	setHorizontalScrollPosition((m_horizontalScrollbar->getLeft() - SCROLLBAR_MARGIN + p_offset) * m_content->getWidth() / (getWidth() - 2.f * SCROLLBAR_MARGIN));
+	setHorizontalScrollPosition((m_horizontalScrollbar->getLeft() - m_scrollbarMargin + p_offset) * m_content->getWidth() / (getWidth() - 2.f * SCROLLBAR_MARGIN));
 }
 void ScrollContainer::moveVerticalScrollbar(float p_offset)
 {
-	setVerticalScrollPosition((m_verticalScrollbar->getTop() - SCROLLBAR_MARGIN + p_offset) * m_content->getHeight() / (getHeight() - 2.f * SCROLLBAR_MARGIN));
+	setVerticalScrollPosition((m_verticalScrollbar->getTop() - m_scrollbarMargin + p_offset) * m_content->getHeight() / (getHeight() - 2.f * SCROLLBAR_MARGIN));
 }
 
 //------------------------------
@@ -225,8 +234,8 @@ void ScrollContainer::handleMouseScroll(AvoGUI::MouseEvent const& p_event)
 
 void ScrollContainer::handleSizeChange()
 {
-	m_verticalScrollbar->setRight(getWidth() - SCROLLBAR_MARGIN);
-	m_horizontalScrollbar->setBottom(getHeight() - SCROLLBAR_MARGIN);
+	m_verticalScrollbar->setRight(getWidth() - m_scrollbarMargin);
+	m_horizontalScrollbar->setBottom(getHeight() - m_scrollbarMargin);
 	updateScrollbars();
 	setVerticalScrollPosition(-m_content->getTop());
 	setHorizontalScrollPosition(-m_content->getLeft());

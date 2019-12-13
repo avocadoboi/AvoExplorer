@@ -24,7 +24,11 @@ private:
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
 	bool m_hasThumbnail;
+	
 	bool m_isBookmark;
+	AvoGUI::Point<float> m_animationStartPosition;
+	AvoGUI::Point<float> m_animationTargetPosition;
+	float m_positionAnimationTime;
 
 	float m_hoverAnimationTime;
 	float m_hoverAnimationValue;
@@ -154,8 +158,45 @@ public:
 
 	//------------------------------
 
+	void setTargetPosition(float p_left, float p_top)
+	{
+		if (getLeft() || getTop())
+		{
+			m_animationStartPosition = getTopLeft();
+			m_animationTargetPosition.set(p_left, p_top);
+			m_positionAnimationTime = 0.f;
+			queueAnimationUpdate();
+		}
+		else
+		{
+			m_animationStartPosition.set(p_left, p_top);
+			m_animationTargetPosition.set(p_left, p_top);
+			setTopLeft(p_left, p_top);
+			m_positionAnimationTime = 1.f;
+		}
+	}
+	void setTargetPosition(AvoGUI::Point<float> const& p_targetPosition)
+	{
+		setTargetPosition(p_targetPosition.x, p_targetPosition.y);
+	}
+	AvoGUI::Point<float> const& getTargetPosition()
+	{
+		return m_animationTargetPosition;
+	}
+
+	//------------------------------
+
 	void updateAnimations()
 	{
+		if (m_isBookmark)
+		{
+			if (m_positionAnimationTime < 1.f)
+			{
+				float animationValue = getThemeEasing("out").easeValue(m_positionAnimationTime += getThemeValue("position animation speed"));
+				setTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, animationValue));
+				queueAnimationUpdate();
+			}
+		}
 		if (m_isHovering)
 		{
 			if (m_hoverAnimationTime < 1.f)

@@ -69,6 +69,7 @@ private:
 	FileBrowser* m_fileBrowser;
 	FileBrowserPathEditorPath* m_path;
 
+	AvoGUI::LinearGradient* m_pathFadeGradient;
 	AvoGUI::Image* m_bookmarkIcon_hollow;
 	AvoGUI::Image* m_bookmarkIcon_filled;
 	AvoGUI::Button* m_bookmarkButton;
@@ -94,11 +95,24 @@ public:
 	FileBrowserPathEditor(FileBrowser* p_parent);
 	~FileBrowserPathEditor()
 	{
+		m_pathFadeGradient->forget();
 		m_bookmarkIcon_hollow->forget();
 		m_bookmarkIcon_filled->forget();
 	}
 
 	void handleSizeChange() override;
+	void updateLayout()
+	{
+		float rightPosition = m_bookmarkButton->getLeft() - m_bookmarkButton->getTop();
+		if (m_path->getWidth() > rightPosition)
+		{
+			m_path->setRight(rightPosition);
+		}
+		else
+		{
+			m_path->setLeft(0.f);
+		}
+	}
 
 	//------------------------------
 
@@ -129,4 +143,5 @@ public:
 	//------------------------------
 
 	void draw(AvoGUI::DrawingContext* p_context) override;
+	void drawOverlay(AvoGUI::DrawingContext* p_context) override;
 };
