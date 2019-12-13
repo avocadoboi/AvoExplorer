@@ -1,5 +1,5 @@
 # AvoExplorer
 A simple file explorer for windows.
 
-All that is needed to compile is to include AvoGUI.hpp and AvoGUI.cpp from https://github.com/avocadoboi/AvoGUI.
+All that is needed to compile is to include AvoGUI.hpp, AvoGUI.cpp and Font data.hpp from https://github.com/avocadoboi/AvoGUI.
 
