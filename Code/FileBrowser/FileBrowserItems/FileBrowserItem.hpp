@@ -49,6 +49,8 @@ public:
 		}
 	}
 
+	void handleSizeChange() override;
+
 	//------------------------------
 
 	void setIsBookmark(bool p_isBookmark)

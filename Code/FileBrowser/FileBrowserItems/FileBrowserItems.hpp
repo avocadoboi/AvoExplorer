@@ -64,14 +64,8 @@ private:
 
 	void loadIconForItem(FileBrowserItem* p_item);
 
-	uint32 getNumberOfDirectoriesPerRow()
-	{
-
-	}
-	uint32 getNumberOfFilesPerRow()
-	{
-
-	}
+	uint32 getNumberOfDirectoriesPerRow();
+	uint32 getNumberOfFilesPerRow();
 
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
