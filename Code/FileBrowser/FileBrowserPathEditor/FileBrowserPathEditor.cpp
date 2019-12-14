@@ -121,7 +121,9 @@ void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 //------------------------------
 
 FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
-	View(p_parent), m_fileBrowser(p_parent), m_isBookmark(false)
+	View(p_parent), m_fileBrowser(p_parent), m_path(0), 
+	m_pathFadeGradient(0), 
+	m_bookmarkIcon_hollow(0), m_bookmarkIcon_filled(0), m_bookmarkButton(0), m_isBookmark(false)
 {
 	enableMouseEvents();
 

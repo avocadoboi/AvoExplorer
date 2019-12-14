@@ -39,8 +39,54 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_needsToChangeDirectory)
 		{
+			m_needsToChangeDirectory = false;
+
+			m_selectedItems.clear();
+			m_directoryItems.clear();
+			m_fileItems.clear();
 			getGui()->excludeAnimationThread();
-			setWorkingDirectory(m_fileBrowser->getPath());
+			removeAllChildren();
+			getGui()->includeAnimationThread();
+
+			std::vector<std::filesystem::path> directoryPaths;
+			directoryPaths.reserve(128);
+			std::vector<std::filesystem::path> filePaths;
+			filePaths.reserve(256);
+
+			for (auto item : std::filesystem::directory_iterator(m_fileBrowser->getPath()))
+			{
+				if (item.is_regular_file())
+				{
+					filePaths.push_back(item.path());
+				}
+				else if (item.is_directory())
+				{
+					directoryPaths.push_back(item.path());
+				}
+			}
+
+			// Sort files and directories separately, because they will be displayed separately.
+			std::sort(filePaths.begin(), filePaths.end());
+			std::sort(directoryPaths.begin(), directoryPaths.end());
+
+			m_directoryItems.reserve(directoryPaths.size());
+			m_fileItems.reserve(filePaths.size());
+
+			getGui()->excludeAnimationThread();
+			for (auto path : directoryPaths)
+			{
+				m_directoryItems.push_back(new FileBrowserItem(this, path, false));
+			}
+			for (auto path : filePaths)
+			{
+				m_fileItems.push_back(new FileBrowserItem(this, path, false));
+			}
+
+			if (getParent()->getWidth() && getParent()->getHeight())
+			{
+				updateLayout();
+				invalidate();
+			}
 			getGui()->includeAnimationThread();
 		}
 
@@ -396,55 +442,6 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 	{
 		m_needsToChangeDirectory = true;
 		tellIconLoadingThreadToLoadMoreIcons();
-		return;
-	}
-	else
-	{
-		m_needsToChangeDirectory = false;
-	}
-
-	getGui()->excludeAnimationThread();
-	m_selectedItems.clear();
-	m_directoryItems.clear();
-	m_fileItems.clear();
-	removeAllChildren();
-	getGui()->includeAnimationThread();
-
-	std::vector<std::filesystem::path> directoryPaths;
-	directoryPaths.reserve(128);
-	std::vector<std::filesystem::path> filePaths;
-	filePaths.reserve(256);
-
-	for (auto item : std::filesystem::directory_iterator(p_path))
-	{
-		if (item.is_regular_file())
-		{
-			filePaths.push_back(item.path());
-		}
-		else if (item.is_directory())
-		{
-			directoryPaths.push_back(item.path());
-		}
-	}
-
-	// Sort files and directories separately, because they will be displayed separately.
-	std::sort(filePaths.begin(), filePaths.end());
-	std::sort(directoryPaths.begin(), directoryPaths.end());
-
-	m_directoryItems.reserve(directoryPaths.size());
-	m_fileItems.reserve(filePaths.size());
-	for (auto path : directoryPaths)
-	{
-		m_directoryItems.push_back(new FileBrowserItem(this, path, false));
-	}
-	for (auto path : filePaths)
-	{
-		m_fileItems.push_back(new FileBrowserItem(this, path, false));
-	}
-
-	if (getParent()->getWidth() && getParent()->getHeight())
-	{
-		updateLayout();
 	}
 }
 
