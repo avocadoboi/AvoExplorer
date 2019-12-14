@@ -70,7 +70,10 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 {
 	std::string pathString = p_path.u8string();
 
+	getGui()->excludeAnimationThread();
 	removeAllChildren();
+	getGui()->includeAnimationThread();
+
 	//for (uint32 a = 0; a < m_directoryButtons.size(); a++)
 	//{
 	//	removeChild(m_directoryButtons[a]);

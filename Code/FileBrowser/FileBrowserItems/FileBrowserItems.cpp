@@ -333,25 +333,11 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 			if (m_selectedItems[a]->getIsFile())
 			{
-				if (m_fileItems.size() > 1)
-				{
-					m_fileItems.erase(m_fileItems.begin() + m_selectedItems[a]->getIndex() - m_directoryItems.size());
-				}
-				else
-				{
-					m_fileItems.clear();
-				}
+				m_fileItems.erase(m_fileItems.begin() + (m_selectedItems[a]->getIndex() - m_directoryItems.size()));
 			}
 			else
 			{
-				if (m_directoryItems.size() > 1)
-				{
-					m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
-				}
-				else
-				{
-					m_directoryItems.clear();
-				}
+				m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
 			}
 			removeChild(m_selectedItems[a]->getIndex());
 		}
@@ -417,10 +403,12 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 		m_needsToChangeDirectory = false;
 	}
 
+	getGui()->excludeAnimationThread();
 	m_selectedItems.clear();
 	m_directoryItems.clear();
 	m_fileItems.clear();
 	removeAllChildren();
+	getGui()->includeAnimationThread();
 
 	std::vector<std::filesystem::path> directoryPaths;
 	directoryPaths.reserve(128);
