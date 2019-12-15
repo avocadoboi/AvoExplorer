@@ -8,7 +8,7 @@
 
 void Bookmarks::updateLayout()
 {
-	if (m_bookmarks.size())
+	if (m_bookmarks.size() && getHeight())
 	{
 		float padding = 0.5f * (getHeight() - m_bookmarks[0]->getHeight());
 		for (uint32 a = 0; a < m_bookmarks.size(); a++)
@@ -29,6 +29,30 @@ void Bookmarks::handleSizeChange(float p_previousWidth, float p_previousHeight)
 	m_bookmarksScrollContainer->setSize(getSize());
 	if (p_previousHeight != getHeight() || (p_previousWidth > m_bookmarksContainer->getWidth()) != (getWidth() < m_bookmarksContainer->getWidth()))
 	{
+		updateLayout();
+	}
+}
+
+void Bookmarks::handleBookmarkDrag(FileBrowserItem* p_bookmark)
+{
+	if (m_bookmarks.size() > 1)
+	{
+		float x = getGui()->getWindow()->getMousePosition().x;
+
+		AvoGUI::removeVectorElementWhileKeepingOrder(m_bookmarks, p_bookmark);
+		for (uint32 a = 0; a < m_bookmarks.size(); a++)
+		{
+			if (x < m_bookmarks[a]->getAbsoluteCenterX())
+			{
+				m_bookmarks.insert(m_bookmarks.begin() + a, p_bookmark);
+				break;
+			}
+			else if (a == m_bookmarks.size() - 1)
+			{
+				m_bookmarks.push_back(p_bookmark);
+				break;
+			}
+		}
 		updateLayout();
 	}
 }

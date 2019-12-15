@@ -29,6 +29,7 @@ private:
 	AvoGUI::Point<float> m_animationStartPosition;
 	AvoGUI::Point<float> m_animationTargetPosition;
 	float m_positionAnimationTime;
+	bool m_isDragged;
 
 	float m_hoverAnimationTime;
 	float m_hoverAnimationValue;
@@ -63,6 +64,10 @@ public:
 	}
 
 	void handleSizeChange() override;
+	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
+	{
+		ContextView::handleBoundsChange(p_previousBounds);
+	}
 
 	//------------------------------
 
@@ -128,7 +133,14 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (!m_isBookmark)
+			if (m_isBookmark)
+			{
+				m_isDragged = true;
+				move(getParent()->getAbsoluteTopLeft());
+				setParent(getGui());
+				setElevation(-1.f);
+			}
+			else 
 			{
 				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
 				{
@@ -156,6 +168,23 @@ public:
 			ContextView::handleMouseDown(p_event);
 		}
 	}
+	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override
+	{
+		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
+		{
+			if (m_isBookmark)
+			{
+				m_isDragged = false;
+				m_animationStartPosition = getAbsoluteTopLeft();
+				m_positionAnimationTime = 0.f;
+				queueAnimationUpdate();
+			}
+		}
+		else
+		{
+			ContextView::handleMouseUp(p_event);
+		}
+	}
 	void handleMouseDoubleClick(AvoGUI::MouseEvent const& p_event) override
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
@@ -170,23 +199,38 @@ public:
 			}
 		}
 	}
+	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override
+	{
+		if (m_isBookmark && m_isDragged)
+		{
+			move(p_event.movementX, p_event.movementY);
+			invalidate();
+
+			m_bookmarks->handleBookmarkDrag(this);
+		}
+	}
 
 	//------------------------------
 
 	void setTargetPosition(float p_left, float p_top)
 	{
+		p_left += m_bookmarks->getBookmarksContainer()->getAbsoluteLeft();
+		p_top += m_bookmarks->getBookmarksContainer()->getAbsoluteTop();
 		if (getLeft() || getTop())
 		{
-			m_animationStartPosition = getTopLeft();
 			m_animationTargetPosition.set(p_left, p_top);
-			m_positionAnimationTime = 0.f;
-			queueAnimationUpdate();
+			if (!m_isDragged)
+			{
+				m_animationStartPosition = getAbsoluteTopLeft();
+				m_positionAnimationTime = 0.f;
+				queueAnimationUpdate();
+			}
 		}
-		else
+		else if (!m_isDragged)
 		{
 			m_animationStartPosition.set(p_left, p_top);
 			m_animationTargetPosition.set(p_left, p_top);
-			setTopLeft(p_left, p_top);
+			setAbsoluteTopLeft(p_left, p_top);
 			m_positionAnimationTime = 1.f;
 		}
 	}
@@ -196,20 +240,25 @@ public:
 	}
 	AvoGUI::Point<float> const& getTargetPosition()
 	{
-		return m_animationTargetPosition;
+		return m_animationTargetPosition - m_bookmarks->getBookmarksContainer()->getAbsoluteTopLeft();
 	}
 
 	//------------------------------
 
 	void updateAnimations()
 	{
-		if (m_isBookmark)
+		if (m_isBookmark && !m_isDragged)
 		{
 			if (m_positionAnimationTime < 1.f)
 			{
 				float animationValue = getThemeEasing("out").easeValue(m_positionAnimationTime += getThemeValue("position animation speed"));
-				setTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, animationValue));
+				setAbsoluteTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, animationValue));
 				queueAnimationUpdate();
+			}
+			else if (getParent() == getGui())
+			{
+				setParent(m_bookmarks->getBookmarksContainer());
+				move(-getParent()->getAbsoluteTopLeft());
 			}
 		}
 		if (m_isHovering)
