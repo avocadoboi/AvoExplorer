@@ -144,8 +144,22 @@ public:
 	void handleViewSizeChange(AvoGUI::View* p_view, float p_previousWidth, float p_previousHeight) override
 	{
 		updateScrollbars();
-		setVerticalScrollPosition(-m_content->getTop());
-		setHorizontalScrollPosition(-m_content->getLeft());
+		if (p_previousHeight)
+		{
+			setVerticalScrollPosition(-m_content->getTop()/p_previousHeight * p_view->getHeight());
+		}
+		else
+		{
+			setVerticalScrollPosition(0.f);
+		}
+		if (p_previousWidth)
+		{
+			setHorizontalScrollPosition(-m_content->getLeft()/p_previousWidth * p_view->getWidth());
+		}
+		else
+		{
+			setHorizontalScrollPosition(0.f);
+		}
 		invalidate();
 	}
 	void handleSizeChange() override;

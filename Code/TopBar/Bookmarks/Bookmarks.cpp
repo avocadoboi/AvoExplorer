@@ -10,14 +10,13 @@ void Bookmarks::updateLayout()
 {
 	if (m_bookmarks.size())
 	{
-		bool isScrollbarShown = (m_bookmarksContainer->getWidth() > m_bookmarksScrollContainer->getWidth());
-		m_currentPadding = 0.5f * (getHeight() - m_bookmarks[0]->getHeight()) - isScrollbarShown*2.f;
+		float padding = 0.5f * (getHeight() - m_bookmarks[0]->getHeight());
 		for (uint32 a = 0; a < m_bookmarks.size(); a++)
 		{
-			m_bookmarks[a]->setTargetPosition((a ? m_bookmarks[a - 1]->getTargetPosition().x + m_bookmarks[a - 1]->getWidth() : 0) + m_currentPadding, m_currentPadding);
+			m_bookmarks[a]->setTargetPosition((a ? m_bookmarks[a - 1]->getTargetPosition().x + m_bookmarks[a - 1]->getWidth() : 0) + padding, padding);
 		}
-		m_bookmarksContainer->setWidth(m_bookmarks.back()->getTargetPosition().x + m_bookmarks.back()->getWidth() + m_currentPadding + (isScrollbarShown*2.f*(m_bookmarks.size() + 1)));
-		m_bookmarksContainer->setHeight(m_currentPadding + m_bookmarks[0]->getHeight());
+		m_bookmarksContainer->setWidth(m_bookmarks.back()->getTargetPosition().x + m_bookmarks.back()->getWidth() + padding);
+		m_bookmarksContainer->setHeight(padding + m_bookmarks[0]->getHeight());
 	}
 }
 

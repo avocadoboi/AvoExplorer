@@ -10,13 +10,6 @@ float constexpr FILE_BROWSER_PADDING_TOP = 2				* 8.f;
 
 //------------------------------
 
-//bool getIsPathLessThan(std::filesystem::path const& p_a, std::filesystem::path const& p_b)
-//{
-//	return p_a < p_b;
-//}
-
-//------------------------------
-
 FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	View(p_parent), m_avoExplorer(p_parent),
 	m_pathEditor(0), m_button_changeView(0), m_button_add(0),

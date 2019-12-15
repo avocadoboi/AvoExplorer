@@ -70,7 +70,10 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 {
 	std::string pathString = p_path.u8string();
 
+	getGui()->excludeAnimationThread();
 	removeAllChildren();
+	getGui()->includeAnimationThread();
+
 	//for (uint32 a = 0; a < m_directoryButtons.size(); a++)
 	//{
 	//	removeChild(m_directoryButtons[a]);
@@ -118,7 +121,9 @@ void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 //------------------------------
 
 FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
-	View(p_parent), m_fileBrowser(p_parent), m_isBookmark(false)
+	View(p_parent), m_fileBrowser(p_parent), m_path(0), 
+	m_pathFadeGradient(0), 
+	m_bookmarkIcon_hollow(0), m_bookmarkIcon_filled(0), m_bookmarkButton(0), m_isBookmark(false)
 {
 	enableMouseEvents();
 
@@ -178,5 +183,5 @@ void FileBrowserPathEditor::drawOverlay(AvoGUI::DrawingContext* p_context)
 	}
 
 	p_context->setColor(Colors::fileBrowserPathEditorBorder);
-	p_context->strokeRoundedRectangle(getSize(), getCorners().topLeftSizeX, 3.f);
+	p_context->strokeGeometry(getClipGeometry(), 3.f);
 }

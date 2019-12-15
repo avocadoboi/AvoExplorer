@@ -12,7 +12,8 @@ float constexpr TOP_BAR_BOOKMARKS_MARGIN_BOTTOM = 1.f			*8.f;
 //------------------------------
 
 TopBar::TopBar(AvoExplorer* p_parent) :
-	View(p_parent), m_avoExplorer(p_parent)
+	View(p_parent), m_avoExplorer(p_parent),
+	m_title(0), m_bookmarks(0)
 {
 	setHeight(TOP_BAR_HEIGHT);
 

@@ -17,7 +17,6 @@ private:
 	AvoGUI::View* m_bookmarksContainer;
 	ScrollContainer* m_bookmarksScrollContainer;
 	FileBrowserItem* m_draggedBookmark;
-	float m_currentPadding;
 	void updateLayout();
 
 	AvoGUI::Geometry* m_borderGeometry;
@@ -35,7 +34,7 @@ public:
 		setThemeColor("background", Colors::topBarBookmarksBackground);
 
 		m_bookmarksScrollContainer = new ScrollContainer(this);
-		m_bookmarksScrollContainer->setScrollbarMargin(3.f);
+		m_bookmarksScrollContainer->setScrollbarMargin(2.f);
 
 		m_bookmarksContainer = m_bookmarksScrollContainer->getContent();
 	}
