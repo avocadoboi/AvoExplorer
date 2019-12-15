@@ -12,7 +12,7 @@ float constexpr BOOKMARK_HEIGHT = 4		* 8.f;
 FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark) :
 	ContextView(p_parent), m_fileBrowserItems(0),
 	m_icon(0), m_text_name(0), m_isFile(false), m_hasThumbnail(false), 
-	m_isBookmark(p_isBookmark), //m_positionAnimationTime(0.f),
+	m_isBookmark(p_isBookmark), m_positionAnimationTime(0.f),
 	m_hoverAnimationTime(0.f), m_hoverAnimationValue(0.f), m_isHovering(false), 
 	m_isSelected(false)
 {

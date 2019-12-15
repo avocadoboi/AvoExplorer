@@ -14,6 +14,16 @@ float constexpr MIN_FILE_WIDTH = 20			* 8.f;
 float constexpr MIN_DIRECTORY_WIDTH = 20	* 8.f;
 float constexpr DIRECTORY_HEIGHT = 6		* 8.f;
 
+//------------------------------
+
+bool getIsPathLessThan(std::filesystem::path const& p_a, std::filesystem::path const& p_b)
+{
+	std::wstring string_a = p_a.wstring();
+	std::wstring string_b = p_b.wstring();
+	
+	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, string_a.c_str(), string_a.size(), string_b.c_str(), string_b.size());
+}
+
 //
 // Private
 //
@@ -69,8 +79,8 @@ void FileBrowserItems::thread_loadIcons()
 			}
 
 			// Sort files and directories separately, because they will be displayed separately.
-			std::sort(filePaths.begin(), filePaths.end());
-			std::sort(directoryPaths.begin(), directoryPaths.end());
+			std::sort(filePaths.begin(), filePaths.end(), getIsPathLessThan);
+			std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathLessThan);
 
 			m_directoryItems.reserve(directoryPaths.size());
 			m_fileItems.reserve(filePaths.size());
@@ -242,7 +252,18 @@ FileBrowserItems::~FileBrowserItems()
 	m_needsToLoadMoreIconsMutex.unlock();
 	m_iconLoadingThread.join();
 
-	m_fileNameEndGradient->forget();
+	if (m_directoryGeometry)
+	{
+		m_directoryGeometry->forget();
+	}
+	if (m_fileGeometry)
+	{
+		m_fileGeometry->forget();
+	}
+	if (m_fileNameEndGradient)
+	{
+		m_fileNameEndGradient->forget();
+	}
 	for (auto& icon : m_uniqueLoadedFileIcons)
 	{
 		icon.second->forget();
@@ -463,27 +484,49 @@ void FileBrowserItems::updateLayout()
 
 	uint32 directoriesPerRow = getNumberOfDirectoriesPerRow();
 	uint32 filesPerRow = getNumberOfFilesPerRow();
-	float directoryWidth = (getParent()->getWidth() - 2.f*PADDING - MARGIN_HORIZONTAL* (getNumberOfDirectoriesPerRow() - 1.f))/getNumberOfDirectoriesPerRow();
-	float fileWidth = (getParent()->getWidth() - 2.f*PADDING - MARGIN_HORIZONTAL * (getNumberOfFilesPerRow() - 1.f)) / getNumberOfFilesPerRow();
 
-	m_text_directories->setTopLeft(PADDING, PADDING_TOP);
-	for (uint32 a = 0; a < m_directoryItems.size(); a++)
+	if (m_directoryItems.size())
 	{
-		m_directoryItems[a]->setSize(directoryWidth, DIRECTORY_HEIGHT);
-		m_directoryItems[a]->setTopLeft(
-			PADDING + (directoryWidth + MARGIN_HORIZONTAL) * (a % directoriesPerRow) - MARGIN_HORIZONTAL, 
-			m_text_directories->getBottom() + LABEL_MARGIN_BOTTOM + (DIRECTORY_HEIGHT + MARGIN_VERTICAL) * (a / directoriesPerRow) - MARGIN_VERTICAL
-		);
+		float directoryWidth = (getParent()->getWidth() - 2.f*PADDING - MARGIN_HORIZONTAL* (getNumberOfDirectoriesPerRow() - 1.f))/getNumberOfDirectoriesPerRow();
+		if (std::abs(directoryWidth - m_directoryItems[0]->getWidth()) > 0.1f)
+		{
+			if (m_directoryGeometry)
+			{
+				m_directoryGeometry->forget();
+			}
+			m_directoryGeometry = getGui()->getDrawingContext()->createCornerRectangleGeometry(directoryWidth, DIRECTORY_HEIGHT, m_directoryItems[0]->getCorners().topLeftSizeX);
+		}
+		m_text_directories->setTopLeft(PADDING, PADDING_TOP);
+		for (uint32 a = 0; a < m_directoryItems.size(); a++)
+		{
+			m_directoryItems[a]->setSize(directoryWidth, DIRECTORY_HEIGHT);
+			m_directoryItems[a]->setTopLeft(
+				PADDING + (directoryWidth + MARGIN_HORIZONTAL) * (a % directoriesPerRow) - MARGIN_HORIZONTAL, 
+				m_text_directories->getBottom() + LABEL_MARGIN_BOTTOM + (DIRECTORY_HEIGHT + MARGIN_VERTICAL) * (a / directoriesPerRow) - MARGIN_VERTICAL
+			);
+		}
 	}
 
-	m_text_files->setTopLeft(PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + LABEL_MARGIN_TOP : PADDING_TOP);
-	for (uint32 a = 0; a < m_fileItems.size(); a++)
+	if (m_fileItems.size())
 	{
-		m_fileItems[a]->setSize(fileWidth);
-		m_fileItems[a]->setTopLeft(
-			PADDING + (fileWidth + MARGIN_HORIZONTAL) * (a % filesPerRow) - MARGIN_HORIZONTAL,
-			m_text_files->getBottom() + LABEL_MARGIN_BOTTOM + (fileWidth + MARGIN_VERTICAL) * (a / filesPerRow) - MARGIN_VERTICAL
-		);
+		float fileWidth = (getParent()->getWidth() - 2.f * PADDING - MARGIN_HORIZONTAL * (getNumberOfFilesPerRow() - 1.f)) / getNumberOfFilesPerRow();
+		if (std::abs(fileWidth - m_fileItems[0]->getWidth()) > 0.1f)
+		{
+			if (m_fileGeometry)
+			{
+				m_fileGeometry->forget();
+			}
+			m_fileGeometry = getGui()->getDrawingContext()->createCornerRectangleGeometry(fileWidth, fileWidth, m_fileItems[0]->getCorners().topLeftSizeX);
+		}
+		m_text_files->setTopLeft(PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + LABEL_MARGIN_TOP : PADDING_TOP);
+		for (uint32 a = 0; a < m_fileItems.size(); a++)
+		{
+			m_fileItems[a]->setSize(fileWidth);
+			m_fileItems[a]->setTopLeft(
+				PADDING + (fileWidth + MARGIN_HORIZONTAL) * (a % filesPerRow) - MARGIN_HORIZONTAL,
+				m_text_files->getBottom() + LABEL_MARGIN_BOTTOM + (fileWidth + MARGIN_VERTICAL) * (a / filesPerRow) - MARGIN_VERTICAL
+			);
+		}
 	}
 
 	float height = 0.f;

@@ -35,6 +35,19 @@ private:
 	bool m_isHovering;
 	bool m_isSelected;
 
+protected:
+	void updateClipGeometry()
+	{
+		if (m_isBookmark)
+		{
+			View::updateClipGeometry();
+		}
+		else if (m_fileBrowserItems)
+		{
+			setClipGeometry(m_isFile ? m_fileBrowserItems->getFileGeometry() : m_fileBrowserItems->getDirectoryGeometry());
+		}
+	}
+
 public:
 	FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark);
 	~FileBrowserItem()

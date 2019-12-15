@@ -183,5 +183,5 @@ void FileBrowserPathEditor::drawOverlay(AvoGUI::DrawingContext* p_context)
 	}
 
 	p_context->setColor(Colors::fileBrowserPathEditorBorder);
-	p_context->strokeRoundedRectangle(getSize(), getCorners().topLeftSizeX, 3.f);
+	p_context->strokeGeometry(getClipGeometry(), 3.f);
 }
