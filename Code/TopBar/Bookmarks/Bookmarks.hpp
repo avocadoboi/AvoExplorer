@@ -16,40 +16,48 @@ private:
 	std::vector<FileBrowserItem*> m_bookmarks;
 	AvoGUI::View* m_bookmarksContainer;
 	ScrollContainer* m_bookmarksScrollContainer;
-	FileBrowserItem* m_draggedBookmark;
-	float m_currentPadding;
 	void updateLayout();
-
-	AvoGUI::Geometry* m_borderGeometry;
 
 public:
 	Bookmarks(TopBar* p_topBar) :
-		View(p_topBar, Ids::bookmarks), m_topBar(p_topBar),
-		m_draggedBookmark(0), m_borderGeometry(0)
+		View(p_topBar, Ids::bookmarks), m_topBar(p_topBar)
 	{
 		enableMouseEvents();
 
 		setCornerRadius(6.f);
-		m_borderGeometry = getGui()->getDrawingContext()->createRoundedRectangleGeometry(getSize(), getCorners().topLeftSizeX);
 
 		setThemeColor("background", Colors::topBarBookmarksBackground);
 
 		m_bookmarksScrollContainer = new ScrollContainer(this);
-		m_bookmarksScrollContainer->setScrollbarMargin(3.f);
-
+		m_bookmarksScrollContainer->setScrollbarMargin(2.f);
 		m_bookmarksContainer = m_bookmarksScrollContainer->getContent();
-	}
-	~Bookmarks()
-	{
-		m_borderGeometry->forget();
+
+		loadBookmarks();
 	}
 
 	void handleSizeChange(float p_previousWidth, float p_previousHeight) override;
 
 	//------------------------------
 
+	void handleBookmarkDrag(FileBrowserItem* p_bookmark);
+	AvoGUI::View* getBookmarksContainer()
+	{
+		return m_bookmarksContainer;
+	}
+	std::vector<FileBrowserItem*>& getBookmarks()
+	{
+		return m_bookmarks;
+	}
+
+	//------------------------------
+
+	void loadBookmarks();
+	void saveBookmarks();
+
 	void addBookmark(std::filesystem::path const& p_path);
 	void removeBookmark(uint32 p_index);
+	void removeBookmark(std::filesystem::path const& p_path);
+	bool getIsPathBookmarked(std::filesystem::path const& p_path);
 
 	//------------------------------
 
@@ -59,6 +67,6 @@ public:
 		p_context->fillRectangle(getSize());
 
 		p_context->setColor(Colors::topBarBookmarksBorder);
-		p_context->strokeGeometry(m_borderGeometry, 3.f);
+		p_context->strokeGeometry(getClipGeometry(), 3.f);
 	}
 };

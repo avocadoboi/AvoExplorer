@@ -1,6 +1,7 @@
 #include "FileBrowserPathEditor.hpp"
 
 #include "../../utilities.hpp"
+#include "../../TopBar/Bookmarks/Bookmarks.hpp"
 
 //------------------------------
 
@@ -70,11 +71,10 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 {
 	std::string pathString = p_path.u8string();
 
+	getGui()->excludeAnimationThread();
 	removeAllChildren();
-	//for (uint32 a = 0; a < m_directoryButtons.size(); a++)
-	//{
-	//	removeChild(m_directoryButtons[a]);
-	//}
+	getGui()->includeAnimationThread();
+
 	m_directoryButtons.clear();
 
 	uint32 directoryStartIndex = 0;
@@ -118,7 +118,9 @@ void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 //------------------------------
 
 FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
-	View(p_parent), m_fileBrowser(p_parent), m_isBookmark(false)
+	View(p_parent), m_fileBrowser(p_parent), m_path(0), 
+	m_pathFadeGradient(0), 
+	m_bookmarkIcon_hollow(0), m_bookmarkIcon_filled(0), m_bookmarkButton(0), m_isBookmark(false)
 {
 	enableMouseEvents();
 
@@ -155,14 +157,31 @@ void FileBrowserPathEditor::handleSizeChange()
 
 //------------------------------
 
+void FileBrowserPathEditor::handleButtonClick(AvoGUI::Button* p_button)
+{
+	if (m_isBookmark)
+	{
+		getGui()->getViewById<Bookmarks>(Ids::bookmarks)->removeBookmark(m_fileBrowser->getPath());
+	}
+	else
+	{
+		getGui()->getViewById<Bookmarks>(Ids::bookmarks)->addBookmark(m_fileBrowser->getPath());
+	}
+
+	m_isBookmark = !m_isBookmark;
+	updateBookmarkButtonIcon();
+}
+
 void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
 {
-	m_isBookmark = getGui<AvoExplorer>()->getIsPathBookmarked(p_path);
+	m_isBookmark = getGui()->getViewById<Bookmarks>(Ids::bookmarks)->getIsPathBookmarked(p_path);
 	updateBookmarkButtonIcon();
 
 	m_path->setWorkingDirectory(p_path);
 	updateLayout();
 }
+
+//------------------------------
 
 void FileBrowserPathEditor::draw(AvoGUI::DrawingContext* p_context)
 {
@@ -178,5 +197,5 @@ void FileBrowserPathEditor::drawOverlay(AvoGUI::DrawingContext* p_context)
 	}
 
 	p_context->setColor(Colors::fileBrowserPathEditorBorder);
-	p_context->strokeRoundedRectangle(getSize(), getCorners().topLeftSizeX, 3.f);
+	p_context->strokeGeometry(getClipGeometry(), 3.f);
 }

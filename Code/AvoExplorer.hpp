@@ -26,10 +26,6 @@ private:
 
 	ContextMenu* m_contextMenu;
 
-	std::vector<std::filesystem::path> m_bookmarkPaths;
-	void loadBookmarkPaths();
-	void saveBookmarkPaths();
-
 	IWICImagingFactory2* m_windowsImagingFactory;
 
 	char const* m_initialPath;
@@ -37,30 +33,6 @@ private:
 public:
 	AvoExplorer(char const* p_initialPath);
 	~AvoExplorer();
-
-	//------------------------------
-
-	void addBookmark(std::filesystem::path const& p_path);
-	void removeBookmark(uint32 p_index);
-	void removeBookmark(std::filesystem::path const& p_path)
-	{
-		for (uint32 a = 0; a < m_bookmarkPaths.size(); a++)
-		{
-			if (m_bookmarkPaths[a] == p_path)
-			{
-				removeBookmark(a);
-				break;
-			}
-		}
-	}
-	std::vector<std::filesystem::path> const& getBookmarkPaths()
-	{
-		return m_bookmarkPaths;
-	}
-	bool getIsPathBookmarked(std::filesystem::path const& p_path)
-	{
-		return std::find(m_bookmarkPaths.begin(), m_bookmarkPaths.end(), p_path) != m_bookmarkPaths.end();
-	}
 
 	//------------------------------
 

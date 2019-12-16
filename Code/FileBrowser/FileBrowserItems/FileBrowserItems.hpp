@@ -36,6 +36,8 @@ private:
 	AvoGUI::Text* m_text_files;
 	AvoGUI::Text* m_text_directoryIsEmpty;
 
+	AvoGUI::Geometry* m_fileGeometry;
+	AvoGUI::Geometry* m_directoryGeometry;
 	AvoGUI::LinearGradient* m_fileNameEndGradient;
 
 	//------------------------------
@@ -64,13 +66,16 @@ private:
 
 	void loadIconForItem(FileBrowserItem* p_item);
 
+	uint32 getNumberOfDirectoriesPerRow();
+	uint32 getNumberOfFilesPerRow();
+
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
 		m_lastSelectedItem(0),
 		m_isMouseOnBackground(false),
 		m_text_directories(0), m_text_files(0),
-		m_fileNameEndGradient(0),
+		m_fileGeometry(0), m_directoryGeometry(0), m_fileNameEndGradient(0),
 		m_thumbnailCache(0), m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
 		m_needsToLoadMoreIcons(false), 
 		m_needsToChangeDirectory(false),
@@ -94,6 +99,17 @@ public:
 		m_iconLoadingThread = std::thread(&FileBrowserItems::thread_loadIcons, this);
 	}
 	~FileBrowserItems();
+
+	//------------------------------
+
+	AvoGUI::Geometry* getFileGeometry()
+	{
+		return m_fileGeometry;
+	}
+	AvoGUI::Geometry* getDirectoryGeometry()
+	{
+		return m_directoryGeometry;
+	}
 
 	//------------------------------
 

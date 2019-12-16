@@ -2,21 +2,17 @@
 
 //------------------------------
 
-float constexpr FILE_WIDTH = 18			* 8.f;
 float constexpr FILE_HEIGHT = 16		* 8.f;
 float constexpr FILE_NAME_PADDING = 1	* 8.f;
-
-float constexpr FOLDER_WIDTH = 24		* 8.f;
-float constexpr FOLDER_HEIGHT = 6		* 8.f;
 
 float constexpr BOOKMARK_HEIGHT = 4		* 8.f;
 
 //------------------------------
 
 FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark) :
-	ContextView(p_parent), m_fileBrowserItems(0),
+	ContextView(p_parent), m_fileBrowserItems(0), m_bookmarks(0),
 	m_icon(0), m_text_name(0), m_isFile(false), m_hasThumbnail(false), 
-	m_isBookmark(p_isBookmark), //m_positionAnimationTime(0.f),
+	m_isBookmark(p_isBookmark), m_positionAnimationTime(0.f), m_isDragged(false),
 	m_hoverAnimationTime(0.f), m_hoverAnimationValue(0.f), m_isHovering(false), 
 	m_isSelected(false)
 {
@@ -60,7 +56,11 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 	}
 	else
 	{
-		if (p_path.has_filename())
+		if (p_path.root_path() == p_path)
+		{
+			m_name = p_path.root_name();
+		}
+		else if (p_path.has_filename())
 		{
 			m_name = p_path.filename();
 		}
@@ -68,18 +68,6 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 		{
 			m_name = p_path.parent_path().filename();
 		}
-	}
-	if (m_isBookmark)
-	{
-		setHeight(BOOKMARK_HEIGHT);
-	}
-	else if (m_isFile)
-	{
-		setSize(FILE_WIDTH, FILE_HEIGHT);
-	}
-	else
-	{
-		setSize(FOLDER_WIDTH, FOLDER_HEIGHT);
 	}
 
 	//------------------------------
@@ -92,18 +80,10 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 	m_text_name = getGui()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
 	m_text_name->setIsTopTrimmed(true);
 	m_text_name->fitHeightToText();
-	if (m_isFile && !m_isBookmark)
-	{
-		m_text_name->setBottomLeft(FILE_NAME_PADDING*1.1f, getHeight() - FILE_NAME_PADDING);
-	}
-	else
-	{
-		m_text_name->setCenterY(getHeight()*0.5f);
-		m_text_name->setLeft(getHeight());
-	}
 
 	if (m_isBookmark)
 	{
+		setHeight(BOOKMARK_HEIGHT);
 		setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
 		m_fileBrowserItems->tellIconLoadingThreadToLoadIconForItem(this);
 	}
@@ -112,6 +92,21 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 	m_contextMenuItems.push_back(ActionMenuItemData("Cut", "Ctrl + X"));
 	m_contextMenuItems.push_back(ActionMenuItemData("Remove", "del"));
 }
+
+void FileBrowserItem::handleSizeChange()
+{
+	if (m_isFile && !m_isBookmark)
+	{
+		m_text_name->setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
+	}
+	else
+	{
+		m_text_name->setCenterY(getHeight() * 0.5f);
+		m_text_name->setLeft(getHeight() - 1.f);
+	}
+}
+
+//------------------------------
 
 void FileBrowserItem::setIcon(AvoGUI::Image* p_image)
 {
@@ -147,20 +142,14 @@ void FileBrowserItem::draw(AvoGUI::DrawingContext* p_context)
 	{
 		if (m_isFile && !m_isBookmark)
 		{
-			if (m_icon)
-			{
-				m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
-				m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
-			}
+			m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
+			m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
 		}
 		else
 		{
-			if (m_icon)
-			{
-				m_icon->setSize(getHeight()*0.65f);
-				m_icon->setCenterY(getHeight() * 0.5f);
-				m_icon->setLeft(m_icon->getTop());
-			}
+			m_icon->setSize(getHeight()*0.65f);
+			m_icon->setCenterY(getHeight() * 0.5f);
+			m_icon->setLeft(m_icon->getTop());
 		}
 
 		p_context->drawImage(m_icon);

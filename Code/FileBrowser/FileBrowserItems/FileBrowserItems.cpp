@@ -4,12 +4,25 @@
 
 //------------------------------
 
-float constexpr FILE_BROWSER_ITEMS_PADDING_TOP = 2			* 8.f;
-float constexpr FILE_BROWSER_ITEMS_PADDING = 3				* 8.f;
-float constexpr FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL = 1	* 8.f;
-float constexpr FILE_BROWSER_ITEMS_MARGIN_VERTICAL = 1		* 8.f;
-float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP = 3		* 8.f;
-float constexpr FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM = 2	* 8.f;
+float constexpr PADDING_TOP = 2				* 8.f;
+float constexpr PADDING = 3					* 8.f;
+float constexpr MARGIN_HORIZONTAL = 1		* 8.f;
+float constexpr MARGIN_VERTICAL = 1			* 8.f;
+float constexpr LABEL_MARGIN_TOP = 3		* 8.f;
+float constexpr LABEL_MARGIN_BOTTOM = 3		* 8.f;
+float constexpr MIN_FILE_WIDTH = 20			* 8.f;
+float constexpr MIN_DIRECTORY_WIDTH = 20	* 8.f;
+float constexpr DIRECTORY_HEIGHT = 6		* 8.f;
+
+//------------------------------
+
+bool getIsPathLessThan(std::filesystem::path const& p_a, std::filesystem::path const& p_b)
+{
+	std::wstring string_a = p_a.wstring();
+	std::wstring string_b = p_b.wstring();
+	
+	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, string_a.c_str(), string_a.size(), string_b.c_str(), string_b.size());
+}
 
 //
 // Private
@@ -39,8 +52,54 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_needsToChangeDirectory)
 		{
+			m_needsToChangeDirectory = false;
+
+			m_selectedItems.clear();
+			m_directoryItems.clear();
+			m_fileItems.clear();
 			getGui()->excludeAnimationThread();
-			setWorkingDirectory(m_fileBrowser->getPath());
+			removeAllChildren();
+			getGui()->includeAnimationThread();
+
+			std::vector<std::filesystem::path> directoryPaths;
+			directoryPaths.reserve(128);
+			std::vector<std::filesystem::path> filePaths;
+			filePaths.reserve(256);
+
+			for (auto item : std::filesystem::directory_iterator(m_fileBrowser->getPath()))
+			{
+				if (item.is_regular_file())
+				{
+					filePaths.push_back(item.path());
+				}
+				else if (item.is_directory())
+				{
+					directoryPaths.push_back(item.path());
+				}
+			}
+
+			// Sort files and directories separately, because they will be displayed separately.
+			std::sort(filePaths.begin(), filePaths.end(), getIsPathLessThan);
+			std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathLessThan);
+
+			m_directoryItems.reserve(directoryPaths.size());
+			m_fileItems.reserve(filePaths.size());
+
+			getGui()->excludeAnimationThread();
+			for (auto path : directoryPaths)
+			{
+				m_directoryItems.push_back(new FileBrowserItem(this, path, false));
+			}
+			for (auto path : filePaths)
+			{
+				m_fileItems.push_back(new FileBrowserItem(this, path, false));
+			}
+
+			if (getParent()->getWidth() && getParent()->getHeight())
+			{
+				updateLayout();
+				invalidate();
+			}
 			getGui()->includeAnimationThread();
 		}
 
@@ -53,9 +112,9 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_directoryItems.size())
 		{
-			int32 numberOfColumns = floor((getWidth() - FILE_BROWSER_ITEMS_PADDING + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL) / (m_directoryItems[0]->getWidth() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL));
-			int32 firstVisibleDirectoryItemIndex = numberOfColumns * floor((-getTop() - m_text_directories->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
-			int32 lastVisibleDirectoryItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_directories->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
+			int32 numberOfColumns = getNumberOfDirectoriesPerRow();
+			int32 firstVisibleDirectoryItemIndex = numberOfColumns * floor((-getTop() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
+			int32 lastVisibleDirectoryItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
 			for (int32 a = AvoGUI::max(0, firstVisibleDirectoryItemIndex); a < lastVisibleDirectoryItemIndex && a < m_directoryItems.size(); a++)
 			{
 				if (m_needsToLoadMoreIcons)
@@ -68,9 +127,9 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_fileItems.size())
 		{
-			int32 numberOfColumns = floor((getWidth() - FILE_BROWSER_ITEMS_PADDING + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL) / (m_fileItems[0]->getWidth() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL));
-			int32 firstVisibleFileItemIndex = numberOfColumns * floor((-getTop() - m_text_files->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
-			int32 lastVisibleFileItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_files->getBottom() - FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL));
+			int32 numberOfColumns = getNumberOfFilesPerRow();
+			int32 firstVisibleFileItemIndex = numberOfColumns * floor((-getTop() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
+			int32 lastVisibleFileItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
 			for (int32 a = AvoGUI::max(0, firstVisibleFileItemIndex); a < lastVisibleFileItemIndex && a < m_fileItems.size(); a++)
 			{
 				if (m_needsToLoadMoreIcons)
@@ -109,7 +168,7 @@ void FileBrowserItems::loadIconForItem(FileBrowserItem* p_item)
 
 				ISharedBitmap* bitmap = 0;
 				WTS_CACHEFLAGS flags;
-				m_thumbnailCache->GetThumbnail(item, 128, WTS_EXTRACT, &bitmap, &flags, 0);
+				m_thumbnailCache->GetThumbnail(item, 100, WTS_EXTRACT, &bitmap, &flags, 0);
 
 				if (bitmap)
 				{
@@ -171,6 +230,15 @@ void FileBrowserItems::loadIconForItem(FileBrowserItem* p_item)
 	}
 }
 
+uint32 FileBrowserItems::getNumberOfDirectoriesPerRow()
+{
+	return AvoGUI::max(1u, (uint32)floor((getParent()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_DIRECTORY_WIDTH + MARGIN_HORIZONTAL)));
+}
+uint32 FileBrowserItems::getNumberOfFilesPerRow()
+{
+	return AvoGUI::max(1u, (uint32)floor((getParent()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
+}
+
 //
 // Public
 //
@@ -184,7 +252,18 @@ FileBrowserItems::~FileBrowserItems()
 	m_needsToLoadMoreIconsMutex.unlock();
 	m_iconLoadingThread.join();
 
-	m_fileNameEndGradient->forget();
+	if (m_directoryGeometry)
+	{
+		m_directoryGeometry->forget();
+	}
+	if (m_fileGeometry)
+	{
+		m_fileGeometry->forget();
+	}
+	if (m_fileNameEndGradient)
+	{
+		m_fileNameEndGradient->forget();
+	}
 	for (auto& icon : m_uniqueLoadedFileIcons)
 	{
 		icon.second->forget();
@@ -333,25 +412,11 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 			if (m_selectedItems[a]->getIsFile())
 			{
-				if (m_fileItems.size() > 1)
-				{
-					m_fileItems.erase(m_fileItems.begin() + m_selectedItems[a]->getIndex() - m_directoryItems.size());
-				}
-				else
-				{
-					m_fileItems.clear();
-				}
+				m_fileItems.erase(m_fileItems.begin() + (m_selectedItems[a]->getIndex() - m_directoryItems.size()));
 			}
 			else
 			{
-				if (m_directoryItems.size() > 1)
-				{
-					m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
-				}
-				else
-				{
-					m_directoryItems.clear();
-				}
+				m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
 			}
 			removeChild(m_selectedItems[a]->getIndex());
 		}
@@ -410,53 +475,6 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 	{
 		m_needsToChangeDirectory = true;
 		tellIconLoadingThreadToLoadMoreIcons();
-		return;
-	}
-	else
-	{
-		m_needsToChangeDirectory = false;
-	}
-
-	m_selectedItems.clear();
-	m_directoryItems.clear();
-	m_fileItems.clear();
-	removeAllChildren();
-
-	std::vector<std::filesystem::path> directoryPaths;
-	directoryPaths.reserve(128);
-	std::vector<std::filesystem::path> filePaths;
-	filePaths.reserve(256);
-
-	for (auto item : std::filesystem::directory_iterator(p_path))
-	{
-		if (item.is_regular_file())
-		{
-			filePaths.push_back(item.path());
-		}
-		else if (item.is_directory())
-		{
-			directoryPaths.push_back(item.path());
-		}
-	}
-
-	// Sort files and directories separately, because they will be displayed separately.
-	std::sort(filePaths.begin(), filePaths.end());
-	std::sort(directoryPaths.begin(), directoryPaths.end());
-
-	m_directoryItems.reserve(directoryPaths.size());
-	m_fileItems.reserve(filePaths.size());
-	for (auto path : directoryPaths)
-	{
-		m_directoryItems.push_back(new FileBrowserItem(this, path, false));
-	}
-	for (auto path : filePaths)
-	{
-		m_fileItems.push_back(new FileBrowserItem(this, path, false));
-	}
-
-	if (getParent()->getWidth() && getParent()->getHeight())
-	{
-		updateLayout();
 	}
 }
 
@@ -464,78 +482,63 @@ void FileBrowserItems::updateLayout()
 {
 	FileBrowserItem* lastItem = 0;
 
-	float width = 0.f;
+	uint32 directoriesPerRow = getNumberOfDirectoriesPerRow();
+	uint32 filesPerRow = getNumberOfFilesPerRow();
+
+	if (m_directoryItems.size())
+	{
+		float directoryWidth = (getParent()->getWidth() - 2.f*PADDING - MARGIN_HORIZONTAL* (getNumberOfDirectoriesPerRow() - 1.f))/getNumberOfDirectoriesPerRow();
+		if (std::abs(directoryWidth - m_directoryItems[0]->getWidth()) > 0.1f)
+		{
+			if (m_directoryGeometry)
+			{
+				m_directoryGeometry->forget();
+			}
+			m_directoryGeometry = getGui()->getDrawingContext()->createCornerRectangleGeometry(directoryWidth, DIRECTORY_HEIGHT, m_directoryItems[0]->getCorners().topLeftSizeX);
+		}
+		m_text_directories->setTopLeft(PADDING, PADDING_TOP);
+		for (uint32 a = 0; a < m_directoryItems.size(); a++)
+		{
+			m_directoryItems[a]->setSize(directoryWidth, DIRECTORY_HEIGHT);
+			m_directoryItems[a]->setTopLeft(
+				PADDING + (directoryWidth + MARGIN_HORIZONTAL) * (a % directoriesPerRow) - MARGIN_HORIZONTAL, 
+				m_text_directories->getBottom() + LABEL_MARGIN_BOTTOM + (DIRECTORY_HEIGHT + MARGIN_VERTICAL) * (a / directoriesPerRow) - MARGIN_VERTICAL
+			);
+		}
+	}
+
+	if (m_fileItems.size())
+	{
+		float fileWidth = (getParent()->getWidth() - 2.f * PADDING - MARGIN_HORIZONTAL * (getNumberOfFilesPerRow() - 1.f)) / getNumberOfFilesPerRow();
+		if (std::abs(fileWidth - m_fileItems[0]->getWidth()) > 0.1f)
+		{
+			if (m_fileGeometry)
+			{
+				m_fileGeometry->forget();
+			}
+			m_fileGeometry = getGui()->getDrawingContext()->createCornerRectangleGeometry(fileWidth, fileWidth, m_fileItems[0]->getCorners().topLeftSizeX);
+		}
+		m_text_files->setTopLeft(PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + LABEL_MARGIN_TOP : PADDING_TOP);
+		for (uint32 a = 0; a < m_fileItems.size(); a++)
+		{
+			m_fileItems[a]->setSize(fileWidth);
+			m_fileItems[a]->setTopLeft(
+				PADDING + (fileWidth + MARGIN_HORIZONTAL) * (a % filesPerRow) - MARGIN_HORIZONTAL,
+				m_text_files->getBottom() + LABEL_MARGIN_BOTTOM + (fileWidth + MARGIN_VERTICAL) * (a / filesPerRow) - MARGIN_VERTICAL
+			);
+		}
+	}
+
 	float height = 0.f;
-
-	m_text_directories->setTopLeft(FILE_BROWSER_ITEMS_PADDING, FILE_BROWSER_ITEMS_PADDING_TOP);
-	for (FileBrowserItem* item : m_directoryItems)
+	if (m_fileItems.size())
 	{
-		if (lastItem)
-		{
-			if (lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL + item->getWidth() > getParent()->getWidth() - FILE_BROWSER_ITEMS_PADDING)
-			{
-				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, lastItem->getBottom() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL);
-				if (item->getBottom() > height)
-				{
-					height = item->getBottom();
-				}
-			}
-			else
-			{
-				item->setTopLeft(lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL, lastItem->getTop());
-			}
-			if (item->getRight() > width)
-			{
-				width = item->getRight();
-			}
-		}
-		else
-		{
-			item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_text_directories->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM);
-			height = item->getBottom();
-			width = item->getRight();
-		}
-		lastItem = item;
+		height = m_fileItems.back()->getBottom();
 	}
-
-	m_text_files->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_directoryItems.size() ? m_directoryItems.back()->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_TOP : FILE_BROWSER_ITEMS_PADDING_TOP);
-	for (FileBrowserItem* item : m_fileItems)
+	else if (m_directoryItems.size())
 	{
-		if (lastItem)
-		{
-			if (item == m_fileItems[0])
-			{
-				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_text_files->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM);
-				if (item->getBottom() > height)
-				{
-					height = item->getBottom();
-				}
-			}
-			else if (lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL + item->getWidth() > getParent()->getWidth() - FILE_BROWSER_ITEMS_PADDING)
-			{
-				item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, lastItem->getBottom() + FILE_BROWSER_ITEMS_MARGIN_VERTICAL);
-				if (item->getBottom() > height)
-				{
-					height = item->getBottom();
-				}
-			}
-			else
-			{
-				item->setTopLeft(lastItem->getRight() + FILE_BROWSER_ITEMS_MARGIN_HORIZONTAL, lastItem->getTop());
-			}
-		}
-		else
-		{
-			item->setTopLeft(FILE_BROWSER_ITEMS_PADDING, m_text_files->getBottom() + FILE_BROWSER_ITEMS_LABEL_MARGIN_BOTTOM);
-			height = item->getBottom();
-		}
-		if (item->getRight() > width)
-		{
-			width = item->getRight();
-		}
-		lastItem = item;
+		height = m_directoryItems.back()->getBottom();
 	}
-	setSize(width, height + FILE_BROWSER_ITEMS_PADDING);
+	setSize(getParent()->getWidth() - PADDING, height + PADDING);
 
 	tellIconLoadingThreadToLoadMoreIcons();
 }
