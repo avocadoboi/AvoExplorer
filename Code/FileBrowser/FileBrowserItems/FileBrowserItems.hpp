@@ -69,6 +69,8 @@ private:
 	uint32 getNumberOfDirectoriesPerRow();
 	uint32 getNumberOfFilesPerRow();
 
+	void scrollToShowLastSelectedItem();
+
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),

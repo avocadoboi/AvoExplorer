@@ -98,7 +98,7 @@ void FileBrowserItems::thread_loadIcons()
 			if (getParent()->getWidth() && getParent()->getHeight())
 			{
 				updateLayout();
-				invalidate();
+				getParent()->invalidate();
 			}
 			getGui()->includeAnimationThread();
 		}
@@ -237,6 +237,20 @@ uint32 FileBrowserItems::getNumberOfDirectoriesPerRow()
 uint32 FileBrowserItems::getNumberOfFilesPerRow()
 {
 	return AvoGUI::max(1u, (uint32)floor((getParent()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
+}
+
+void FileBrowserItems::scrollToShowLastSelectedItem()
+{
+	if (m_lastSelectedItem->getAbsoluteTop() < getParent()->getAbsoluteTop())
+	{
+		getParent<ScrollContainer>()->setScrollPosition(0.f, m_lastSelectedItem->getTop() - MARGIN_VERTICAL);
+		getParent()->invalidate();
+	}
+	else if (m_lastSelectedItem->getAbsoluteBottom() > getParent()->getAbsoluteBottom())
+	{
+		getParent<ScrollContainer>()->setScrollPosition(0.f, m_lastSelectedItem->getBottom() - getParent()->getHeight() + MARGIN_VERTICAL);
+		getParent()->invalidate();
+	}
 }
 
 //
@@ -390,25 +404,10 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 	{
 	case AvoGUI::KeyboardKey::Delete:
 	{
-		wchar_t pathBuffer[MAX_PATH + 1]; // MAX_PATH includes first 1 terminator, we want 2 null terminators
+		std::wstring paths;
 		for (uint32 a = 0; a < m_selectedItems.size(); a++)
 		{
-			std::wstring pathString = m_selectedItems[a]->getPath();
-
-			memcpy(pathBuffer, pathString.data(), pathString.size() * 2);
-			pathBuffer[pathString.size()] = 0;
-			pathBuffer[pathString.size() + 1] = 0;
-
-			SHFILEOPSTRUCTW fileOperation = { 0 };
-			fileOperation.fFlags = FOF_ALLOWUNDO;
-			fileOperation.wFunc = FO_DELETE;
-			fileOperation.pFrom = pathBuffer;
-			SHFileOperationW(&fileOperation);
-
-			if (fileOperation.fAnyOperationsAborted)
-			{
-				continue;
-			}
+			paths += m_selectedItems[a]->getPath().wstring() + L'\0';
 
 			if (m_selectedItems[a]->getIsFile())
 			{
@@ -420,9 +419,24 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			removeChild(m_selectedItems[a]->getIndex());
 		}
-		m_selectedItems.clear();
-		updateLayout();
-		invalidate();
+		paths += L'\0';
+
+		SHFILEOPSTRUCTW fileOperation = { 0 };
+		fileOperation.fFlags = FOF_ALLOWUNDO;
+		fileOperation.wFunc = FO_DELETE;
+		fileOperation.pFrom = paths.data();
+		SHFileOperationW(&fileOperation);
+
+		if (fileOperation.fAnyOperationsAborted)
+		{
+			setWorkingDirectory(m_fileBrowser->getPath());
+		}
+		else
+		{
+			m_selectedItems.clear();
+			updateLayout();
+			getParent()->invalidate();
+		}
 		break;
 	}
 	case AvoGUI::KeyboardKey::A:
@@ -445,6 +459,48 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 					m_selectedItems.push_back(m_fileItems[a]);
 				}
 			}
+		}
+		break;
+	}
+	case AvoGUI::KeyboardKey::Left:
+	{
+		uint32 index = m_lastSelectedItem->getIndex();
+		if (getNumberOfChildren() && index)
+		{
+			setSelectedItem(getChild<FileBrowserItem>(index - 1));
+			scrollToShowLastSelectedItem();
+		}
+		break;
+	}
+	case AvoGUI::KeyboardKey::Right:
+	{
+		uint32 index = m_lastSelectedItem->getIndex();
+		if ((int32)index < (int32)getNumberOfChildren() - 1)
+		{
+			setSelectedItem(getChild<FileBrowserItem>(index + 1));
+			scrollToShowLastSelectedItem();
+		}
+		break;
+	}
+	case AvoGUI::KeyboardKey::Up:
+	{
+		uint32 index = m_lastSelectedItem->getIndex();
+		int32 numberOfItemsToJump = int32(m_lastSelectedItem->getIsFile() ? getNumberOfFilesPerRow() : getNumberOfDirectoriesPerRow());
+		if ((int32)index >= numberOfItemsToJump)
+		{
+			setSelectedItem(getChild<FileBrowserItem>(index - numberOfItemsToJump));
+			scrollToShowLastSelectedItem();
+		}
+		break;
+	}
+	case AvoGUI::KeyboardKey::Down:
+	{
+		uint32 index = m_lastSelectedItem->getIndex();
+		int32 numberOfItemsToJump = int32(m_lastSelectedItem->getIsFile() ? getNumberOfFilesPerRow() : getNumberOfDirectoriesPerRow());
+		if ((int32)index < getNumberOfChildren() - numberOfItemsToJump)
+		{
+			setSelectedItem(getChild<FileBrowserItem>(index + numberOfItemsToJump));
+			scrollToShowLastSelectedItem();
 		}
 		break;
 	}
