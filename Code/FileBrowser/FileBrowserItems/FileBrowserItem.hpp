@@ -172,12 +172,14 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (m_isBookmark)
+			if (m_isBookmark && m_isDragged)
 			{
 				m_isDragged = false;
 				m_animationStartPosition = getAbsoluteTopLeft();
 				m_positionAnimationTime = 0.f;
 				queueAnimationUpdate();
+
+				m_bookmarks->saveBookmarks();
 			}
 		}
 		else

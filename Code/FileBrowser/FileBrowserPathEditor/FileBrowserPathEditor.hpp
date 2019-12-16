@@ -123,20 +123,7 @@ public:
 
 	//------------------------------
 
-	void handleButtonClick(AvoGUI::Button* p_button) override
-	{
-		if (m_isBookmark)
-		{
-			getGui<AvoExplorer>()->removeBookmark(m_fileBrowser->getPath());
-		}
-		else
-		{
-			getGui<AvoExplorer>()->addBookmark(m_fileBrowser->getPath());
-		}
-
-		m_isBookmark = !m_isBookmark;
-		updateBookmarkButtonIcon();
-	}
+	void handleButtonClick(AvoGUI::Button* p_button) override;
 
 	void setWorkingDirectory(std::filesystem::path const& p_path);
 

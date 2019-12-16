@@ -4,10 +4,9 @@
 #include "TopBar/TopBar.hpp"
 #include "TopBar/Bookmarks/Bookmarks.hpp"
 #include "FileBrowser/FileBrowser.hpp"
+#include "FileBrowser/FileBrowserItems/FileBrowserItem.hpp"
 
 #include "ActionMenu/ContextMenu.hpp"
-
-#include <fstream>
 
 //------------------------------
 
@@ -15,43 +14,6 @@ uint32 constexpr WINDOW_WIDTH_MIN = 260;
 uint32 constexpr WINDOW_HEIGHT_MIN = 200;
 uint32 constexpr WINDOW_WIDTH_START = 850;
 uint32 constexpr WINDOW_HEIGHT_START = 560;
-
-constexpr char const* BOOKMARKS_DATA_PATH = "data";
-
-//
-// Private
-//
-
-void AvoExplorer::loadBookmarkPaths()
-{
-	if (std::filesystem::exists(BOOKMARKS_DATA_PATH))
-	{
-		std::wifstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
-
-		while (!fileStream.eof())
-		{
-			std::wstring pathString;
-			std::getline(fileStream, pathString, (wchar_t)0);
-			if (pathString != L"")
-			{
-				addBookmark(pathString);
-			}
-		}
-
-		fileStream.close();
-	}
-}
-void AvoExplorer::saveBookmarkPaths()
-{
-	std::wofstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
-
-	for (uint32 a = 0; a < m_bookmarkPaths.size(); a++)
-	{
-		fileStream.write(m_bookmarkPaths[a].c_str(), m_bookmarkPaths[a].wstring().size() + 1);
-	}
-
-	fileStream.close();
-}
 
 //
 // Public
@@ -70,21 +32,6 @@ AvoExplorer::AvoExplorer(char const* p_initialPath) :
 AvoExplorer::~AvoExplorer()
 {
 	m_windowsImagingFactory->Release();
-}
-
-//------------------------------
-
-void AvoExplorer::addBookmark(std::filesystem::path const& p_path)
-{
-	getViewById<Bookmarks>(Ids::bookmarks)->addBookmark(p_path);
-	m_bookmarkPaths.push_back(p_path);
-	saveBookmarkPaths();
-}
-void AvoExplorer::removeBookmark(uint32 p_index)
-{
-	getViewById<Bookmarks>(Ids::bookmarks)->removeBookmark(p_index);
-	m_bookmarkPaths.erase(m_bookmarkPaths.begin() + p_index);
-	saveBookmarkPaths();
 }
 
 //------------------------------
@@ -129,9 +76,6 @@ void AvoExplorer::createContent()
 
 	m_fileBrowser = new FileBrowser(this);
 	m_topBar = new TopBar(this);
-
-	m_bookmarkPaths.reserve(10);
-	loadBookmarkPaths();
 
 	m_fileBrowser->setWorkingDirectory(m_initialPath);
 

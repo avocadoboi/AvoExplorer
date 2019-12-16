@@ -30,8 +30,9 @@ public:
 
 		m_bookmarksScrollContainer = new ScrollContainer(this);
 		m_bookmarksScrollContainer->setScrollbarMargin(2.f);
-
 		m_bookmarksContainer = m_bookmarksScrollContainer->getContent();
+
+		loadBookmarks();
 	}
 
 	void handleSizeChange(float p_previousWidth, float p_previousHeight) override;
@@ -43,11 +44,20 @@ public:
 	{
 		return m_bookmarksContainer;
 	}
+	std::vector<FileBrowserItem*>& getBookmarks()
+	{
+		return m_bookmarks;
+	}
 
 	//------------------------------
 
+	void loadBookmarks();
+	void saveBookmarks();
+
 	void addBookmark(std::filesystem::path const& p_path);
 	void removeBookmark(uint32 p_index);
+	void removeBookmark(std::filesystem::path const& p_path);
+	bool getIsPathBookmarked(std::filesystem::path const& p_path);
 
 	//------------------------------
 

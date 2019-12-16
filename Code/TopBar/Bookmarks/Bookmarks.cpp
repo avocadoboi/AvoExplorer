@@ -2,6 +2,12 @@
 
 #include "../../FileBrowser/FileBrowserItems/FileBrowserItem.hpp"
 
+#include <fstream>
+
+//------------------------------
+
+constexpr char const* BOOKMARKS_DATA_PATH = "data";
+
 //
 // Private
 //
@@ -59,6 +65,38 @@ void Bookmarks::handleBookmarkDrag(FileBrowserItem* p_bookmark)
 
 //------------------------------
 
+void Bookmarks::loadBookmarks()
+{
+	if (std::filesystem::exists(BOOKMARKS_DATA_PATH))
+	{
+		std::wifstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
+
+		while (!fileStream.eof())
+		{
+			std::wstring pathString;
+			std::getline(fileStream, pathString, (wchar_t)0);
+			if (pathString != L"")
+			{
+				m_bookmarks.push_back(new FileBrowserItem(m_bookmarksContainer, pathString, true));
+			}
+		}
+		updateLayout();
+
+		fileStream.close();
+	}
+}
+void Bookmarks::saveBookmarks()
+{
+	std::wofstream fileStream(BOOKMARKS_DATA_PATH, std::ios::binary);
+
+	for (FileBrowserItem* bookmark : m_bookmarks)
+	{
+		fileStream.write(bookmark->getPath().c_str(), bookmark->getPath().wstring().size() + 1);
+	}
+
+	fileStream.close();
+}
+
 void Bookmarks::addBookmark(std::filesystem::path const& p_path)
 {
 	m_bookmarks.push_back(new FileBrowserItem(m_bookmarksContainer, p_path, true));
@@ -71,4 +109,26 @@ void Bookmarks::removeBookmark(uint32 p_index)
 	m_bookmarksContainer->removeChild(m_bookmarks[p_index]->getIndex());
 	m_bookmarks.erase(m_bookmarks.begin() + p_index);
 	updateLayout();
+}
+void Bookmarks::removeBookmark(std::filesystem::path const& p_path)
+{
+	for (uint32 a = 0; a < m_bookmarks.size(); a++)
+	{
+		if (m_bookmarks[a]->getPath() == p_path)
+		{
+			removeBookmark(a);
+			break;
+		}
+	}
+}
+bool Bookmarks::getIsPathBookmarked(std::filesystem::path const& p_path)
+{
+	for (uint32 a = 0; a < m_bookmarks.size(); a++)
+	{
+		if (m_bookmarks[a]->getPath() == p_path)
+		{
+			return true;
+		}
+	}
+	return false;
 }

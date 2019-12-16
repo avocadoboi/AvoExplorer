@@ -1,6 +1,7 @@
 #include "FileBrowserPathEditor.hpp"
 
 #include "../../utilities.hpp"
+#include "../../TopBar/Bookmarks/Bookmarks.hpp"
 
 //------------------------------
 
@@ -74,10 +75,6 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 	removeAllChildren();
 	getGui()->includeAnimationThread();
 
-	//for (uint32 a = 0; a < m_directoryButtons.size(); a++)
-	//{
-	//	removeChild(m_directoryButtons[a]);
-	//}
 	m_directoryButtons.clear();
 
 	uint32 directoryStartIndex = 0;
@@ -160,14 +157,31 @@ void FileBrowserPathEditor::handleSizeChange()
 
 //------------------------------
 
+void FileBrowserPathEditor::handleButtonClick(AvoGUI::Button* p_button)
+{
+	if (m_isBookmark)
+	{
+		getGui()->getViewById<Bookmarks>(Ids::bookmarks)->removeBookmark(m_fileBrowser->getPath());
+	}
+	else
+	{
+		getGui()->getViewById<Bookmarks>(Ids::bookmarks)->addBookmark(m_fileBrowser->getPath());
+	}
+
+	m_isBookmark = !m_isBookmark;
+	updateBookmarkButtonIcon();
+}
+
 void FileBrowserPathEditor::setWorkingDirectory(std::filesystem::path const& p_path)
 {
-	m_isBookmark = getGui<AvoExplorer>()->getIsPathBookmarked(p_path);
+	m_isBookmark = getGui()->getViewById<Bookmarks>(Ids::bookmarks)->getIsPathBookmarked(p_path);
 	updateBookmarkButtonIcon();
 
 	m_path->setWorkingDirectory(p_path);
 	updateLayout();
 }
+
+//------------------------------
 
 void FileBrowserPathEditor::draw(AvoGUI::DrawingContext* p_context)
 {
