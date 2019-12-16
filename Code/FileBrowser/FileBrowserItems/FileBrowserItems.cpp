@@ -168,7 +168,7 @@ void FileBrowserItems::loadIconForItem(FileBrowserItem* p_item)
 
 				ISharedBitmap* bitmap = 0;
 				WTS_CACHEFLAGS flags;
-				m_thumbnailCache->GetThumbnail(item, 128, WTS_EXTRACT, &bitmap, &flags, 0);
+				m_thumbnailCache->GetThumbnail(item, 100, WTS_EXTRACT, &bitmap, &flags, 0);
 
 				if (bitmap)
 				{
