@@ -142,9 +142,14 @@ public:
 			}
 			else 
 			{
+				bool isShiftDown = p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift;
 				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
 				{
-					if (m_isSelected)
+					if (isShiftDown)
+					{
+						m_fileBrowserItems->selectItemsTo(this, true);
+					}
+					else if (m_isSelected)
 					{
 						m_fileBrowserItems->removeSelectedItem(this);
 					}
@@ -153,7 +158,7 @@ public:
 						m_fileBrowserItems->addSelectedItem(this);
 					}
 				}
-				else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+				else if (isShiftDown)
 				{
 					m_fileBrowserItems->selectItemsTo(this);
 				}

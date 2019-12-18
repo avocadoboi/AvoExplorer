@@ -29,6 +29,7 @@ private:
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
 	std::vector<FileBrowserItem*> m_selectedItems;
+	FileBrowserItem* m_firstSelectedItem;
 	FileBrowserItem* m_lastSelectedItem;
 	bool m_isMouseOnBackground;
 
@@ -74,6 +75,7 @@ private:
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
+		m_firstSelectedItem(0),
 		m_lastSelectedItem(0),
 		m_isMouseOnBackground(false),
 		m_text_directories(0), m_text_files(0),
@@ -118,7 +120,8 @@ public:
 	void setSelectedItem(FileBrowserItem* p_item);
 	void addSelectedItem(FileBrowserItem* p_item);
 	void removeSelectedItem(FileBrowserItem* p_item);
-	void selectItemsTo(FileBrowserItem* p_item);
+	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false);
+	void deselectAllItems();
 
 	//------------------------------
 
