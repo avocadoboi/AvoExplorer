@@ -28,9 +28,19 @@ private:
 
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
+
+	/*
+		When selecting between two items (shift + click, shift + arrow key), m_firstSelectedItem is the start of the selection and m_lastSelectedItem is the end of the selection.
+		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
+	*/
 	std::vector<FileBrowserItem*> m_selectedItems;
 	FileBrowserItem* m_firstSelectedItem;
 	FileBrowserItem* m_lastSelectedItem;
+
+	AvoGUI::Rectangle<float> m_selectionRectangle;
+	AvoGUI::Point<float> m_selectionRectangleAnchor;
+	bool m_isDraggingSelectionRectangle;
+	
 	bool m_isMouseOnBackground;
 
 	AvoGUI::Text* m_text_directories;
@@ -77,6 +87,7 @@ public:
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
 		m_firstSelectedItem(0),
 		m_lastSelectedItem(0),
+		m_isDraggingSelectionRectangle(false),
 		m_isMouseOnBackground(false),
 		m_text_directories(0), m_text_files(0),
 		m_fileGeometry(0), m_directoryGeometry(0), m_fileNameEndGradient(0),
@@ -135,6 +146,8 @@ public:
 		m_isMouseOnBackground = false;
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
+	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override;
+	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override;
 
 	//------------------------------
 
@@ -172,7 +185,7 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context)
+	void draw(AvoGUI::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::label);
 		if (m_directoryItems.size())
@@ -182,6 +195,21 @@ public:
 		if (m_fileItems.size())
 		{
 			p_context->drawText(m_text_files);
+		}
+	}
+	void drawOverlay(AvoGUI::DrawingContext* p_context) override
+	{
+		if (m_isDraggingSelectionRectangle)
+		{
+			p_context->setColor(AvoGUI::Color(Colors::selection, 0.1f));
+			p_context->fillRectangle(m_selectionRectangle);
+			p_context->setColor(AvoGUI::Color(Colors::selection, 0.9f));
+			if (m_selectionRectangle.getWidth() > 1.f && m_selectionRectangle.getHeight() > 1.f)
+			{
+				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Dash);
+				p_context->strokeRectangle(m_selectionRectangle.left + 0.5f, m_selectionRectangle.top + 0.5f, m_selectionRectangle.right - 0.5f, m_selectionRectangle.bottom - 0.5f, 1.f);
+				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Solid);
+			}
 		}
 	}
 };

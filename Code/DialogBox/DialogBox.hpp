@@ -106,6 +106,7 @@ public:
 		m_text = context->createText(m_textString, 14.f, AvoGUI::Rectangle<float>(m_titleText->getLeft(), m_titleText->getBottom() + 20.f, getRight() - m_titleText->getLeft(), getBottom() - 50.f));
 		m_text->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
 		m_text->setFontWeight((AvoGUI::FontWeight)400);
+		m_text->setLineHeight(1.1f);
 	}
 
 	void handleSizeChange() override

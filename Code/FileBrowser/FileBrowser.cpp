@@ -59,8 +59,8 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 		if (error.code().value() == 5)
 		{
 			m_dialog = new DialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
-			m_dialog->addButton("Restart", AvoGUI::Button::Emphasis::High);
-			m_dialog->addButton("No", AvoGUI::Button::Emphasis::Medium);
+			m_dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
+			m_dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
 			m_dialog->setDialogBoxListener(this);
 			m_dialog->detachFromParent();
 			getGui()->getWindow()->disableUserInteraction();

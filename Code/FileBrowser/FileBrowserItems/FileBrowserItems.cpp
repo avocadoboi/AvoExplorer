@@ -9,7 +9,7 @@ float constexpr PADDING = 3					* 8.f;
 float constexpr MARGIN_HORIZONTAL = 1		* 8.f;
 float constexpr MARGIN_VERTICAL = 1			* 8.f;
 float constexpr LABEL_MARGIN_TOP = 3		* 8.f;
-float constexpr LABEL_MARGIN_BOTTOM = 3		* 8.f;
+float constexpr LABEL_MARGIN_BOTTOM = 2		* 8.f;
 float constexpr MIN_FILE_WIDTH = 20			* 8.f;
 float constexpr MIN_DIRECTORY_WIDTH = 20	* 8.f;
 float constexpr DIRECTORY_HEIGHT = 6		* 8.f;
@@ -410,7 +410,157 @@ void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 	{
 		deselectAllItems();
 	}
+	m_isDraggingSelectionRectangle = true;
+	m_selectionRectangle.set(p_event.x, p_event.y, p_event.x, p_event.y);
+	m_selectionRectangleAnchor.set(p_event.x, p_event.y);
 	getGui()->setKeyboardFocus(this);
+}
+void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
+{
+	m_isDraggingSelectionRectangle = false;
+	getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+}
+void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
+{
+	if (m_isDraggingSelectionRectangle && AvoGUI::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_selectionRectangleAnchor.x, m_selectionRectangleAnchor.y) > 36.f)
+	{
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+		if (p_event.x < m_selectionRectangleAnchor.x)
+		{
+			m_selectionRectangle.left = p_event.x;
+			m_selectionRectangle.right = m_selectionRectangleAnchor.x;
+		}
+		else
+		{
+			m_selectionRectangle.left = m_selectionRectangleAnchor.x;
+			m_selectionRectangle.right = p_event.x;
+		}
+		if (p_event.y < m_selectionRectangleAnchor.y)
+		{
+			m_selectionRectangle.top = p_event.y;
+			m_selectionRectangle.bottom = m_selectionRectangleAnchor.y;
+		}
+		else
+		{
+			m_selectionRectangle.top = m_selectionRectangleAnchor.y;
+			m_selectionRectangle.bottom = p_event.y;
+		}
+
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+
+		if (!getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
+		{
+			deselectAllItems();
+		}
+
+		int32 leftIndex = 0;
+		int32 rightIndex = 0;
+		int32 topIndex = 0;
+		int32 bottomIndex = 0;
+		if (m_directoryItems.size())
+		{
+			uint32 numberOfDirectoriesPerRow = getNumberOfDirectoriesPerRow();
+			topIndex = (m_selectionRectangle.top - m_directoryItems[0]->getTop()) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
+			if (topIndex <= m_directoryItems.size() / numberOfDirectoriesPerRow)
+			{
+				if (topIndex < 0)
+				{
+					topIndex = 0;
+				}
+
+				bottomIndex = int32(m_selectionRectangle.bottom - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
+
+				leftIndex = AvoGUI::constrain(int32(m_selectionRectangle.left - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfDirectoriesPerRow - 1);
+
+				rightIndex = AvoGUI::constrain(int32(m_selectionRectangle.right - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfDirectoriesPerRow - 1);
+
+				for (uint32 y = topIndex; y <= bottomIndex; y++)
+				{
+					for (uint32 x = leftIndex; x <= rightIndex; x++)
+					{
+						uint32 index = y * numberOfDirectoriesPerRow + x;
+						if (index >= m_directoryItems.size())
+						{
+							y = bottomIndex + 1;
+							break;
+						}
+						if (m_directoryItems[index]->getIsIntersecting(m_selectionRectangle) && !m_directoryItems[index]->getIsSelected())
+						{
+							addSelectedItem(m_directoryItems[index]);
+						}
+					}
+				}
+			}
+		}
+		if (m_directoryItems.size())
+		{
+			uint32 numberOfDirectoriesPerRow = getNumberOfDirectoriesPerRow();
+			topIndex = int32(m_selectionRectangle.top - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
+			bottomIndex = int32(m_selectionRectangle.bottom - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
+			if (topIndex <= int32(m_directoryItems.size() / numberOfDirectoriesPerRow) && bottomIndex >= 0)
+			{
+				if (topIndex < 0)
+				{
+					topIndex = 0;
+				}
+
+				leftIndex = AvoGUI::constrain(int32(m_selectionRectangle.left - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfDirectoriesPerRow - 1);
+
+				rightIndex = AvoGUI::constrain(int32(m_selectionRectangle.right - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfDirectoriesPerRow - 1);
+
+				for (uint32 y = topIndex; y <= bottomIndex; y++)
+				{
+					for (uint32 x = leftIndex; x <= rightIndex; x++)
+					{
+						uint32 index = y * numberOfDirectoriesPerRow + x;
+						if (index >= m_directoryItems.size())
+						{
+							y = bottomIndex + 1;
+							break;
+						}
+						if (m_directoryItems[index]->getIsIntersecting(m_selectionRectangle) && !m_directoryItems[index]->getIsSelected())
+						{
+							addSelectedItem(m_directoryItems[index]);
+						}
+					}
+				}
+			}
+		}
+		if (m_fileItems.size())
+		{
+			uint32 numberOfFilesPerRow = getNumberOfFilesPerRow();
+			topIndex = (m_selectionRectangle.top - m_fileItems[0]->getTop()) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL);
+			bottomIndex = int32(m_selectionRectangle.bottom - m_fileItems[0]->getTop()) / int32(m_fileItems[0]->getHeight() + MARGIN_VERTICAL);
+			if (topIndex <= int32(m_fileItems.size() / numberOfFilesPerRow) && bottomIndex >= 0)
+			{
+				if (topIndex < 0)
+				{
+					topIndex = 0;
+				}
+
+				leftIndex = AvoGUI::constrain(int32(m_selectionRectangle.left - PADDING) / int32(m_fileItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfFilesPerRow - 1);
+
+				rightIndex = AvoGUI::constrain(int32(m_selectionRectangle.right - PADDING) / int32(m_fileItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfFilesPerRow - 1);
+
+				for (uint32 y = topIndex; y <= bottomIndex; y++)
+				{
+					for (uint32 x = leftIndex; x <= rightIndex; x++)
+					{
+						uint32 index = y * numberOfFilesPerRow + x;
+						if (index >= m_fileItems.size())
+						{
+							y = bottomIndex + 1;
+							break;
+						}
+						if (m_fileItems[index]->getIsIntersecting(m_selectionRectangle) && !m_fileItems[index]->getIsSelected())
+						{
+							addSelectedItem(m_fileItems[index]);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 //------------------------------
@@ -450,6 +600,8 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 		}
 		else
 		{
+			m_firstSelectedItem = 0;
+			m_lastSelectedItem = 0;
 			m_selectedItems.clear();
 			updateLayout();
 			getParent()->invalidate();
@@ -640,8 +792,8 @@ void FileBrowserItems::updateLayout()
 		{
 			m_directoryItems[a]->setSize(directoryWidth, DIRECTORY_HEIGHT);
 			m_directoryItems[a]->setTopLeft(
-				PADDING + (directoryWidth + MARGIN_HORIZONTAL) * (a % directoriesPerRow) - MARGIN_HORIZONTAL, 
-				m_text_directories->getBottom() + LABEL_MARGIN_BOTTOM + (DIRECTORY_HEIGHT + MARGIN_VERTICAL) * (a / directoriesPerRow) - MARGIN_VERTICAL
+				PADDING + (directoryWidth + MARGIN_HORIZONTAL) * (a % directoriesPerRow), 
+				m_text_directories->getBottom() + LABEL_MARGIN_BOTTOM + (DIRECTORY_HEIGHT + MARGIN_VERTICAL) * (a / directoriesPerRow)
 			);
 		}
 	}
@@ -662,8 +814,8 @@ void FileBrowserItems::updateLayout()
 		{
 			m_fileItems[a]->setSize(fileWidth);
 			m_fileItems[a]->setTopLeft(
-				PADDING + (fileWidth + MARGIN_HORIZONTAL) * (a % filesPerRow) - MARGIN_HORIZONTAL,
-				m_text_files->getBottom() + LABEL_MARGIN_BOTTOM + (fileWidth + MARGIN_VERTICAL) * (a / filesPerRow) - MARGIN_VERTICAL
+				PADDING + (fileWidth + MARGIN_HORIZONTAL) * (a % filesPerRow),
+				m_text_files->getBottom() + LABEL_MARGIN_BOTTOM + (fileWidth + MARGIN_VERTICAL) * (a / filesPerRow)
 			);
 		}
 	}

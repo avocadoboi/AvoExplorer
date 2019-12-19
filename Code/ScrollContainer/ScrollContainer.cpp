@@ -49,12 +49,6 @@ void Scrollbar::handleMouseLeave(AvoGUI::MouseEvent const& p_event)
 }
 void Scrollbar::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	if (m_isDragging && !getIsContaining(p_event.x, p_event.y))
-	{
-		m_isHovering = false;
-		m_opacityAnimationTime = 1.f;
-		queueAnimationUpdate();
-	}
 	m_isDragging = false;
 }
 void Scrollbar::handleMouseMove(AvoGUI::MouseEvent const& p_event)
