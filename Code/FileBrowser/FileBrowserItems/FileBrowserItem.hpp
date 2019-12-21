@@ -143,7 +143,7 @@ public:
 			else 
 			{
 				bool isShiftDown = p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift;
-				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
+				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
 				{
 					if (isShiftDown)
 					{

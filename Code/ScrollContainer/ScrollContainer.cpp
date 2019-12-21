@@ -5,8 +5,9 @@
 float constexpr SCROLLBAR_OPACITY_NORMAL = 0.3f;
 float constexpr SCROLLBAR_OPACITY_HOVERING = 0.6f;
 
-float constexpr SCROLLBAR_WIDTH = 0.5	* 8.f;
-float constexpr SCROLLBAR_MARGIN = 0.5	* 8.f;
+float constexpr SCROLLBAR_WIDTH = 0.5		* 8.f;
+float constexpr SCROLLBAR_MIN_LENGTH = 2	* 8.f;
+float constexpr SCROLLBAR_MARGIN = 0.5		* 8.f;
 
 float constexpr SCROLL_STEP_SIZE = 4	* 8.f;
 
@@ -115,13 +116,13 @@ void ScrollContainer::updateScrollbars()
 	m_verticalScrollbar->setIsVisible(m_content->getHeight() > getHeight());
 	if (m_content->getHeight() > getHeight())
 	{
-		m_verticalScrollbar->setHeight((getHeight() - 2.f* m_scrollbarMargin) * getHeight() / m_content->getHeight());
+		m_verticalScrollbar->setHeight(AvoGUI::max((getHeight() - 2.f* m_scrollbarMargin) * getHeight() / m_content->getHeight(), SCROLLBAR_MIN_LENGTH));
 	}
 
 	m_horizontalScrollbar->setIsVisible(m_content->getWidth() > getWidth());
 	if (m_content->getWidth() > getWidth())
 	{
-		m_horizontalScrollbar->setWidth((getWidth() - 2.f* m_scrollbarMargin) * getWidth() / m_content->getWidth());
+		m_horizontalScrollbar->setWidth(AvoGUI::max((getWidth() - 2.f* m_scrollbarMargin) * getWidth() / m_content->getWidth(), SCROLLBAR_MIN_LENGTH));
 	}
 }
 
@@ -190,11 +191,11 @@ void ScrollContainer::setVerticalScrollPosition(float p_position)
 
 void ScrollContainer::moveHorizontalScrollbar(float p_offset)
 {
-	setHorizontalScrollPosition((m_horizontalScrollbar->getLeft() - m_scrollbarMargin + p_offset) * m_content->getWidth() / (getWidth() - 2.f * SCROLLBAR_MARGIN));
+	setHorizontalScrollPosition((m_horizontalScrollbar->getLeft() - m_scrollbarMargin + p_offset) * (m_content->getWidth() - getWidth()) / (getWidth() - 2.f * m_scrollbarMargin - m_horizontalScrollbar->getWidth()));
 }
 void ScrollContainer::moveVerticalScrollbar(float p_offset)
 {
-	setVerticalScrollPosition((m_verticalScrollbar->getTop() - m_scrollbarMargin + p_offset) * m_content->getHeight() / (getHeight() - 2.f * SCROLLBAR_MARGIN));
+	setVerticalScrollPosition((m_verticalScrollbar->getTop() - m_scrollbarMargin + p_offset) * (m_content->getHeight() - getHeight()) / (getHeight() - 2.f * m_scrollbarMargin - m_verticalScrollbar->getHeight()));
 }
 
 //------------------------------

@@ -2,14 +2,14 @@
 
 //------------------------------
 
-float constexpr ACTION_MENU_ITEM_HEIGHT = 4.f			*8.f;
-float constexpr ACTION_MENU_ITEM_LEFT_PADDING = 2.f		*8.f;
-float constexpr ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	*8.f;
+float constexpr ACTION_MENU_ITEM_HEIGHT = 4.f			* 8.f;
+float constexpr ACTION_MENU_ITEM_LEFT_PADDING = 2.f		* 8.f;
+float constexpr ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	* 8.f;
 
-float constexpr ACTION_MENU_MIN_PARENT_MARGIN = 3.f		*8.f;
-float constexpr ACTION_MENU_VERTICAL_PADDING = 1.f		*8.f;
+float constexpr ACTION_MENU_MIN_PARENT_MARGIN = 3.f		* 8.f;
+float constexpr ACTION_MENU_VERTICAL_PADDING = 1.f		* 8.f;
 
-float constexpr ACTION_MENU_ANIMATION_SPEED = 0.1f;
+float constexpr ACTION_MENU_ANIMATION_SPEED = 0.05f;
 
 //
 // Class ActionMenuItem
@@ -122,7 +122,7 @@ void ActionMenu::updateAnimations()
 		}
 	}
 
-	setOpacity(AvoGUI::max(m_openAnimationValue * 7.f - 6.f, 0.f));
+	setOpacity(1.f - AvoGUI::square(1.f - m_openAnimationValue));
 
 	invalidate();
 }

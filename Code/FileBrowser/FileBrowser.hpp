@@ -5,6 +5,7 @@
 
 #undef DialogBox
 #include "../DialogBox/DialogBox.hpp"
+#include "../ActionMenu/ActionMenu.hpp"
 
 //------------------------------
 
@@ -18,7 +19,9 @@ class FileBrowserItem;
 
 class FileBrowser :
 	public AvoGUI::View,
-	public DialogBoxListener
+	public DialogBoxListener,
+	public AvoGUI::ButtonListener,
+	public ActionMenuListener
 {
 private:
 	AvoExplorer* m_avoExplorer;
@@ -26,6 +29,7 @@ private:
 	FileBrowserPathEditor* m_pathEditor;
 	AvoGUI::Button* m_button_changeView;
 	AvoGUI::Button* m_button_add;
+	ActionMenu* m_actionMenu_add;
 
 	FileBrowserItems* m_items;
 
@@ -38,6 +42,14 @@ public:
 	~FileBrowser()
 	{
 	}
+
+	//------------------------------
+
+	void handleButtonClick(AvoGUI::Button* p_button) override
+	{
+		m_actionMenu_add->open(p_button->getCenter());
+	}
+	void handleActionMenuItemChoice(std::string const& p_action, uint32 p_index) override;
 
 	//------------------------------
 

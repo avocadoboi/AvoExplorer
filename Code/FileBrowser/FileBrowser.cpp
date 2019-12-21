@@ -2,11 +2,12 @@
 
 #include "FileBrowserPathEditor/FileBrowserPathEditor.hpp"
 #include "FileBrowserItems/FileBrowserItems.hpp"
+#include "../utilities.hpp"
 
 //------------------------------
 
-float constexpr FILE_BROWSER_PADDING_HORIZONTAL = 2			* 8.f;
-float constexpr FILE_BROWSER_PADDING_TOP = 2				* 8.f;
+float constexpr PADDING_HORIZONTAL = 2	* 8.f;
+float constexpr PADDING_TOP = 2			* 8.f;
 
 //------------------------------
 
@@ -19,10 +20,31 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 	m_pathEditor = new FileBrowserPathEditor(this);
 
+	m_button_add = new AvoGUI::Button(this, MaterialIcons::ADD, AvoGUI::Button::Emphasis::High, true);
+	m_button_add->setSize(36.f);
+	m_button_add->setCornerRadius(m_button_add->getWidth() * 0.5f);
+	m_button_add->getText()->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+	m_button_add->getText()->setFontSize(24.f);
+	m_button_add->getText()->fitSizeToText();
+	m_button_add->getText()->setCenter(m_button_add->getSize() * 0.5f);
+	m_button_add->addButtonListener(this);
+
+	m_actionMenu_add = new ActionMenu(this);
+	m_actionMenu_add->addAction("File", "Ctrl N");
+	m_actionMenu_add->addAction("Directory", "Ctrl Shift N");
+	m_actionMenu_add->addActionMenuListener(this);
+
 	ScrollContainer* scrollContainer = new ScrollContainer(this);
 	scrollContainer->enableMouseEvents();
 	m_items = new FileBrowserItems(scrollContainer, this);
 	scrollContainer->setContentView(m_items);
+}
+
+//------------------------------
+
+void FileBrowser::handleActionMenuItemChoice(std::string const& p_action, uint32 p_index)
+{
+
 }
 
 //------------------------------
@@ -78,8 +100,11 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 
 void FileBrowser::handleSizeChange()
 {
-	m_pathEditor->setTopLeft(FILE_BROWSER_PADDING_HORIZONTAL, FILE_BROWSER_PADDING_TOP);
-	m_pathEditor->setWidth(getRight() - FILE_BROWSER_PADDING_HORIZONTAL * 2.f);
+	float buttonMargin = (2.f * PADDING_TOP + m_pathEditor->getHeight() - m_button_add->getHeight()) * 0.5f;
+	m_button_add->setTopRight(getWidth() - PADDING_HORIZONTAL, buttonMargin);
+
+	m_pathEditor->setTopLeft(PADDING_HORIZONTAL, PADDING_TOP);
+	m_pathEditor->setRight(m_button_add->getLeft() - PADDING_HORIZONTAL, false);
 
 	m_items->getParent()->setBounds(0, m_pathEditor->getBottom(), getWidth(), getHeight());
 	m_items->updateLayout();

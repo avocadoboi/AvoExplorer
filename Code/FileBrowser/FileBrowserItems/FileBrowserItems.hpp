@@ -58,6 +58,7 @@ private:
 	IImageList2* m_windowsDirectoryIconList;
 	IImageList2* m_windowsFileIconList;
 
+	// Icon cache
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedFileIcons;
 	std::vector<FileBrowserItem*> m_itemsToLoadIconFor;
@@ -133,6 +134,11 @@ public:
 	void removeSelectedItem(FileBrowserItem* p_item);
 	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false);
 	void deselectAllItems();
+
+	//------------------------------
+
+	void letUserAddDirectory();
+	void letUserAddFile();
 
 	//------------------------------
 

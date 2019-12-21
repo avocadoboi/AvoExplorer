@@ -52,6 +52,8 @@ void AvoExplorer::createContent()
 	setThemeColor("selection", Colors::selection);
 	setThemeColor("primary", Colors::primary);
 	setThemeColor("primary on background", Colors::primaryOnBackground);
+	setThemeColor("secondary", Colors::secondary);
+	setThemeColor("on secondary", Colors::onSecondary);
 
 	setThemeValue("hover animation speed", 0.4f);
 	setThemeValue("position animation speed", 0.1f);

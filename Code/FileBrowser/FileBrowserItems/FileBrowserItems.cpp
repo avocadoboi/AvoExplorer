@@ -406,19 +406,25 @@ void FileBrowserItems::deselectAllItems()
 
 void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 {
-	if (m_isMouseOnBackground && p_event.modifierKeys == AvoGUI::ModifierKeyFlags::LeftMouse)
+	if (m_isMouseOnBackground && p_event.modifierKeys & AvoGUI::ModifierKeyFlags::LeftMouse)
 	{
-		deselectAllItems();
+		if (!(p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control))
+		{
+			deselectAllItems();
+		}
+		m_isDraggingSelectionRectangle = true;
+		m_selectionRectangle.set(p_event.x, p_event.y, p_event.x, p_event.y);
+		m_selectionRectangleAnchor.set(p_event.x, p_event.y);
+		getGui()->setKeyboardFocus(this);
 	}
-	m_isDraggingSelectionRectangle = true;
-	m_selectionRectangle.set(p_event.x, p_event.y, p_event.x, p_event.y);
-	m_selectionRectangleAnchor.set(p_event.x, p_event.y);
-	getGui()->setKeyboardFocus(this);
 }
 void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	m_isDraggingSelectionRectangle = false;
-	getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+	if (m_isDraggingSelectionRectangle)
+	{
+		m_isDraggingSelectionRectangle = false;
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+	}
 }
 void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 {

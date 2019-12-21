@@ -109,7 +109,7 @@ private:
 	std::vector<ActionMenuListener*> m_actionMenuListeners;
 
 public:
-	ActionMenu(AvoGUI::View* p_parent, float p_width = 200.f) :
+	ActionMenu(AvoGUI::View* p_parent, float p_width = 160.f) :
 		View(p_parent, AvoGUI::Rectangle<float>(0.f, 0.f, p_width, 0.f)),
 		m_openAnimationTime(0.f), m_openAnimationValue(0.f),
 		m_targetBounds(0.f, 0.f, p_width, 0.f)
@@ -195,7 +195,7 @@ public:
 
 	void handleGlobalMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (m_openAnimationTime >= 1.f && !getIsContaining(p_event.x, p_event.y))
+		if (m_openAnimationTime >= 1.f && !getIsContainingAbsolute(p_event.x, p_event.y))
 		{
 			setIsVisible(false);
 			invalidate();
