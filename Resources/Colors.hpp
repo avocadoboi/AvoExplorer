@@ -41,4 +41,5 @@ namespace Colors
 
 	AvoGUI::Color const dialogBoxBackground(0.1f);
 	AvoGUI::Color const dialogBoxOnBackground(1.f);
+	AvoGUI::Color const dialogBoxOutline(0.5f);
 };

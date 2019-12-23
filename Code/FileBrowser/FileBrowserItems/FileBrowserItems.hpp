@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../FileBrowser.hpp"
+#include "../../DialogBox/InputDialogBox.hpp"
 
 //------------------------------
 
@@ -34,8 +35,8 @@ private:
 		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
 	*/
 	std::vector<FileBrowserItem*> m_selectedItems;
-	FileBrowserItem* m_firstSelectedItem;
-	FileBrowserItem* m_lastSelectedItem;
+	FileBrowserItem* m_firstSelectedItem = 0;
+	FileBrowserItem* m_lastSelectedItem = 0;
 
 	AvoGUI::Rectangle<float> m_selectionRectangle;
 	AvoGUI::Point<float> m_selectionRectangleAnchor;
@@ -43,20 +44,20 @@ private:
 	
 	bool m_isMouseOnBackground;
 
-	AvoGUI::Text* m_text_directories;
-	AvoGUI::Text* m_text_files;
-	AvoGUI::Text* m_text_directoryIsEmpty;
+	AvoGUI::Text* m_text_directories = 0;
+	AvoGUI::Text* m_text_files = 0;
+	AvoGUI::Text* m_text_directoryIsEmpty = 0;
 
-	AvoGUI::Geometry* m_fileGeometry;
-	AvoGUI::Geometry* m_directoryGeometry;
-	AvoGUI::LinearGradient* m_fileNameEndGradient;
+	AvoGUI::Geometry* m_fileGeometry = 0;
+	AvoGUI::Geometry* m_directoryGeometry = 0;
+	AvoGUI::LinearGradient* m_fileNameEndGradient = 0;
 
 	//------------------------------
 	// Icon loading
 
-	IThumbnailCache* m_thumbnailCache;
-	IImageList2* m_windowsDirectoryIconList;
-	IImageList2* m_windowsFileIconList;
+	IThumbnailCache* m_thumbnailCache = 0;
+	IImageList2* m_windowsDirectoryIconList = 0;
+	IImageList2* m_windowsFileIconList = 0;
 
 	// Icon cache
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
@@ -86,13 +87,8 @@ private:
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
-		m_firstSelectedItem(0),
-		m_lastSelectedItem(0),
 		m_isDraggingSelectionRectangle(false),
 		m_isMouseOnBackground(false),
-		m_text_directories(0), m_text_files(0),
-		m_fileGeometry(0), m_directoryGeometry(0), m_fileNameEndGradient(0),
-		m_thumbnailCache(0), m_windowsDirectoryIconList(0), m_windowsFileIconList(0),
 		m_needsToLoadMoreIcons(false), 
 		m_needsToChangeDirectory(false),
 		m_needsToExitIconLoadingThread(false)
@@ -137,8 +133,21 @@ public:
 
 	//------------------------------
 
-	void letUserAddDirectory();
-	void letUserAddFile();
+	void letUserAddDirectory()
+	{
+		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
+		//dialog->setId(Ids::createDirectoryDialogBox);
+		dialog->detachFromParent();
+		getGui()->getWindow()->disableUserInteraction();
+	}
+	void letUserAddFile()
+	{
+		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
+		//dialog->setId(Ids::createFileDialogBox);
+		dialog->detachFromParent();
+		getGui()->getWindow()->disableUserInteraction();
+
+	}
 
 	//------------------------------
 

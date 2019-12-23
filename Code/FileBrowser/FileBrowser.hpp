@@ -3,8 +3,7 @@
 #include "../AvoExplorer.hpp"
 #include "../ScrollContainer/ScrollContainer.hpp"
 
-#undef DialogBox
-#include "../DialogBox/DialogBox.hpp"
+#include "../DialogBox/ChoiceDialogBox.hpp"
 #include "../ActionMenu/ActionMenu.hpp"
 
 //------------------------------
@@ -19,21 +18,19 @@ class FileBrowserItem;
 
 class FileBrowser :
 	public AvoGUI::View,
-	public DialogBoxListener,
+	public ChoiceDialogBoxListener,
 	public AvoGUI::ButtonListener,
 	public ActionMenuListener
 {
 private:
 	AvoExplorer* m_avoExplorer;
 
-	FileBrowserPathEditor* m_pathEditor;
-	AvoGUI::Button* m_button_changeView;
-	AvoGUI::Button* m_button_add;
-	ActionMenu* m_actionMenu_add;
+	FileBrowserPathEditor* m_pathEditor = 0;
+	AvoGUI::Button* m_button_changeView = 0;
+	AvoGUI::Button* m_button_add = 0;
+	ActionMenu* m_actionMenu_add = 0;
 
-	FileBrowserItems* m_items;
-
-	DialogBox* m_dialog;
+	FileBrowserItems* m_items = 0;
 
 	std::filesystem::path m_path;
 
@@ -53,11 +50,11 @@ public:
 
 	//------------------------------
 
-	void handleDialogBoxClose()
+	void handleChoiceDialogBoxClose(ChoiceDialogBox* p_dialog) override
 	{
 		getGui()->getWindow()->enableUserInteraction();
 	}
-	void handleDialogBoxChoice(std::string const& p_text);
+	void handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string const& p_text) override;
 
 	void setWorkingDirectory(std::filesystem::path p_path);
 	std::filesystem::path const& getPath()

@@ -6,35 +6,37 @@
 
 //------------------------------
 
-class DialogBoxListener
+class ChoiceDialogBox;
+
+class ChoiceDialogBoxListener
 {
 public:
-	virtual void handleDialogBoxChoice(std::string const& p_choice) {}
-	virtual void handleDialogBoxClose() {}
+	virtual void handleDialogBoxChoice(ChoiceDialogBox* p_dialogBox, std::string const& p_choice) {}
+	virtual void handleChoiceDialogBoxClose(ChoiceDialogBox* p_dialogBox) {}
 };
 
 //------------------------------
 
-class DialogBox : 
+class ChoiceDialogBox : 
 	public AvoGUI::Gui,
 	public AvoGUI::ButtonListener
 {
 private:
-	TitleBar* m_titleBar;
+	TitleBar* m_titleBar = 0;
 
-	AvoGUI::Text* m_titleText;
-	AvoGUI::Text* m_text;
+	AvoGUI::Text* m_titleText = 0;
+	AvoGUI::Text* m_messageText = 0;
 	char const* m_titleTextString;
-	char const* m_textString;
+	char const* m_messageTextString;
 
-	DialogBoxListener* m_listener;
+	ChoiceDialogBoxListener* m_listener = 0;
 
 	std::vector<AvoGUI::Button*> m_buttons;
 	void positionButtons()
 	{
 		if (m_buttons.size() > 0)
 		{
-			float padding = 0.5f * (getHeight() - m_text->getBottom() - m_buttons[0]->getHeight());
+			float padding = 0.5f * (getHeight() - m_messageText->getBottom() - m_buttons[0]->getHeight());
 			m_buttons.back()->setBottomRight(getWidth() - padding, getHeight() - padding);
 			m_buttons.back()->invalidate();
 			for (int32 a = m_buttons.size() - 2; a >= 0; a--)
@@ -46,18 +48,18 @@ private:
 	}
 
 public:
-	DialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_text);
-	~DialogBox()
+	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
+	~ChoiceDialogBox()
 	{
 		if (m_listener)
 		{
-			m_listener->handleDialogBoxClose();
+			m_listener->handleChoiceDialogBoxClose(this);
 		}
 	}
 
 	//------------------------------
 
-	void setDialogBoxListener(DialogBoxListener* p_listener)
+	void setDialogBoxListener(ChoiceDialogBoxListener* p_listener)
 	{
 		m_listener = p_listener;
 	}
@@ -65,7 +67,7 @@ public:
 	{
 		if (m_listener)
 		{
-			m_listener->handleDialogBoxChoice(p_button->getString());
+			m_listener->handleDialogBoxChoice(this, p_button->getString());
 			getWindow()->close();
 		}
 	}
@@ -103,10 +105,10 @@ public:
 		m_titleText = context->createText(m_titleTextString, 22.f);
 		m_titleText->setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
 
-		m_text = context->createText(m_textString, 14.f, AvoGUI::Rectangle<float>(m_titleText->getLeft(), m_titleText->getBottom() + 20.f, getRight() - m_titleText->getLeft(), getBottom() - 50.f));
-		m_text->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
-		m_text->setFontWeight((AvoGUI::FontWeight)400);
-		m_text->setLineHeight(1.1f);
+		m_messageText = context->createText(m_messageTextString, 14.f, AvoGUI::Rectangle<float>(m_titleText->getLeft(), m_titleText->getBottom() + 20.f, getRight() - m_titleText->getLeft(), getBottom() - 50.f));
+		m_messageText->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
+		m_messageText->setFontWeight((AvoGUI::FontWeight)400);
+		m_messageText->setLineHeight(1.1f);
 	}
 
 	void handleSizeChange() override
@@ -129,11 +131,11 @@ public:
 		p_context->setColor(getThemeColor("on background"));
 		p_context->drawText(m_titleText);
 		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.9));
-		p_context->drawText(m_text);
+		p_context->drawText(m_messageText);
 	}
 	void drawOverlay(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.1));
+		p_context->setColor(Colors::dialogBoxOutline);
 		p_context->strokeRectangle(getBounds());
 	}
 };

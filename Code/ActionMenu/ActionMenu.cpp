@@ -106,21 +106,39 @@ void ActionMenu::updateAnimations()
 		m_targetBounds.right,
 		AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
 	);
-	float itemsTop = m_targetBounds.top - getTop() + ACTION_MENU_VERTICAL_PADDING;
-	if (getChild(0)->getTop() != itemsTop)
+	for (uint32_t a = 0; a < getNumberOfChildren(); a++)
 	{
-		for (uint32_t a = 0; a < getNumberOfChildren(); a++)
+		if (a)
 		{
-			if (a)
+			getChild(a)->setTop(getChild(a-1)->getBottom());
+		}
+		else
+		{
+			if (m_targetBounds.top != m_anchor.y)
 			{
-				getChild(a)->setTop(getChild(a-1)->getBottom());
+				getChild(a)->setTop(ACTION_MENU_VERTICAL_PADDING);
 			}
 			else
 			{
-				getChild(a)->setTop(itemsTop);
+				getChild(a)->setTop(getHeight() - ACTION_MENU_VERTICAL_PADDING - getNumberOfChildren()*ACTION_MENU_ITEM_HEIGHT);
 			}
 		}
 	}
+	//float itemsTop = m_targetBounds.top - getTop() + ACTION_MENU_VERTICAL_PADDING;
+	//if (getChild(0)->getTop() != itemsTop)
+	//{
+	//	for (uint32_t a = 0; a < getNumberOfChildren(); a++)
+	//	{
+	//		if (a)
+	//		{
+	//			getChild(a)->setTop(getChild(a-1)->getBottom());
+	//		}
+	//		else
+	//		{
+	//			getChild(a)->setTop(itemsTop);
+	//		}
+	//	}
+	//}
 
 	setOpacity(1.f - AvoGUI::square(1.f - m_openAnimationValue));
 

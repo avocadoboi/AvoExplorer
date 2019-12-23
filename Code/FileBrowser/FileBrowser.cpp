@@ -12,9 +12,7 @@ float constexpr PADDING_TOP = 2			* 8.f;
 //------------------------------
 
 FileBrowser::FileBrowser(AvoExplorer* p_parent) :
-	View(p_parent), m_avoExplorer(p_parent),
-	m_pathEditor(0), m_button_changeView(0), m_button_add(0),
-	m_items(0), m_dialog(0)
+	View(p_parent), m_avoExplorer(p_parent)
 {
 	enableMouseEvents();
 
@@ -30,8 +28,8 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 	m_button_add->addButtonListener(this);
 
 	m_actionMenu_add = new ActionMenu(this);
-	m_actionMenu_add->addAction("File", "Ctrl N");
-	m_actionMenu_add->addAction("Directory", "Ctrl Shift N");
+	m_actionMenu_add->addAction(Strings::file, "Ctrl N");
+	m_actionMenu_add->addAction(Strings::directory, "Ctrl Shift N");
 	m_actionMenu_add->addActionMenuListener(this);
 
 	ScrollContainer* scrollContainer = new ScrollContainer(this);
@@ -44,12 +42,19 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 void FileBrowser::handleActionMenuItemChoice(std::string const& p_action, uint32 p_index)
 {
-
+	if (p_action == Strings::directory)
+	{
+		m_items->letUserAddDirectory();
+	}
+	else
+	{
+		m_items->letUserAddFile();
+	}
 }
 
 //------------------------------
 
-void FileBrowser::handleDialogBoxChoice(std::string const& p_text)
+void FileBrowser::handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string const& p_text)
 {
 	if (p_text == Strings::restart)
 	{
@@ -80,11 +85,12 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 	{
 		if (error.code().value() == 5)
 		{
-			m_dialog = new DialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogText);
-			m_dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
-			m_dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-			m_dialog->setDialogBoxListener(this);
-			m_dialog->detachFromParent();
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogMessage);
+			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->setDialogBoxListener(this);
+			dialog->setId(Ids::accessDeniedDialogBox);
+			dialog->detachFromParent();
 			getGui()->getWindow()->disableUserInteraction();
 			return;
 		}

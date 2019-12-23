@@ -4,15 +4,15 @@
 
 //------------------------------
 
-float constexpr PADDING_TOP = 2				* 8.f;
-float constexpr PADDING = 3					* 8.f;
-float constexpr MARGIN_HORIZONTAL = 1		* 8.f;
-float constexpr MARGIN_VERTICAL = 1			* 8.f;
-float constexpr LABEL_MARGIN_TOP = 3		* 8.f;
-float constexpr LABEL_MARGIN_BOTTOM = 2		* 8.f;
-float constexpr MIN_FILE_WIDTH = 20			* 8.f;
-float constexpr MIN_DIRECTORY_WIDTH = 20	* 8.f;
-float constexpr DIRECTORY_HEIGHT = 6		* 8.f;
+constexpr float PADDING_TOP = 2				* 8.f;
+constexpr float PADDING = 3					* 8.f;
+constexpr float MARGIN_HORIZONTAL = 1		* 8.f;
+constexpr float MARGIN_VERTICAL = 1			* 8.f;
+constexpr float LABEL_MARGIN_TOP = 3		* 8.f;
+constexpr float LABEL_MARGIN_BOTTOM = 2		* 8.f;
+constexpr float MIN_FILE_WIDTH = 20			* 8.f;
+constexpr float MIN_DIRECTORY_WIDTH = 20	* 8.f;
+constexpr float DIRECTORY_HEIGHT = 6		* 8.f;
 
 //------------------------------
 
