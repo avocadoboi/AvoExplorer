@@ -11,14 +11,15 @@ class InputDialogBox;
 class InputDialogBoxListener
 {
 public:
-	virtual void handleDialogBoxInput(InputDialogBox* p_dialogBox, std::string const& p_choice) {}
+	virtual void handleDialogBoxInput(InputDialogBox* p_dialogBox, std::string const& p_input) {}
 	virtual void handleInputDialogBoxClose(InputDialogBox* p_dialogBox) {}
 };
 
 //------------------------------
 
 class InputDialogBox :
-	public AvoGUI::Gui
+	public AvoGUI::Gui,
+	public AvoGUI::ButtonListener
 {
 private:
 	TitleBar* m_titleBar = 0;
@@ -31,12 +32,40 @@ private:
 	AvoGUI::TextField* m_inputField = 0;
 	AvoGUI::Button* m_okButton = 0;
 
+	InputDialogBoxListener* m_listener = 0;
+
 public:
 	InputDialogBox(AvoGUI::Gui* p_parentGui, char const* p_title, char const* p_message);
+	~InputDialogBox()
+	{
+		if (m_listener)
+		{
+			m_listener->handleInputDialogBoxClose(this);
+		}
+	}
+
+	//------------------------------
 
 	void createContent();
 
 	void handleSizeChange();
+
+	//------------------------------
+
+	void setInputDialogBoxListener(InputDialogBoxListener* p_listener)
+	{
+		m_listener = p_listener;
+	}
+
+	void handleButtonClick(AvoGUI::Button* p_button) override
+	{
+		getParent()->getWindow()->enableUserInteraction();
+		if (m_listener)
+		{
+			m_listener->handleDialogBoxInput(this, m_inputField->getString());
+		}
+		getWindow()->close();
+	}
 
 	//------------------------------
 

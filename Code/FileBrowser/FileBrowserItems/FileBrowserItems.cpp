@@ -2,6 +2,8 @@
 
 #include "FileBrowserItem.hpp"
 
+#include <fstream>
+
 //------------------------------
 
 constexpr float PADDING_TOP = 2				* 8.f;
@@ -116,6 +118,7 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_directoryItems.size())
 		{
+			std::lock_guard<std::mutex> lock(m_directoryItemsMutex);
 			int32 numberOfColumns = getNumberOfDirectoriesPerRow();
 			int32 firstVisibleDirectoryItemIndex = numberOfColumns * floor((-getTop() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
 			int32 lastVisibleDirectoryItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
@@ -131,6 +134,7 @@ void FileBrowserItems::thread_loadIcons()
 
 		if (m_fileItems.size())
 		{
+			std::lock_guard<std::mutex> lock(m_fileItemsMutex);
 			int32 numberOfColumns = getNumberOfFilesPerRow();
 			int32 firstVisibleFileItemIndex = numberOfColumns * floor((-getTop() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
 			int32 lastVisibleFileItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
@@ -404,6 +408,41 @@ void FileBrowserItems::deselectAllItems()
 
 //------------------------------
 
+void FileBrowserItems::createFile(std::string const& p_name)
+{
+	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	if (std::filesystem::exists(path))
+	{
+		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::fileAlreadyExistsDialogTitle, Strings::fileAlreadyExistsDialogMessage);
+		dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
+		dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+		dialog->detachFromParent();
+	}
+	
+	std::ofstream file(path.native());
+	file.close();
+	if (file.fail())
+	{
+		std::cout << strerror(errno) << '\n';
+		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileFailedDialogTitle, Strings::newFileFailedDialogMessage);
+		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+		dialog->detachFromParent();
+	}
+	else
+	{
+		//m_fileItemsMutex.lock();
+		//for (uint32 a = 0; a < m_fileItems.size(); a++)
+		//{
+		//	if (getIsPathLessThan(path, m_fileItems[a]->getPath()))
+		//	{
+		//	}
+		//}
+		//m_fileItemsMutex.unlock();
+	}
+}
+
+//------------------------------
+
 void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 {
 	if (m_isMouseOnBackground && p_event.modifierKeys & AvoGUI::ModifierKeyFlags::LeftMouse)
@@ -451,7 +490,6 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			m_selectionRectangle.top = m_selectionRectangleAnchor.y;
 			m_selectionRectangle.bottom = p_event.y;
 		}
-
 		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
 
 		if (!getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
@@ -463,41 +501,6 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 		int32 rightIndex = 0;
 		int32 topIndex = 0;
 		int32 bottomIndex = 0;
-		if (m_directoryItems.size())
-		{
-			uint32 numberOfDirectoriesPerRow = getNumberOfDirectoriesPerRow();
-			topIndex = (m_selectionRectangle.top - m_directoryItems[0]->getTop()) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
-			if (topIndex <= m_directoryItems.size() / numberOfDirectoriesPerRow)
-			{
-				if (topIndex < 0)
-				{
-					topIndex = 0;
-				}
-
-				bottomIndex = int32(m_selectionRectangle.bottom - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
-
-				leftIndex = AvoGUI::constrain(int32(m_selectionRectangle.left - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfDirectoriesPerRow - 1);
-
-				rightIndex = AvoGUI::constrain(int32(m_selectionRectangle.right - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfDirectoriesPerRow - 1);
-
-				for (uint32 y = topIndex; y <= bottomIndex; y++)
-				{
-					for (uint32 x = leftIndex; x <= rightIndex; x++)
-					{
-						uint32 index = y * numberOfDirectoriesPerRow + x;
-						if (index >= m_directoryItems.size())
-						{
-							y = bottomIndex + 1;
-							break;
-						}
-						if (m_directoryItems[index]->getIsIntersecting(m_selectionRectangle) && !m_directoryItems[index]->getIsSelected())
-						{
-							addSelectedItem(m_directoryItems[index]);
-						}
-					}
-				}
-			}
-		}
 		if (m_directoryItems.size())
 		{
 			uint32 numberOfDirectoriesPerRow = getNumberOfDirectoriesPerRow();

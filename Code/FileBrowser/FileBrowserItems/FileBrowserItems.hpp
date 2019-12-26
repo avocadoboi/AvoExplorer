@@ -22,7 +22,8 @@ class FileBrowserItem;
 
 class FileBrowserItems :
 	public AvoGUI::View,
-	public AvoGUI::KeyboardListener
+	public AvoGUI::KeyboardListener,
+	public InputDialogBoxListener
 {
 private:
 	FileBrowser* m_fileBrowser;
@@ -70,7 +71,8 @@ private:
 
 	bool m_needsToChangeDirectory;
 
-	std::mutex m_itemsMutex;
+	std::mutex m_fileItemsMutex;
+	std::mutex m_directoryItemsMutex;
 	std::atomic<bool> m_needsToExitIconLoadingThread;
 	std::thread m_iconLoadingThread;
 	void thread_loadIcons();
@@ -133,20 +135,38 @@ public:
 
 	//------------------------------
 
+	void createFile(std::string const& p_name);
+	void createDirectory(std::string const& p_name) { }
+
 	void letUserAddDirectory()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
-		//dialog->setId(Ids::createDirectoryDialogBox);
+		dialog->setId(Ids::createDirectoryDialogBox);
+		dialog->setInputDialogBoxListener(this);
 		dialog->detachFromParent();
-		getGui()->getWindow()->disableUserInteraction();
 	}
 	void letUserAddFile()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
-		//dialog->setId(Ids::createFileDialogBox);
+		dialog->setId(Ids::createFileDialogBox);
+		dialog->setInputDialogBoxListener(this);
 		dialog->detachFromParent();
-		getGui()->getWindow()->disableUserInteraction();
 
+	}
+	void handleDialogBoxInput(InputDialogBox* p_dialog, std::string const& p_input) override
+	{
+		switch (p_dialog->getId())
+		{
+		case Ids::createFileDialogBox:
+		{
+			createFile(p_input);
+			break;
+		}
+		case Ids::createDirectoryDialogBox:
+		{
+			break;
+		}
+		}
 	}
 
 	//------------------------------

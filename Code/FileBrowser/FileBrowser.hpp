@@ -50,10 +50,6 @@ public:
 
 	//------------------------------
 
-	void handleChoiceDialogBoxClose(ChoiceDialogBox* p_dialog) override
-	{
-		getGui()->getWindow()->enableUserInteraction();
-	}
 	void handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string const& p_text) override;
 
 	void setWorkingDirectory(std::filesystem::path p_path);

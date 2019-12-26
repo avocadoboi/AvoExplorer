@@ -52,21 +52,21 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 
 	if (m_isFile)
 	{
-		m_name = p_path.filename();
+		m_name = p_path.filename().u8string();
 	}
 	else
 	{
 		if (p_path.root_path() == p_path)
 		{
-			m_name = p_path.root_name();
+			m_name = p_path.root_name().u8string();
 		}
 		else if (p_path.has_filename())
 		{
-			m_name = p_path.filename();
+			m_name = p_path.filename().u8string();
 		}
 		else if (p_path.has_parent_path())
 		{
-			m_name = p_path.parent_path().filename();
+			m_name = p_path.parent_path().filename().u8string();
 		}
 	}
 
@@ -77,7 +77,7 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 
 	//------------------------------
 
-	m_text_name = getGui()->getDrawingContext()->createText(m_name.u8string().c_str(), 11.f);
+	m_text_name = getGui()->getDrawingContext()->createText(m_name.c_str(), 11.f);
 	m_text_name->setIsTopTrimmed(true);
 	m_text_name->fitHeightToText();
 

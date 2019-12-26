@@ -88,10 +88,9 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogMessage);
 			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
 			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-			dialog->setDialogBoxListener(this);
+			dialog->setChoiceDialogBoxListener(this);
 			dialog->setId(Ids::accessDeniedDialogBox);
 			dialog->detachFromParent();
-			getGui()->getWindow()->disableUserInteraction();
 			return;
 		}
 	}

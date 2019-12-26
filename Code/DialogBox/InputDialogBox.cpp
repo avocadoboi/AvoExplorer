@@ -11,11 +11,13 @@ constexpr float INPUT_PADDING = 3.f * 8.f;
 InputDialogBox::InputDialogBox(AvoGUI::Gui* p_parentGui, char const* p_title, char const* p_message) :
 	m_titleTextString(p_title), m_messageTextString(p_message)
 {
-	create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder);
+	create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
 }
 
 void InputDialogBox::createContent()
 {
+	getParent()->getWindow()->disableUserInteraction();
+
 	enableMouseEvents();
 	setThemeColor("background", Colors::dialogBoxBackground);
 	setThemeColor("on background", Colors::dialogBoxOnBackground);
@@ -44,6 +46,7 @@ void InputDialogBox::createContent()
 
 	m_okButton = new AvoGUI::Button(this, Strings::ok, AvoGUI::Button::Emphasis::High);
 	m_okButton->setCenterY(m_inputField->getCenterY());
+	m_okButton->addButtonListener(this);
 	setHeight(m_inputField->getBottom() + INPUT_PADDING);
 }
 

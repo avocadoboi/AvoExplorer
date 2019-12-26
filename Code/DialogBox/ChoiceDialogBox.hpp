@@ -32,20 +32,7 @@ private:
 	ChoiceDialogBoxListener* m_listener = 0;
 
 	std::vector<AvoGUI::Button*> m_buttons;
-	void positionButtons()
-	{
-		if (m_buttons.size() > 0)
-		{
-			float padding = 0.5f * (getHeight() - m_messageText->getBottom() - m_buttons[0]->getHeight());
-			m_buttons.back()->setBottomRight(getWidth() - padding, getHeight() - padding);
-			m_buttons.back()->invalidate();
-			for (int32 a = m_buttons.size() - 2; a >= 0; a--)
-			{
-				m_buttons[a]->setBottomRight(m_buttons[a + 1]->getLeft() - padding, getHeight() - padding);
-				m_buttons[a]->invalidate();
-			}
-		}
-	}
+	void positionButtons();
 
 public:
 	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
@@ -59,17 +46,18 @@ public:
 
 	//------------------------------
 
-	void setDialogBoxListener(ChoiceDialogBoxListener* p_listener)
+	void setChoiceDialogBoxListener(ChoiceDialogBoxListener* p_listener)
 	{
 		m_listener = p_listener;
 	}
 	void handleButtonClick(AvoGUI::Button* p_button)
 	{
+		getParent()->getWindow()->enableUserInteraction();
 		if (m_listener)
 		{
 			m_listener->handleDialogBoxChoice(this, p_button->getString());
-			getWindow()->close();
 		}
+		getWindow()->close();
 	}
 
 	//------------------------------
@@ -77,21 +65,14 @@ public:
 	/*
 		Added in the order the buttons are shown, from left to right.
 	*/
-	void addButton(char const* p_text, AvoGUI::Button::Emphasis p_emphasis)
-	{
-		// Will be called from other threads.
-		excludeAnimationThread();
-		AvoGUI::Button* button = new AvoGUI::Button(this, p_text, p_emphasis);
-		button->addButtonListener(this);
-		m_buttons.push_back(button);
-		positionButtons();
-		includeAnimationThread();
-	}
+	void addButton(char const* p_text, AvoGUI::Button::Emphasis p_emphasis);
 
 	//------------------------------
 
 	void createContent() override
 	{
+		getParent()->getWindow()->disableUserInteraction();
+
 		enableMouseEvents();
 		setThemeColor("background", Colors::dialogBoxBackground);
 		setThemeColor("on background", Colors::dialogBoxOnBackground);
@@ -105,10 +86,19 @@ public:
 		m_titleText = context->createText(m_titleTextString, 22.f);
 		m_titleText->setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
 
-		m_messageText = context->createText(m_messageTextString, 14.f, AvoGUI::Rectangle<float>(m_titleText->getLeft(), m_titleText->getBottom() + 20.f, getRight() - m_titleText->getLeft(), getBottom() - 50.f));
+		m_messageText = context->createText(
+			m_messageTextString, 14.f, 
+			AvoGUI::Rectangle<float> 
+			{ 
+				m_titleText->getLeft(), m_titleText->getBottom() + 20.f, 
+				getRight() - m_titleText->getLeft(), getBottom() 
+			}
+		);
 		m_messageText->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
 		m_messageText->setFontWeight((AvoGUI::FontWeight)400);
 		m_messageText->setLineHeight(1.1f);
+		m_messageText->fitHeightToText();
+		setHeight(m_messageText->getBottom() + m_messageText->getLeft());
 	}
 
 	void handleSizeChange() override

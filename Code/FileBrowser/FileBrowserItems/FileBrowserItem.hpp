@@ -20,7 +20,7 @@ private:
 	AvoGUI::Image* m_icon;
 
 	std::filesystem::path m_path;
-	std::filesystem::path m_name;
+	std::string m_name;
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
 	bool m_hasThumbnail;
@@ -115,6 +115,10 @@ public:
 	std::filesystem::path const& getPath()
 	{
 		return m_path;
+	}
+	std::string const& getName()
+	{
+		return m_name;
 	}
 
 	//------------------------------
