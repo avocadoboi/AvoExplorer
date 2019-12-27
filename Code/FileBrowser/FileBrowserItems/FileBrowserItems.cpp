@@ -1,4 +1,4 @@
-#include "FileBrowserItems.hpp"
+﻿#include "FileBrowserItems.hpp"
 
 #include "FileBrowserItem.hpp"
 
@@ -92,13 +92,15 @@ void FileBrowserItems::thread_loadIcons()
 			m_fileItems.reserve(filePaths.size());
 
 			getGui()->excludeAnimationThread();
-			for (auto path : directoryPaths)
+			for (uint32 a = 0; a < directoryPaths.size(); a++)
 			{
-				m_directoryItems.push_back(new FileBrowserItem(this, path, false));
+				m_directoryItems.push_back(new FileBrowserItem(this, directoryPaths[a], false));
+				m_directoryItems.back()->setItemIndex(a);
 			}
-			for (auto path : filePaths)
+			for (uint32 a = 0; a < filePaths.size(); a++)
 			{
-				m_fileItems.push_back(new FileBrowserItem(this, path, false));
+				m_fileItems.push_back(new FileBrowserItem(this, filePaths[a], false));
+				m_fileItems.back()->setItemIndex(a);
 			}
 
 			if (getParent()->getWidth() && getParent()->getHeight())
@@ -265,6 +267,15 @@ void FileBrowserItems::scrollToShowLastSelectedItem()
 	}
 }
 
+FileBrowserItem* FileBrowserItems::getItemFromAbsoluteIndex(uint32 p_index)
+{
+	return p_index > m_directoryItems.size() ? m_fileItems[p_index - m_directoryItems.size()] : m_directoryItems[p_index];
+}
+uint32 FileBrowserItems::getAbsoluteIndexFromItem(FileBrowserItem* p_item)
+{
+	return p_item ? (p_item->getIsFile() ? p_item->getItemIndex() + m_directoryItems.size() : p_item->getItemIndex()) : 0;
+}
+
 //
 // Public
 //
@@ -339,13 +350,18 @@ void FileBrowserItems::setSelectedItem(FileBrowserItem* p_item)
 	}
 	m_firstSelectedItem = p_item;
 	m_lastSelectedItem = p_item;
+	scrollToShowLastSelectedItem();
 }
 void FileBrowserItems::addSelectedItem(FileBrowserItem* p_item)
 {
-	m_selectedItems.push_back(p_item);
-	p_item->select();
-	m_firstSelectedItem = p_item;
-	m_lastSelectedItem = p_item;
+	if (p_item)
+	{
+		m_selectedItems.push_back(p_item);
+		p_item->select();
+		m_firstSelectedItem = p_item;
+		m_lastSelectedItem = p_item;
+		scrollToShowLastSelectedItem();
+	}
 }
 void FileBrowserItems::removeSelectedItem(FileBrowserItem* p_item)
 {
@@ -365,20 +381,20 @@ void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive)
 	uint32 lastIndex = 0;
 	if (m_firstSelectedItem)
 	{
-		if (m_firstSelectedItem->getIndex() < p_item->getIndex())
+		if (getAbsoluteIndexFromItem(m_firstSelectedItem) < getAbsoluteIndexFromItem(p_item))
 		{
-			firstIndex = m_firstSelectedItem->getIndex();
-			lastIndex = p_item->getIndex();
+			firstIndex = getAbsoluteIndexFromItem(m_firstSelectedItem);
+			lastIndex = getAbsoluteIndexFromItem(p_item);
 		}
 		else
 		{
-			firstIndex = p_item->getIndex();
-			lastIndex = m_firstSelectedItem->getIndex();
+			firstIndex = getAbsoluteIndexFromItem(p_item);
+			lastIndex = getAbsoluteIndexFromItem(m_firstSelectedItem);
 		}
 	}
 	else
 	{
-		lastIndex = p_item->getIndex();
+		lastIndex = getAbsoluteIndexFromItem(p_item);
 	}
 
 	if (!p_isAdditive)
@@ -388,7 +404,7 @@ void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive)
 
 	for (uint32 a = firstIndex; a <= lastIndex; a++)
 	{
-		FileBrowserItem* item = (FileBrowserItem*)getChild(a);
+		FileBrowserItem* item = getItemFromAbsoluteIndex(a);
 		if (!item->getIsSelected())
 		{
 			item->select();
@@ -396,6 +412,7 @@ void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive)
 		}
 	}
 	m_lastSelectedItem = p_item;
+	scrollToShowLastSelectedItem();
 }
 void FileBrowserItems::deselectAllItems()
 {
@@ -410,34 +427,78 @@ void FileBrowserItems::deselectAllItems()
 
 void FileBrowserItems::createFile(std::string const& p_name)
 {
+	//std::filesystem::path namePath = p_name;
+	//if (namePath.has_parent_path())
+	//{
+
+	//}
 	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
-	if (std::filesystem::exists(path))
+	if (p_name == "")
 	{
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::fileAlreadyExistsDialogTitle, Strings::fileAlreadyExistsDialogMessage);
-		dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-		dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-		dialog->detachFromParent();
+		return;
 	}
 	
-	std::ofstream file(path.native());
-	file.close();
-	if (file.fail())
+	HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
+	CloseHandle(fileHandle);
+	if (fileHandle == INVALID_HANDLE_VALUE)
 	{
-		std::cout << strerror(errno) << '\n';
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileFailedDialogTitle, Strings::newFileFailedDialogMessage);
-		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
-		dialog->detachFromParent();
+		DWORD error = GetLastError();
+		switch (error)
+		{
+		case ERROR_ACCESS_DENIED:
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileAccessDeniedDialogTitle, Strings::newFileAccessDeniedDialogMessage);
+			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->setId(Ids::newFileAccessDeniedDialog);
+			dialog->setChoiceDialogBoxListener(this);
+			dialog->detachFromParent();
+			break;
+		}
+		case ERROR_FILE_EXISTS:
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileAlreadyExistsDialogTitle, Strings::newFileAlreadyExistsDialogMessage);
+			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->setId(Ids::newFileAlreadyExistsDialog);
+			dialog->detachFromParent();
+			break;
+		}
+		default:
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileFailedDialogTitle, Strings::newFileFailedDialogMessage);
+			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+			dialog->detachFromParent();
+		}
+		}
 	}
 	else
 	{
-		//m_fileItemsMutex.lock();
-		//for (uint32 a = 0; a < m_fileItems.size(); a++)
-		//{
-		//	if (getIsPathLessThan(path, m_fileItems[a]->getPath()))
-		//	{
-		//	}
-		//}
-		//m_fileItemsMutex.unlock();
+		std::lock_guard<std::mutex> lock(m_fileItemsMutex);
+
+		FileBrowserItem* newItem = new FileBrowserItem(this, path, false);
+		FileBrowserItem* lastItem = 0;
+		for (uint32 a = 0; a < m_fileItems.size(); a++)
+		{
+			if (lastItem)
+			{
+				std::swap(lastItem, m_fileItems[a]);
+				lastItem->incrementItemIndex();
+			}
+			else if (getIsPathLessThan(path, m_fileItems[a]->getPath()))
+			{
+				lastItem = m_fileItems[a];
+				lastItem->incrementItemIndex();
+				m_fileItems[a] = newItem;
+				newItem->setItemIndex(a);
+				break;
+			}
+		}
+		m_fileItems.push_back(lastItem ? lastItem : newItem);
+		updateLayout();
+		setSelectedItem(newItem);
+		getParent()->invalidate();
+		tellIconLoadingThreadToLoadMoreIcons();
 	}
 }
 
@@ -454,8 +515,8 @@ void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 		m_isDraggingSelectionRectangle = true;
 		m_selectionRectangle.set(p_event.x, p_event.y, p_event.x, p_event.y);
 		m_selectionRectangleAnchor.set(p_event.x, p_event.y);
-		getGui()->setKeyboardFocus(this);
 	}
+	getGui()->setKeyboardFocus(this);
 }
 void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
@@ -496,6 +557,10 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 		{
 			deselectAllItems();
 		}
+
+		/*
+			Here we first do a broad phase and then a narrow phase, like collision detection in games 🤔
+		*/
 
 		int32 leftIndex = 0;
 		int32 rightIndex = 0;
@@ -580,20 +645,38 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 	{
 	case AvoGUI::KeyboardKey::Delete:
 	{
+		/*
+			What happens here is
+			1. Concatenate a string of the paths of all selected items.
+			2. Remove all deleted items from their lists and update their indexes.
+			The best way to do this seems to be to just zero their values first and then 
+			remove them in a single sweep afterwards if the operation was not aborted.
+		*/
 		std::wstring paths;
+		int32 firstErasedFileItemIndex = -1;
+		int32 firstErasedDirectoryItemIndex = -1;
 		for (uint32 a = 0; a < m_selectedItems.size(); a++)
 		{
 			paths += m_selectedItems[a]->getPath().wstring() + L'\0';
 
+			uint32 itemIndex = m_selectedItems[a]->getItemIndex();
 			if (m_selectedItems[a]->getIsFile())
 			{
-				m_fileItems.erase(m_fileItems.begin() + (m_selectedItems[a]->getIndex() - m_directoryItems.size()));
+				if (firstErasedFileItemIndex == -1 || itemIndex < firstErasedFileItemIndex)
+				{
+					firstErasedFileItemIndex = itemIndex;
+				}
+				m_fileItems[itemIndex] = 0;
 			}
 			else
 			{
-				m_directoryItems.erase(m_directoryItems.begin() + m_selectedItems[a]->getIndex());
+				if (firstErasedDirectoryItemIndex == -1 || itemIndex < firstErasedDirectoryItemIndex)
+				{
+					firstErasedDirectoryItemIndex = itemIndex;
+				}
+				m_directoryItems[itemIndex] = 0;
 			}
-			removeChild(m_selectedItems[a]->getIndex());
+			removeChild(m_selectedItems[a]);
 		}
 		paths += L'\0';
 
@@ -609,6 +692,38 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 		}
 		else
 		{
+			/*
+				Remove all deleted items in single sweep
+			*/
+			if (firstErasedFileItemIndex >= 0)
+			{
+				uint32 lastEmptyIndex = firstErasedFileItemIndex;
+				for (uint32 a = firstErasedFileItemIndex + 1; a < m_fileItems.size(); a++)
+				{
+					if (m_fileItems[a])
+					{
+						m_fileItems[a]->setItemIndex(lastEmptyIndex);
+						m_fileItems[lastEmptyIndex++] = m_fileItems[a];
+						m_fileItems[a] = 0;
+					}
+				}
+				m_fileItems.resize(lastEmptyIndex);
+			}
+			if (firstErasedDirectoryItemIndex >= 0)
+			{
+				uint32 lastEmptyIndex = firstErasedDirectoryItemIndex;
+				for (uint32 a = firstErasedDirectoryItemIndex + 1; a < m_directoryItems.size(); a++)
+				{
+					if (m_directoryItems[a])
+					{
+						m_directoryItems[a]->setItemIndex(lastEmptyIndex);
+						m_directoryItems[lastEmptyIndex++] = m_directoryItems[a];
+						m_directoryItems[a] = 0;
+					}
+				}
+				m_directoryItems.resize(lastEmptyIndex);
+			}
+
 			m_firstSelectedItem = 0;
 			m_lastSelectedItem = 0;
 			m_selectedItems.clear();
@@ -642,45 +757,45 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 	}
 	case AvoGUI::KeyboardKey::Left:
 	{
-		uint32 index = m_lastSelectedItem ? m_lastSelectedItem->getIndex() : 0;
+		uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
 		if (getNumberOfChildren() && index)
 		{
 			bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
+			FileBrowserItem* previousItem = getItemFromAbsoluteIndex(index - 1);
 			if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
 			{
-				selectItemsTo(getChild<FileBrowserItem>(index - 1), isCtrlDown);
+				selectItemsTo(previousItem, isCtrlDown);
 			}
 			else if (isCtrlDown)
 			{
-				addSelectedItem(getChild<FileBrowserItem>(index - 1));
+				addSelectedItem(previousItem);
 			}
 			else
 			{
-				setSelectedItem(getChild<FileBrowserItem>(index - 1));
+				setSelectedItem(previousItem);
 			}
-			scrollToShowLastSelectedItem();
 		}
 		break;
 	}
 	case AvoGUI::KeyboardKey::Right:
 	{
-		uint32 index = m_lastSelectedItem ? m_lastSelectedItem->getIndex() : 0;
-		if (getNumberOfChildren() && (int32)index < (int32)getNumberOfChildren() - 1)
+		uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
+		if (getNumberOfChildren() && index < m_fileItems.size() + m_directoryItems.size() - 1)
 		{
 			bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
+			FileBrowserItem* nextItem = getItemFromAbsoluteIndex(index + 1);
 			if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
 			{
-				selectItemsTo(getChild<FileBrowserItem>(index + 1), isCtrlDown);
+				selectItemsTo(nextItem, isCtrlDown);
 			}
 			else if (isCtrlDown)
 			{
-				addSelectedItem(getChild<FileBrowserItem>(index + 1));
+				addSelectedItem(nextItem);
 			}
 			else
 			{
-				setSelectedItem(getChild<FileBrowserItem>(index + 1));
+				setSelectedItem(nextItem);
 			}
-			scrollToShowLastSelectedItem();
 		}
 		break;
 	}
@@ -690,27 +805,27 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 		{
 			break;
 		}
-		uint32 index = m_lastSelectedItem->getIndex();
+		uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
 		for (int32 a = index - 1; a >= 0; a--)
 		{
-			if (getChild(a)->getBottom() < m_lastSelectedItem->getTop() &&
-				getChild(a)->getRight() >= m_lastSelectedItem->getLeft() &&
-				getChild(a)->getLeft() <= m_lastSelectedItem->getRight() || !a)
+			FileBrowserItem* item = getItemFromAbsoluteIndex(a);
+			if (item->getBottom() < m_lastSelectedItem->getTop() &&
+				item->getRight() >= m_lastSelectedItem->getLeft() &&
+				item->getLeft() <= m_lastSelectedItem->getRight() || !a)
 			{
 				bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
 				if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
 				{
-					selectItemsTo(getChild<FileBrowserItem>(a), isCtrlDown);
+					selectItemsTo(item, isCtrlDown);
 				}
 				else if (isCtrlDown)
 				{
-					addSelectedItem(getChild<FileBrowserItem>(a));
+					addSelectedItem(item);
 				}
 				else
 				{
-					setSelectedItem(getChild<FileBrowserItem>(a));
+					setSelectedItem(item);
 				}
-				scrollToShowLastSelectedItem();
 				break;
 			}
 		}
@@ -720,29 +835,29 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 	{
 		if (!m_lastSelectedItem && getNumberOfChildren())
 		{
-			m_lastSelectedItem = getChild<FileBrowserItem>(0);
+			m_lastSelectedItem = m_directoryItems[0];
 		}
-		uint32 index = m_lastSelectedItem->getIndex();
+		uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
 		for (int32 a = index + 1; a < getNumberOfChildren(); a++)
 		{
-			if (getChild(a)->getTop() > m_lastSelectedItem->getBottom() &&
-				getChild(a)->getRight() >= m_lastSelectedItem->getLeft() &&
-				getChild(a)->getLeft() <= m_lastSelectedItem->getRight() || a == getNumberOfChildren() - 1)
+			FileBrowserItem* item = getItemFromAbsoluteIndex(a);
+			if (item->getTop() > m_lastSelectedItem->getBottom() &&
+				item->getRight() >= m_lastSelectedItem->getLeft() &&
+				item->getLeft() <= m_lastSelectedItem->getRight() || a == getNumberOfChildren() - 1)
 			{
 				bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
 				if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
 				{
-					selectItemsTo(getChild<FileBrowserItem>(a), isCtrlDown);
+					selectItemsTo(item, isCtrlDown);
 				}
 				else if (isCtrlDown)
 				{
-					addSelectedItem(getChild<FileBrowserItem>(a));
+					addSelectedItem(item);
 				}
 				else
 				{
-					setSelectedItem(getChild<FileBrowserItem>(a));
+					setSelectedItem(item);
 				}
-				scrollToShowLastSelectedItem();
 				break;
 			}
 		}		
@@ -838,7 +953,7 @@ void FileBrowserItems::updateLayout()
 	{
 		height = m_directoryItems.back()->getBottom();
 	}
-	setSize(getParent()->getWidth() - PADDING, height + PADDING);
+	setSize(getParent()->getWidth() - PADDING, AvoGUI::max(m_fileBrowser->getHeight() - getParent()->getTop(), height + PADDING));
 
 	tellIconLoadingThreadToLoadMoreIcons();
 }

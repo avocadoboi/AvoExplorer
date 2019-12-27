@@ -23,7 +23,8 @@ class FileBrowserItem;
 class FileBrowserItems :
 	public AvoGUI::View,
 	public AvoGUI::KeyboardListener,
-	public InputDialogBoxListener
+	public InputDialogBoxListener,
+	public ChoiceDialogBoxListener
 {
 private:
 	FileBrowser* m_fileBrowser;
@@ -86,6 +87,9 @@ private:
 
 	void scrollToShowLastSelectedItem();
 
+	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index);
+	uint32 getAbsoluteIndexFromItem(FileBrowserItem* p_item);
+
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
@@ -141,14 +145,14 @@ public:
 	void letUserAddDirectory()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
-		dialog->setId(Ids::createDirectoryDialogBox);
+		dialog->setId(Ids::createDirectoryDialog);
 		dialog->setInputDialogBoxListener(this);
 		dialog->detachFromParent();
 	}
 	void letUserAddFile()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
-		dialog->setId(Ids::createFileDialogBox);
+		dialog->setId(Ids::createFileDialog);
 		dialog->setInputDialogBoxListener(this);
 		dialog->detachFromParent();
 
@@ -157,15 +161,27 @@ public:
 	{
 		switch (p_dialog->getId())
 		{
-		case Ids::createFileDialogBox:
+		case Ids::createFileDialog:
 		{
 			createFile(p_input);
 			break;
 		}
-		case Ids::createDirectoryDialogBox:
+		case Ids::createDirectoryDialog:
 		{
 			break;
 		}
+		}
+	}
+	void handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string const& p_choice) override
+	{
+		switch (p_dialog->getId())
+		{
+		case Ids::newFileAccessDeniedDialog:
+			if (p_choice == Strings::restart)
+			{
+				getGui<AvoExplorer>()->restartWithElevatedPrivileges();
+			}
+			break;
 		}
 	}
 

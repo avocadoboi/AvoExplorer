@@ -17,6 +17,8 @@ private:
 	FileBrowserItems* m_fileBrowserItems;
 	Bookmarks* m_bookmarks;
 
+	uint32 m_itemIndex;
+
 	AvoGUI::Image* m_icon;
 
 	std::filesystem::path m_path;
@@ -78,6 +80,21 @@ public:
 	bool getIsBookmark()
 	{
 		return m_isBookmark;
+	}
+
+	//------------------------------
+
+	void setItemIndex(uint32 p_index)
+	{
+		m_itemIndex = p_index;
+	}
+	void incrementItemIndex()
+	{
+		m_itemIndex++;
+	}
+	uint32 getItemIndex()
+	{
+		return m_itemIndex;
 	}
 
 	//------------------------------

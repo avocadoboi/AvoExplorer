@@ -38,6 +38,10 @@ public:
 	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
 	~ChoiceDialogBox()
 	{
+		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
+		{
+			getParent()->getWindow()->enableUserInteraction();
+		}
 		if (m_listener)
 		{
 			m_listener->handleChoiceDialogBoxClose(this);

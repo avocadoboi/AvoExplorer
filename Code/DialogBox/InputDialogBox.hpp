@@ -38,6 +38,10 @@ public:
 	InputDialogBox(AvoGUI::Gui* p_parentGui, char const* p_title, char const* p_message);
 	~InputDialogBox()
 	{
+		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
+		{
+			getParent()->getWindow()->enableUserInteraction();
+		}
 		if (m_listener)
 		{
 			m_listener->handleInputDialogBoxClose(this);

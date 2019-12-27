@@ -36,6 +36,16 @@ AvoExplorer::~AvoExplorer()
 
 //------------------------------
 
+void AvoExplorer::restartWithElevatedPrivileges()
+{
+	wchar_t executablePath[MAX_PATH];
+	GetModuleFileNameW(0, executablePath, MAX_PATH);
+	ShellExecuteW(0, L"runas", executablePath, m_fileBrowser->getPath().c_str(), 0, SW_SHOWNORMAL);
+	getWindow()->close();
+}
+
+//------------------------------
+
 void AvoExplorer::createContent()
 {
 	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);

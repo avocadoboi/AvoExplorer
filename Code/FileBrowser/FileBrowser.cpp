@@ -58,11 +58,7 @@ void FileBrowser::handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string c
 {
 	if (p_text == Strings::restart)
 	{
-		wchar_t executablePath[MAX_PATH];
-		GetModuleFileNameW(0, executablePath, MAX_PATH);
-		ShellExecuteW(0, L"runas", executablePath, m_path.c_str(), 0, SW_SHOWNORMAL);
-
-		getGui()->getWindow()->close();
+		getGui<AvoExplorer>()->restartWithElevatedPrivileges();
 	}
 }
 
@@ -85,11 +81,11 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 	{
 		if (error.code().value() == 5)
 		{
-			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::accessDeniedDialogTitle, Strings::accessDeniedDialogMessage);
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::openDirectoryAccessDeniedDialogTitle, Strings::openDirectoryAccessDeniedDialogMessage);
 			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
 			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
 			dialog->setChoiceDialogBoxListener(this);
-			dialog->setId(Ids::accessDeniedDialogBox);
+			dialog->setId(Ids::openDirectoryAccessDeniedDialog);
 			dialog->detachFromParent();
 			return;
 		}
