@@ -19,7 +19,8 @@ public:
 
 class InputDialogBox :
 	public AvoGUI::Gui,
-	public AvoGUI::ButtonListener
+	public AvoGUI::ButtonListener,
+	public AvoGUI::EditableTextListener
 {
 private:
 	TitleBar* m_titleBar = 0;
@@ -69,6 +70,10 @@ public:
 			m_listener->handleDialogBoxInput(this, m_inputField->getString());
 		}
 		getWindow()->close();
+	}
+	void handleEditableTextEnter(AvoGUI::EditableText* p_editableText) override
+	{
+		handleButtonClick(0);
 	}
 
 	//------------------------------

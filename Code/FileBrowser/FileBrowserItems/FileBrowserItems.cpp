@@ -18,12 +18,9 @@ constexpr float DIRECTORY_HEIGHT = 6		* 8.f;
 
 //------------------------------
 
-bool getIsPathLessThan(std::filesystem::path const& p_a, std::filesystem::path const& p_b)
+bool getIsPathStringLessThan(std::wstring const& p_a, std::wstring const& p_b)
 {
-	std::wstring string_a = p_a.wstring();
-	std::wstring string_b = p_b.wstring();
-	
-	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, string_a.c_str(), string_a.size(), string_b.c_str(), string_b.size());
+	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, p_a.c_str(), p_a.size(), p_b.c_str(), p_b.size());
 }
 
 //
@@ -72,7 +69,8 @@ void FileBrowserItems::thread_loadIcons()
 			std::vector<std::filesystem::path> filePaths;
 			filePaths.reserve(256);
 
-			for (auto item : std::filesystem::directory_iterator(m_fileBrowser->getPath()))
+			std::filesystem::path const& newPath = m_fileBrowser->getPath();
+			for (auto item : std::filesystem::directory_iterator(newPath))
 			{
 				if (item.is_regular_file())
 				{
@@ -85,17 +83,43 @@ void FileBrowserItems::thread_loadIcons()
 			}
 
 			// Sort files and directories separately, because they will be displayed separately.
-			std::sort(filePaths.begin(), filePaths.end(), getIsPathLessThan);
-			std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathLessThan);
+			std::sort(filePaths.begin(), filePaths.end(), getIsPathStringLessThan);
+			std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathStringLessThan);
 
 			m_directoryItems.reserve(directoryPaths.size());
 			m_fileItems.reserve(filePaths.size());
+
+			/*
+				Find the name of the child directory that was last visited, it will be used to find the right item to later be selected.
+			*/
+			int32 lastVisitedDirectoryItemIndex = -1;
+			std::string lastWorkingDirectoryName = m_lastPath.native().size() > newPath.native().size() ? m_lastPath.parent_path().u8string() : "";
+			std::string newPathString = newPath.u8string();
+			if (lastWorkingDirectoryName.size() && newPathString == lastWorkingDirectoryName.substr(0, newPathString.size()))
+			{
+				for (uint32 a = newPathString.size(); a <= lastWorkingDirectoryName.size(); a++)
+				{
+					if (a == lastWorkingDirectoryName.size() || lastWorkingDirectoryName[a] == '\\')
+					{
+						lastWorkingDirectoryName = lastWorkingDirectoryName.substr(newPathString.size(), a - newPathString.size());
+					}
+				}
+			}
+			else
+			{
+				lastWorkingDirectoryName = "";
+			}
 
 			getGui()->excludeAnimationThread();
 			for (uint32 a = 0; a < directoryPaths.size(); a++)
 			{
 				m_directoryItems.push_back(new FileBrowserItem(this, directoryPaths[a], false));
 				m_directoryItems.back()->setItemIndex(a);
+				if (lastWorkingDirectoryName.size() && lastVisitedDirectoryItemIndex == -1 &&
+					m_directoryItems.back()->getName() == lastWorkingDirectoryName)
+				{
+					lastVisitedDirectoryItemIndex = a;
+				}
 			}
 			for (uint32 a = 0; a < filePaths.size(); a++)
 			{
@@ -109,6 +133,12 @@ void FileBrowserItems::thread_loadIcons()
 				getParent()->invalidate();
 			}
 			getGui()->includeAnimationThread();
+
+			if (lastVisitedDirectoryItemIndex >= 0)
+			{
+				setSelectedItem(m_directoryItems[lastVisitedDirectoryItemIndex]);
+			}
+			m_lastPath = newPath;
 		}
 
 		if (m_needsToExitIconLoadingThread)
@@ -269,11 +299,68 @@ void FileBrowserItems::scrollToShowLastSelectedItem()
 
 FileBrowserItem* FileBrowserItems::getItemFromAbsoluteIndex(uint32 p_index)
 {
-	return p_index > m_directoryItems.size() ? m_fileItems[p_index - m_directoryItems.size()] : m_directoryItems[p_index];
+	return p_index >= m_directoryItems.size() ? m_fileItems[p_index - m_directoryItems.size()] : m_directoryItems[p_index];
 }
 uint32 FileBrowserItems::getAbsoluteIndexFromItem(FileBrowserItem* p_item)
 {
 	return p_item ? (p_item->getIsFile() ? p_item->getItemIndex() + m_directoryItems.size() : p_item->getItemIndex()) : 0;
+}
+
+void FileBrowserItems::insertNewFileItem(std::filesystem::path const& p_path)
+{
+	std::lock_guard<std::mutex> lock(m_fileItemsMutex);
+
+	FileBrowserItem* newItem = new FileBrowserItem(this, p_path, false);
+	FileBrowserItem* lastItem = 0;
+	for (uint32 a = 0; a < m_fileItems.size(); a++)
+	{
+		if (lastItem)
+		{
+			std::swap(lastItem, m_fileItems[a]);
+			lastItem->incrementItemIndex();
+		}
+		else if (getIsPathStringLessThan(p_path, m_fileItems[a]->getPath()))
+		{
+			lastItem = m_fileItems[a];
+			lastItem->incrementItemIndex();
+			m_fileItems[a] = newItem;
+			newItem->setItemIndex(a);
+			break;
+		}
+	}
+	m_fileItems.push_back(lastItem ? lastItem : newItem);
+	updateLayout();
+	setSelectedItem(newItem);
+	getParent()->invalidate();
+	tellIconLoadingThreadToLoadMoreIcons();
+}
+void FileBrowserItems::insertNewDirectoryItem(std::filesystem::path const& p_path)
+{
+	std::lock_guard<std::mutex> lock(m_directoryItemsMutex);
+
+	FileBrowserItem* newItem = new FileBrowserItem(this, p_path, false);
+	FileBrowserItem* lastItem = 0;
+	for (uint32 a = 0; a < m_directoryItems.size(); a++)
+	{
+		if (lastItem)
+		{
+			std::swap(lastItem, m_directoryItems[a]);
+			lastItem->incrementItemIndex();
+		}
+		else if (getIsPathStringLessThan(p_path, m_directoryItems[a]->getPath()))
+		{
+			lastItem = m_directoryItems[a];
+			lastItem->incrementItemIndex();
+			m_directoryItems[a] = newItem;
+			newItem->setItemIndex(a);
+			break;
+		}
+	}
+	m_directoryItems.push_back(lastItem ? lastItem : newItem);
+	updateLayout();
+	setSelectedItem(newItem);
+	getParent()->invalidate();
+	tellIconLoadingThreadToLoadMoreIcons();
 }
 
 //
@@ -321,7 +408,7 @@ FileBrowserItems::~FileBrowserItems()
 
 //------------------------------
 
-void FileBrowserItems::setSelectedItem(FileBrowserItem* p_item)
+void FileBrowserItems::setSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem)
 {
 	if (p_item && p_item->getIsSelected())
 	{
@@ -350,9 +437,13 @@ void FileBrowserItems::setSelectedItem(FileBrowserItem* p_item)
 	}
 	m_firstSelectedItem = p_item;
 	m_lastSelectedItem = p_item;
-	scrollToShowLastSelectedItem();
+
+	if (p_willScrollToShowItem)
+	{
+		scrollToShowLastSelectedItem();
+	}
 }
-void FileBrowserItems::addSelectedItem(FileBrowserItem* p_item)
+void FileBrowserItems::addSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem)
 {
 	if (p_item)
 	{
@@ -360,17 +451,14 @@ void FileBrowserItems::addSelectedItem(FileBrowserItem* p_item)
 		p_item->select();
 		m_firstSelectedItem = p_item;
 		m_lastSelectedItem = p_item;
-		scrollToShowLastSelectedItem();
+
+		if (p_willScrollToShowItem)
+		{
+			scrollToShowLastSelectedItem();
+		}
 	}
 }
-void FileBrowserItems::removeSelectedItem(FileBrowserItem* p_item)
-{
-	p_item->deselect();
-	AvoGUI::removeVectorElementWithoutKeepingOrder(m_selectedItems, p_item);
-	m_firstSelectedItem = p_item;
-	m_lastSelectedItem = p_item;
-}
-void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive)
+void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive, bool p_willScrollToShowItem)
 {
 	if (!p_item)
 	{
@@ -412,7 +500,17 @@ void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive)
 		}
 	}
 	m_lastSelectedItem = p_item;
-	scrollToShowLastSelectedItem();
+	if (p_willScrollToShowItem)
+	{
+		scrollToShowLastSelectedItem();
+	}
+}
+void FileBrowserItems::removeSelectedItem(FileBrowserItem* p_item)
+{
+	p_item->deselect();
+	AvoGUI::removeVectorElementWithoutKeepingOrder(m_selectedItems, p_item);
+	m_firstSelectedItem = p_item;
+	m_lastSelectedItem = p_item;
 }
 void FileBrowserItems::deselectAllItems()
 {
@@ -425,21 +523,72 @@ void FileBrowserItems::deselectAllItems()
 
 //------------------------------
 
-void FileBrowserItems::createFile(std::string const& p_name)
+void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceExisting)
 {
-	//std::filesystem::path namePath = p_name;
-	//if (namePath.has_parent_path())
-	//{
-
-	//}
-	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
 	if (p_name == "")
 	{
 		return;
 	}
-	
+
+	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	path.make_preferred();
+
+	/*
+		If the user wrote for example "parent/child/file.txt", then create those directories first, then the file.
+		In that example, a new directory item "parent" will be inserted.
+	*/
+
+	// Will be used later to determine whether to insert new file item
+	bool isNewFileInSameDirectory = !std::filesystem::path(p_name).has_parent_path() && std::filesystem::exists(path.parent_path());
+	if (!isNewFileInSameDirectory)
+	{
+		std::filesystem::path newItemPath;
+		for (uint32 a = 0; a < p_name.size(); a++)
+		{
+			if (p_name[a] == '/' || p_name[a] == '\\')
+			{
+				newItemPath = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name.substr(0, a));
+				break;
+			}
+		}
+		newItemPath.make_preferred();
+		bool wasNewItemPathAlreadyExisting = std::filesystem::exists(newItemPath);
+
+		std::error_code errorCode;
+		std::filesystem::create_directories(path.parent_path(), errorCode);
+		if (errorCode)
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
+			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+			dialog->detachFromParent();
+			return;
+		}
+		else if (!wasNewItemPathAlreadyExisting)
+		{
+			insertNewDirectoryItem(newItemPath);
+		}
+	}
+
+	//------------------------------
+	// Move old file to recycle bin
+
+	if (p_willReplaceExisting && std::filesystem::exists(path))
+	{
+		std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
+
+		SHFILEOPSTRUCTW fileOperation = { 0 };
+		fileOperation.fFlags = FOF_ALLOWUNDO;
+		fileOperation.wFunc = FO_DELETE;
+		fileOperation.pFrom = doubleNullTerminatedPath.data();
+		SHFileOperationW(&fileOperation);
+	}
+
+	//------------------------------
+	// Create the file
+
 	HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
 	CloseHandle(fileHandle);
+
 	if (fileHandle == INVALID_HANDLE_VALUE)
 	{
 		DWORD error = GetLastError();
@@ -460,7 +609,9 @@ void FileBrowserItems::createFile(std::string const& p_name)
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileAlreadyExistsDialogTitle, Strings::newFileAlreadyExistsDialogMessage);
 			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
 			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addDialogArgument(p_name);
 			dialog->setId(Ids::newFileAlreadyExistsDialog);
+			dialog->setChoiceDialogBoxListener(this);
 			dialog->detachFromParent();
 			break;
 		}
@@ -472,33 +623,71 @@ void FileBrowserItems::createFile(std::string const& p_name)
 		}
 		}
 	}
-	else
+	else if (isNewFileInSameDirectory && !p_willReplaceExisting)
 	{
-		std::lock_guard<std::mutex> lock(m_fileItemsMutex);
+		insertNewFileItem(path);
+	}
+}
+void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willReplaceExisting)
+{
+	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	path.make_preferred();
 
-		FileBrowserItem* newItem = new FileBrowserItem(this, path, false);
-		FileBrowserItem* lastItem = 0;
-		for (uint32 a = 0; a < m_fileItems.size(); a++)
+	if (std::filesystem::exists(path))
+	{
+		if (p_willReplaceExisting)
 		{
-			if (lastItem)
+			std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
+
+			SHFILEOPSTRUCTW fileOperation = { 0 };
+			fileOperation.fFlags = FOF_ALLOWUNDO;
+			fileOperation.wFunc = FO_DELETE;
+			fileOperation.pFrom = doubleNullTerminatedPath.data();
+			SHFileOperationW(&fileOperation);
+		}
+		else
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryAlreadyExistsDialogTitle, Strings::newDirectoryAlreadyExistsDialogMessage);
+			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addDialogArgument(p_name);
+			dialog->setId(Ids::newDirectoryAlreadyExistsDialog);
+			dialog->setChoiceDialogBoxListener(this);
+			dialog->detachFromParent();
+			return;
+		}
+	}
+
+	std::filesystem::path newItemPath;
+	if (std::filesystem::path(p_name).has_parent_path())
+	{
+		for (uint32 a = 0; a < p_name.size(); a++)
+		{
+			if (p_name[a] == '/' || p_name[a] == '\\')
 			{
-				std::swap(lastItem, m_fileItems[a]);
-				lastItem->incrementItemIndex();
-			}
-			else if (getIsPathLessThan(path, m_fileItems[a]->getPath()))
-			{
-				lastItem = m_fileItems[a];
-				lastItem->incrementItemIndex();
-				m_fileItems[a] = newItem;
-				newItem->setItemIndex(a);
+				newItemPath = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name.substr(0, a));
 				break;
 			}
 		}
-		m_fileItems.push_back(lastItem ? lastItem : newItem);
-		updateLayout();
-		setSelectedItem(newItem);
-		getParent()->invalidate();
-		tellIconLoadingThreadToLoadMoreIcons();
+		newItemPath.make_preferred();
+	}
+	else
+	{
+		newItemPath = path;
+	}
+	bool wasNewItemPathAlreadyExisting = std::filesystem::exists(newItemPath);
+
+	std::error_code errorCode;
+	std::filesystem::create_directories(path, errorCode);
+	if (errorCode)
+	{
+		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
+		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+		dialog->detachFromParent();
+	}
+	else if (!p_willReplaceExisting && !wasNewItemPathAlreadyExisting)
+	{
+		insertNewDirectoryItem(newItemPath);
 	}
 }
 
@@ -551,7 +740,6 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			m_selectionRectangle.top = m_selectionRectangleAnchor.y;
 			m_selectionRectangle.bottom = p_event.y;
 		}
-		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
 
 		if (!getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
 		{
@@ -562,6 +750,7 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			Here we first do a broad phase and then a narrow phase, like collision detection in games 🤔
 		*/
 
+		FileBrowserItem* itemToScrollTo = 0;
 		int32 leftIndex = 0;
 		int32 rightIndex = 0;
 		int32 topIndex = 0;
@@ -594,7 +783,11 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 						}
 						if (m_directoryItems[index]->getIsIntersecting(m_selectionRectangle) && !m_directoryItems[index]->getIsSelected())
 						{
-							addSelectedItem(m_directoryItems[index]);
+							if (!itemToScrollTo || p_event.y < m_selectionRectangleAnchor.y && m_directoryItems[index]->getTop() < itemToScrollTo->getTop() || p_event.y > m_selectionRectangleAnchor.y && m_directoryItems[index]->getBottom() > itemToScrollTo->getBottom())
+							{
+								itemToScrollTo = m_directoryItems[index];
+							}
+							addSelectedItem(m_directoryItems[index], false);
 						}
 					}
 				}
@@ -628,12 +821,31 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 						}
 						if (m_fileItems[index]->getIsIntersecting(m_selectionRectangle) && !m_fileItems[index]->getIsSelected())
 						{
-							addSelectedItem(m_fileItems[index]);
+							if (!itemToScrollTo || p_event.y < m_selectionRectangleAnchor.y && m_fileItems[index]->getTop() < itemToScrollTo->getTop() || p_event.y > m_selectionRectangleAnchor.y && m_fileItems[index]->getBottom() > itemToScrollTo->getBottom())
+							{
+								itemToScrollTo = m_fileItems[index];
+							}
+							addSelectedItem(m_fileItems[index], false);
 						}
 					}
 				}
 			}
 		}
+		if (itemToScrollTo)
+		{
+			if (itemToScrollTo->getAbsoluteTop() < getParent()->getAbsoluteTop())
+			{
+				getParent<ScrollContainer>()->setScrollPosition(0.f, itemToScrollTo->getTop() - MARGIN_VERTICAL);
+				getParent()->invalidate();
+			}
+			else if (itemToScrollTo->getAbsoluteBottom() > getParent()->getAbsoluteBottom())
+			{
+				getParent<ScrollContainer>()->setScrollPosition(0.f, itemToScrollTo->getBottom() + MARGIN_VERTICAL - getParent()->getHeight());
+				getParent()->invalidate();
+			}
+		}
+
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
 	}
 }
 
@@ -757,22 +969,29 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 	}
 	case AvoGUI::KeyboardKey::Left:
 	{
-		uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
-		if (getNumberOfChildren() && index)
+		if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Alt))
 		{
-			bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
-			FileBrowserItem* previousItem = getItemFromAbsoluteIndex(index - 1);
-			if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
+			m_fileBrowser->setWorkingDirectory(m_fileBrowser->getPath().parent_path().parent_path());
+		}
+		else
+		{
+			uint32 index = getAbsoluteIndexFromItem(m_lastSelectedItem);
+			if (getNumberOfChildren() && index)
 			{
-				selectItemsTo(previousItem, isCtrlDown);
-			}
-			else if (isCtrlDown)
-			{
-				addSelectedItem(previousItem);
-			}
-			else
-			{
-				setSelectedItem(previousItem);
+				bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
+				FileBrowserItem* previousItem = getItemFromAbsoluteIndex(index - 1);
+				if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
+				{
+					selectItemsTo(previousItem, isCtrlDown);
+				}
+				else if (isCtrlDown)
+				{
+					addSelectedItem(previousItem);
+				}
+				else
+				{
+					setSelectedItem(previousItem);
+				}
 			}
 		}
 		break;
@@ -811,7 +1030,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			FileBrowserItem* item = getItemFromAbsoluteIndex(a);
 			if (item->getBottom() < m_lastSelectedItem->getTop() &&
 				item->getRight() >= m_lastSelectedItem->getLeft() &&
-				item->getLeft() <= m_lastSelectedItem->getRight() || !a)
+				item->getLeft() <= m_lastSelectedItem->getRight())
 			{
 				bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
 				if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
@@ -843,7 +1062,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			FileBrowserItem* item = getItemFromAbsoluteIndex(a);
 			if (item->getTop() > m_lastSelectedItem->getBottom() &&
 				item->getRight() >= m_lastSelectedItem->getLeft() &&
-				item->getLeft() <= m_lastSelectedItem->getRight() || a == getNumberOfChildren() - 1)
+				item->getLeft() <= m_lastSelectedItem->getRight())
 			{
 				bool isCtrlDown = getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
 				if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
@@ -862,6 +1081,28 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 		}		
 		break;
+	}
+	case AvoGUI::KeyboardKey::N:
+	{
+		if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
+		{
+			if (getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift))
+			{
+				letUserAddDirectory();
+			}
+			else
+			{
+				letUserAddFile();
+			}
+		}
+		break;
+	}
+	case AvoGUI::KeyboardKey::Enter:
+	{
+		if (m_selectedItems.size() == 1)
+		{
+			m_selectedItems[0]->open();
+		}
 	}
 	}
 }

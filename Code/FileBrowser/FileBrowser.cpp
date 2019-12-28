@@ -64,9 +64,15 @@ void FileBrowser::handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string c
 
 void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 {
-	if (p_path.u8string().back() != '/' && p_path.u8string().back() != '\\')
+	if (!std::filesystem::exists(p_path))
 	{
-		p_path += '/';
+		return;
+	}
+
+	p_path.make_preferred();
+	if (p_path.u8string().back() != '\\')
+	{
+		p_path += '\\';
 	}
 
 	try

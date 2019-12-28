@@ -217,14 +217,7 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (m_isFile)
-			{
-				ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
-			}
-			else
-			{
-				m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
-			}
+			open();
 		}
 	}
 	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override
@@ -235,6 +228,18 @@ public:
 			invalidate();
 
 			m_bookmarks->handleBookmarkDrag(this);
+		}
+	}
+
+	void open()
+	{
+		if (m_isFile)
+		{
+			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
+		}
+		else
+		{
+			m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
 		}
 	}
 

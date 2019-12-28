@@ -9,4 +9,5 @@ namespace Ids
 	uint64 const createDirectoryDialog =			5;
 	uint64 const newFileAlreadyExistsDialog =		6;
 	uint64 const newFileAccessDeniedDialog =		7;
+	uint64 const newDirectoryAlreadyExistsDialog =	8;
 }

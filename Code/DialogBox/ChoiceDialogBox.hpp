@@ -34,6 +34,8 @@ private:
 	std::vector<AvoGUI::Button*> m_buttons;
 	void positionButtons();
 
+	std::vector<std::string> m_dialogArguments;
+
 public:
 	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
 	~ChoiceDialogBox()
@@ -70,6 +72,19 @@ public:
 		Added in the order the buttons are shown, from left to right.
 	*/
 	void addButton(char const* p_text, AvoGUI::Button::Emphasis p_emphasis);
+
+	void addDialogArgument(std::string const& p_argument)
+	{
+		m_dialogArguments.push_back(p_argument);
+	}
+	std::string getDialogArgument(uint32 p_index)
+	{
+		return m_dialogArguments[p_index];
+	}
+	uint32 getNumberOfDialogArguments()
+	{
+		return m_dialogArguments.size();
+	}
 
 	//------------------------------
 

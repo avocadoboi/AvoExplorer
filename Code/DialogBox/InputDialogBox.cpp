@@ -42,6 +42,7 @@ void InputDialogBox::createContent()
 
 	m_inputField = new AvoGUI::TextField(this, AvoGUI::TextField::Type::Filled);
 	m_inputField->setTop(m_messageText->getBottom() + INPUT_PADDING);
+	m_inputField->addEditableTextListener(this);
 	setKeyboardFocus(m_inputField);
 
 	m_okButton = new AvoGUI::Button(this, Strings::ok, AvoGUI::Button::Emphasis::High);

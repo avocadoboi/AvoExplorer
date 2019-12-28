@@ -70,6 +70,7 @@ private:
 	std::mutex m_needsToLoadMoreIconsMutex;
 	std::atomic<bool> m_needsToLoadMoreIcons;
 
+	std::filesystem::path m_lastPath;
 	bool m_needsToChangeDirectory;
 
 	std::mutex m_fileItemsMutex;
@@ -90,6 +91,9 @@ private:
 	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index);
 	uint32 getAbsoluteIndexFromItem(FileBrowserItem* p_item);
 
+	void insertNewFileItem(std::filesystem::path const& p_path);
+	void insertNewDirectoryItem(std::filesystem::path const& p_path);
+
 public:
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
@@ -100,6 +104,7 @@ public:
 		m_needsToExitIconLoadingThread(false)
 	{
 		enableMouseEvents();
+		getGui()->setKeyboardFocus(this);
 
 		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
 
@@ -131,16 +136,16 @@ public:
 
 	//------------------------------
 
-	void setSelectedItem(FileBrowserItem* p_item);
-	void addSelectedItem(FileBrowserItem* p_item);
+	void setSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
+	void addSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
+	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false, bool p_willScrollToShowItem = true);
 	void removeSelectedItem(FileBrowserItem* p_item);
-	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false);
 	void deselectAllItems();
 
 	//------------------------------
 
-	void createFile(std::string const& p_name);
-	void createDirectory(std::string const& p_name) { }
+	void createFile(std::string const& p_name, bool p_willReplaceExisting = false);
+	void createDirectory(std::string const& p_name, bool p_willReplaceExisting = false);
 
 	void letUserAddDirectory()
 	{
@@ -155,7 +160,6 @@ public:
 		dialog->setId(Ids::createFileDialog);
 		dialog->setInputDialogBoxListener(this);
 		dialog->detachFromParent();
-
 	}
 	void handleDialogBoxInput(InputDialogBox* p_dialog, std::string const& p_input) override
 	{
@@ -168,6 +172,7 @@ public:
 		}
 		case Ids::createDirectoryDialog:
 		{
+			createDirectory(p_input);
 			break;
 		}
 		}
@@ -180,6 +185,18 @@ public:
 			if (p_choice == Strings::restart)
 			{
 				getGui<AvoExplorer>()->restartWithElevatedPrivileges();
+			}
+			break;
+		case Ids::newFileAlreadyExistsDialog:
+			if (p_choice == Strings::replace)
+			{
+				createFile(p_dialog->getDialogArgument(0), true);
+			}
+			break;
+		case Ids::newDirectoryAlreadyExistsDialog:
+			if (p_choice == Strings::replace)
+			{
+				createDirectory(p_dialog->getDialogArgument(0), true);
 			}
 			break;
 		}
