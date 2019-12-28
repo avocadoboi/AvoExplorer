@@ -88,9 +88,9 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 		m_fileBrowserItems->tellIconLoadingThreadToLoadIconForItem(this);
 	}
 
-	m_contextMenuItems.push_back(ActionMenuItemData("Copy", "Ctrl + C"));
-	m_contextMenuItems.push_back(ActionMenuItemData("Cut", "Ctrl + X"));
-	m_contextMenuItems.push_back(ActionMenuItemData("Remove", "del"));
+	//m_contextMenuItems.push_back(ActionMenuItemData("Copy", "Ctrl + C"));
+	//m_contextMenuItems.push_back(ActionMenuItemData("Cut", "Ctrl + X"));
+	//m_contextMenuItems.push_back(ActionMenuItemData("Remove", "del"));
 }
 
 void FileBrowserItem::handleSizeChange()
