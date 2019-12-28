@@ -712,14 +712,14 @@ void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 	if (m_isDraggingSelectionRectangle)
 	{
 		m_isDraggingSelectionRectangle = false;
-		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+		getGui()->invalidateRectangle((m_selectionRectangle + getAbsoluteTopLeft()).roundCoordinatesOutwards());
 	}
 }
 void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 {
 	if (m_isDraggingSelectionRectangle && AvoGUI::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_selectionRectangleAnchor.x, m_selectionRectangleAnchor.y) > 36.f)
 	{
-		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+		AvoGUI::Rectangle<float> selectionRectangleBefore = m_selectionRectangle;
 		if (p_event.x < m_selectionRectangleAnchor.x)
 		{
 			m_selectionRectangle.left = p_event.x;
@@ -845,7 +845,8 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			}
 		}
 
-		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
+		getGui()->invalidateRectangle((selectionRectangleBefore + getAbsoluteTopLeft()).roundCoordinatesOutwards());
+		getGui()->invalidateRectangle((m_selectionRectangle + getAbsoluteTopLeft()).roundCoordinatesOutwards());
 	}
 }
 

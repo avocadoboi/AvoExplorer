@@ -265,7 +265,7 @@ public:
 			p_context->drawText(m_text_files);
 		}
 	}
-	void drawOverlay(AvoGUI::DrawingContext* p_context) override
+	void drawOverlay(AvoGUI::DrawingContext* p_context, AvoGUI::Rectangle<float> const& p_target) override
 	{
 		if (m_isDraggingSelectionRectangle)
 		{
