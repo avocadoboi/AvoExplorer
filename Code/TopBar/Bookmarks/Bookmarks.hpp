@@ -14,8 +14,8 @@ private:
 	TopBar* m_topBar;
 
 	std::vector<FileBrowserItem*> m_bookmarks;
-	AvoGUI::View* m_bookmarksContainer;
-	ScrollContainer* m_bookmarksScrollContainer;
+	AvoGUI::View* m_bookmarksContainer = 0;
+	ScrollContainer* m_bookmarksScrollContainer = 0;
 	void updateLayout();
 
 public:

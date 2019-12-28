@@ -10,10 +10,11 @@ float constexpr HEIGHT = 6 * 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_HORIZONTAL = 1		* 8.f;
 float constexpr DIRECTORY_BUTTON_PADDING_VERTICAL = 1.f		* 8.f;
 
-float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = 0.5	* 8.f;
-float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT = 1.5f	* 8.f;
+float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN = -0.25f	* 8.f;
+float constexpr PATH_EDITOR_DIRECTORY_SEPARATOR_SIZE = 2.f		* 8.f;
 
-float constexpr PATH_FADE_GRADIENT_WIDTH = 2.f * 8.f;
+float constexpr PATH_EDITOR_BOOKMARK_ICON_SIZE = 2.75f	* 8.f;
+float constexpr PATH_FADE_GRADIENT_WIDTH = 2.f			* 8.f;
 
 //------------------------------
 // class FileBrowserPathEditorDirectoryButton
@@ -23,11 +24,11 @@ FileBrowserPathEditorDirectoryButton::FileBrowserPathEditorDirectoryButton(AvoGU
 	View(p_parent), m_pathEditor(p_editor),
 	m_path(p_path), m_text(0), m_ripple(0)
 {
-	m_text = getGui()->getDrawingContext()->createText(p_name.c_str(), 16.f);
+	m_text = getGui()->getDrawingContext()->createText(p_name.c_str(), 15.f);
 	m_text->setIsTopTrimmed(false);
 	m_text->fitSizeToText();
 
-	setSize(m_text->getWidth() + 2.f*DIRECTORY_BUTTON_PADDING_HORIZONTAL, 16.f + 2.f*DIRECTORY_BUTTON_PADDING_VERTICAL);
+	setSize(m_text->getWidth() + 2.f*DIRECTORY_BUTTON_PADDING_HORIZONTAL, 15 + 2.f*DIRECTORY_BUTTON_PADDING_VERTICAL);
 
 	m_text->setCenterX(getCenterX());
 	m_text->setTop(DIRECTORY_BUTTON_PADDING_VERTICAL);
@@ -59,12 +60,11 @@ FileBrowserPathEditorPath::FileBrowserPathEditorPath(FileBrowserPathEditor* p_pa
 {
 	enableMouseEvents();
 
-	m_directorySeparatorIcon = loadImageFromResource(RESOURCE_ICON_CHEVRON, getGui()->getDrawingContext());
-	m_directorySeparatorIcon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Fill);
-	m_directorySeparatorIcon->setSize(0.f, PATH_EDITOR_DIRECTORY_SEPARATOR_HEIGHT);
-	m_directorySeparatorIcon->setWidth(m_directorySeparatorIcon->getInnerWidth());
+	m_directorySeparatorIcon = getGui()->getDrawingContext()->createText(MaterialIcons::CHEVRON_RIGHT, PATH_EDITOR_DIRECTORY_SEPARATOR_SIZE);
+	m_directorySeparatorIcon->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+	m_directorySeparatorIcon->setIsTopTrimmed(true);
+	m_directorySeparatorIcon->fitSizeToText();
 	m_directorySeparatorIcon->setCenterY(HEIGHT * 0.5f);
-	m_directorySeparatorIcon->setOpacity(0.7f);
 }
 
 void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const& p_path)
@@ -106,10 +106,11 @@ void FileBrowserPathEditorPath::setWorkingDirectory(std::filesystem::path const&
 
 void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 {
+	p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.7f));
 	for (uint32 a = 0; a < m_directoryButtons.size() - 1; a++)
 	{
 		m_directorySeparatorIcon->setLeft(m_directoryButtons[a]->getRight() + PATH_EDITOR_DIRECTORY_SEPARATOR_MARGIN);
-		p_context->drawImage(m_directorySeparatorIcon);
+		p_context->drawText(m_directorySeparatorIcon);
 	}
 }
 
@@ -117,10 +118,28 @@ void FileBrowserPathEditorPath::draw(AvoGUI::DrawingContext* p_context)
 // class FileBrowserPathEditor
 //------------------------------
 
+//
+// Private
+//
+
+void FileBrowserPathEditor::updateBookmarkButtonIcon()
+{
+	m_bookmarkButton->setString(m_isBookmark ? MaterialIcons::BOOKMARK : MaterialIcons::BOOKMARK_BORDER);
+	m_bookmarkButton->setSize(32.f);
+	m_bookmarkButton->getText()->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+	m_bookmarkButton->getText()->setFontSize(PATH_EDITOR_BOOKMARK_ICON_SIZE);
+	m_bookmarkButton->getText()->fitSizeToText();
+	m_bookmarkButton->getText()->setCenter(m_bookmarkButton->getSize() * 0.5f);
+}
+
+//
+// Public
+//
+
 FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	View(p_parent), m_fileBrowser(p_parent), m_path(0), 
 	m_pathFadeGradient(0), 
-	m_bookmarkIcon_hollow(0), m_bookmarkIcon_filled(0), m_bookmarkButton(0), m_isBookmark(false)
+	m_bookmarkButton(0), m_isBookmark(false)
 {
 	enableMouseEvents();
 
@@ -129,11 +148,9 @@ FileBrowserPathEditor::FileBrowserPathEditor(FileBrowser* p_parent) :
 	m_path = new FileBrowserPathEditorPath(this);
 	m_path->setHeight(HEIGHT);
 
-	m_bookmarkIcon_filled = loadImageFromResource(RESOURCE_ICON_BOOKMARK_FILLED, getGui()->getDrawingContext());
-	m_bookmarkIcon_hollow = loadImageFromResource(RESOURCE_ICON_BOOKMARK_HOLLOW, getGui()->getDrawingContext());
 	m_bookmarkButton = new AvoGUI::Button(this, "", AvoGUI::Button::Emphasis::Low);
-	m_bookmarkButton->setSize(32, 32);
-	m_bookmarkButton->setCornerRadius(16);
+	m_bookmarkButton->setThemeColor("primary on background", getThemeColor("on background"));
+	m_bookmarkButton->setCornerRadius(16.f);
 	m_bookmarkButton->addButtonListener(this);
 	updateBookmarkButtonIcon();
 

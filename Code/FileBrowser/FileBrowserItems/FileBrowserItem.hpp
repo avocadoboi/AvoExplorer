@@ -17,10 +17,12 @@ private:
 	FileBrowserItems* m_fileBrowserItems;
 	Bookmarks* m_bookmarks;
 
+	uint32 m_itemIndex;
+
 	AvoGUI::Image* m_icon;
 
 	std::filesystem::path m_path;
-	std::filesystem::path m_name;
+	std::string m_name;
 	AvoGUI::Text* m_text_name;
 	bool m_isFile;
 	bool m_hasThumbnail;
@@ -82,6 +84,21 @@ public:
 
 	//------------------------------
 
+	void setItemIndex(uint32 p_index)
+	{
+		m_itemIndex = p_index;
+	}
+	void incrementItemIndex()
+	{
+		m_itemIndex++;
+	}
+	uint32 getItemIndex()
+	{
+		return m_itemIndex;
+	}
+
+	//------------------------------
+
 	void select()
 	{
 		m_isSelected = true;
@@ -116,6 +133,10 @@ public:
 	{
 		return m_path;
 	}
+	std::string const& getName()
+	{
+		return m_name;
+	}
 
 	//------------------------------
 
@@ -142,9 +163,14 @@ public:
 			}
 			else 
 			{
-				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Ctrl)
+				bool isShiftDown = p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift;
+				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
 				{
-					if (m_isSelected)
+					if (isShiftDown)
+					{
+						m_fileBrowserItems->selectItemsTo(this, true);
+					}
+					else if (m_isSelected)
 					{
 						m_fileBrowserItems->removeSelectedItem(this);
 					}
@@ -153,7 +179,7 @@ public:
 						m_fileBrowserItems->addSelectedItem(this);
 					}
 				}
-				else if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+				else if (isShiftDown)
 				{
 					m_fileBrowserItems->selectItemsTo(this);
 				}
@@ -191,14 +217,7 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (m_isFile)
-			{
-				ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
-			}
-			else
-			{
-				m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
-			}
+			open();
 		}
 	}
 	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override
@@ -209,6 +228,18 @@ public:
 			invalidate();
 
 			m_bookmarks->handleBookmarkDrag(this);
+		}
+	}
+
+	void open()
+	{
+		if (m_isFile)
+		{
+			ShellExecuteW((HWND)getGui()->getWindow()->getNativeHandle(), 0, m_path.c_str(), 0, m_path.parent_path().c_str(), SHOW_OPENWINDOW);
+		}
+		else
+		{
+			m_fileBrowserItems->getFileBrowser()->setWorkingDirectory(m_path);
 		}
 	}
 

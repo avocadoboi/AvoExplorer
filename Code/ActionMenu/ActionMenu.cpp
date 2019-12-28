@@ -2,14 +2,14 @@
 
 //------------------------------
 
-float constexpr ACTION_MENU_ITEM_HEIGHT = 4.f			*8.f;
-float constexpr ACTION_MENU_ITEM_LEFT_PADDING = 2.f		*8.f;
-float constexpr ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	*8.f;
+float constexpr ACTION_MENU_ITEM_HEIGHT = 4.f			* 8.f;
+float constexpr ACTION_MENU_ITEM_LEFT_PADDING = 2.f		* 8.f;
+float constexpr ACTION_MENU_ITEM_RIGHT_PADDING = 2.f	* 8.f;
 
-float constexpr ACTION_MENU_MIN_PARENT_MARGIN = 3.f		*8.f;
-float constexpr ACTION_MENU_VERTICAL_PADDING = 1.f		*8.f;
+float constexpr ACTION_MENU_MIN_PARENT_MARGIN = 3.f		* 8.f;
+float constexpr ACTION_MENU_VERTICAL_PADDING = 1.f		* 8.f;
 
-float constexpr ACTION_MENU_ANIMATION_SPEED = 0.1f;
+float constexpr ACTION_MENU_ANIMATION_SPEED = 0.05f;
 
 //
 // Class ActionMenuItem
@@ -106,23 +106,41 @@ void ActionMenu::updateAnimations()
 		m_targetBounds.right,
 		AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
 	);
-	float itemsTop = m_targetBounds.top - getTop() + ACTION_MENU_VERTICAL_PADDING;
-	if (getChild(0)->getTop() != itemsTop)
+	for (uint32_t a = 0; a < getNumberOfChildren(); a++)
 	{
-		for (uint32_t a = 0; a < getNumberOfChildren(); a++)
+		if (a)
 		{
-			if (a)
+			getChild(a)->setTop(getChild(a-1)->getBottom());
+		}
+		else
+		{
+			if (m_targetBounds.top != m_anchor.y)
 			{
-				getChild(a)->setTop(getChild(a-1)->getBottom());
+				getChild(a)->setTop(ACTION_MENU_VERTICAL_PADDING);
 			}
 			else
 			{
-				getChild(a)->setTop(itemsTop);
+				getChild(a)->setTop(getHeight() - ACTION_MENU_VERTICAL_PADDING - getNumberOfChildren()*ACTION_MENU_ITEM_HEIGHT);
 			}
 		}
 	}
+	//float itemsTop = m_targetBounds.top - getTop() + ACTION_MENU_VERTICAL_PADDING;
+	//if (getChild(0)->getTop() != itemsTop)
+	//{
+	//	for (uint32_t a = 0; a < getNumberOfChildren(); a++)
+	//	{
+	//		if (a)
+	//		{
+	//			getChild(a)->setTop(getChild(a-1)->getBottom());
+	//		}
+	//		else
+	//		{
+	//			getChild(a)->setTop(itemsTop);
+	//		}
+	//	}
+	//}
 
-	setOpacity(AvoGUI::max(m_openAnimationValue * 7.f - 6.f, 0.f));
+	setOpacity(1.f - AvoGUI::square(1.f - m_openAnimationValue));
 
 	invalidate();
 }

@@ -44,7 +44,7 @@ class FileBrowserPathEditorPath :
 private:
 	FileBrowserPathEditor* m_pathEditor;
 
-	AvoGUI::Image* m_directorySeparatorIcon;
+	AvoGUI::Text* m_directorySeparatorIcon;
 	std::vector<FileBrowserPathEditorDirectoryButton*> m_directoryButtons;
 
 public:
@@ -70,34 +70,16 @@ private:
 	FileBrowserPathEditorPath* m_path;
 
 	AvoGUI::LinearGradient* m_pathFadeGradient;
-	AvoGUI::Image* m_bookmarkIcon_hollow;
-	AvoGUI::Image* m_bookmarkIcon_filled;
 	AvoGUI::Button* m_bookmarkButton;
 	bool m_isBookmark;
 
-	void updateBookmarkButtonIcon()
-	{
-		AvoGUI::Image* newIcon = m_isBookmark ? m_bookmarkIcon_filled : m_bookmarkIcon_hollow;
-		if (newIcon != m_bookmarkButton->getIcon())
-		{
-			newIcon->setSize(16);
-			newIcon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
-
-			if (m_bookmarkButton->getIcon())
-			{
-				m_bookmarkButton->getIcon()->remember();
-			}
-			m_bookmarkButton->setIcon(newIcon);
-		}
-	}
+	void updateBookmarkButtonIcon();
 
 public:
 	FileBrowserPathEditor(FileBrowser* p_parent);
 	~FileBrowserPathEditor()
 	{
 		m_pathFadeGradient->forget();
-		m_bookmarkIcon_hollow->forget();
-		m_bookmarkIcon_filled->forget();
 	}
 
 	void handleSizeChange() override;

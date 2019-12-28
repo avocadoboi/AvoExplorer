@@ -11,10 +11,19 @@ class TitleBar;
 class TitleBarWindowButton :
 	public AvoGUI::View
 {
+public:
+	enum class Icon
+	{
+		Minimize,
+		Maximize,
+		Restore,
+		Close
+	};
+
 private:
 	TitleBar* m_titleBar;
 	
-	AvoGUI::Image* m_icon;
+	Icon m_icon;
 	AvoGUI::Ripple* m_ripple;
 
 	AvoGUI::Color m_backgroundColor;
@@ -23,11 +32,7 @@ private:
 	bool m_isEnabled;
 
 public:
-	TitleBarWindowButton(TitleBar* p_parent, AvoGUI::Image* p_icon, bool p_isCloseButton, bool p_isEnabled = true);
-	~TitleBarWindowButton()
-	{
-		m_icon->forget();
-	}
+	TitleBarWindowButton(TitleBar* p_parent, Icon p_icon, bool p_isCloseButton, bool p_isEnabled = true);
 
 	//------------------------------
 
@@ -45,7 +50,7 @@ public:
 
 	//------------------------------
 
-	void setIcon(AvoGUI::Image* p_icon);
+	void setIcon(Icon p_icon);
 
 	//------------------------------
 
@@ -58,7 +63,7 @@ public:
 				if (m_hoverAnimationTime < 1.f)
 				{
 					m_backgroundColor = AvoGUI::interpolate(
-						AvoGUI::Color(0.f, 0.f), getThemeColor("background"),
+						Colors::titleBarBackground, getThemeColor("background"),
 						getThemeEasing("in out").easeValue(m_hoverAnimationTime += getThemeValue("hover animation speed"))
 					);
 					queueAnimationUpdate();
@@ -74,7 +79,7 @@ public:
 				if (m_hoverAnimationTime > 0.f)
 				{
 					m_backgroundColor = AvoGUI::interpolate(
-						AvoGUI::Color(0.f, 0.f), getThemeColor("background"),
+						Colors::titleBarBackground, getThemeColor("background"),
 						getThemeEasing("in out").easeValue(m_hoverAnimationTime -= getThemeValue("hover animation speed"))
 					);
 					queueAnimationUpdate();
@@ -90,13 +95,7 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context) override
-	{
-		p_context->setColor(m_backgroundColor);
-		p_context->fillRectangle(getSize());
-
-		p_context->drawImage(m_icon);
-	}
+	void draw(AvoGUI::DrawingContext* p_context) override;
 };
 
 //------------------------------

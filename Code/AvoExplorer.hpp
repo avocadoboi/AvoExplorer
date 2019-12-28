@@ -47,6 +47,10 @@ public:
 
 	//------------------------------
 
+	void restartWithElevatedPrivileges();
+
+	//------------------------------
+
 	void createContent() override;
 
 	void handleSizeChange() override;
