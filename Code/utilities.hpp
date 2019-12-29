@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../Resources/Icons/iconResources.hpp"
-
 #include <AvoGUI.hpp>
 #include <Windows.h>
 #undef max
