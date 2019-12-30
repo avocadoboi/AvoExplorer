@@ -86,11 +86,10 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 		setHeight(BOOKMARK_HEIGHT);
 		setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
 		m_fileBrowserItems->tellIconLoadingThreadToLoadIconForItem(this);
-	}
 
-	//m_contextMenuItems.push_back(ActionMenuItemData("Copy", "Ctrl + C"));
-	//m_contextMenuItems.push_back(ActionMenuItemData("Cut", "Ctrl + X"));
-	//m_contextMenuItems.push_back(ActionMenuItemData("Remove", "del"));
+		addContextMenuItem(Strings::removeBookmark);
+		setContextMenuWidth(170.f);
+	}
 }
 
 void FileBrowserItem::handleSizeChange()

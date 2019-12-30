@@ -57,6 +57,7 @@ public:
 	void addBookmark(std::filesystem::path const& p_path);
 	void removeBookmark(uint32 p_index);
 	void removeBookmark(std::filesystem::path const& p_path);
+	void removeBookmark(FileBrowserItem* p_bookmark);
 	bool getIsPathBookmarked(std::filesystem::path const& p_path);
 
 	//------------------------------

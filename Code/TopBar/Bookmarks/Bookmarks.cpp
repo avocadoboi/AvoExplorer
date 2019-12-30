@@ -75,7 +75,7 @@ void Bookmarks::loadBookmarks()
 		{
 			std::wstring pathString;
 			std::getline(fileStream, pathString, (wchar_t)0);
-			if (pathString != L"")
+			if (pathString != L"" && std::filesystem::exists(pathString))
 			{
 				m_bookmarks.push_back(new FileBrowserItem(m_bookmarksContainer, pathString, true));
 			}
@@ -102,19 +102,32 @@ void Bookmarks::addBookmark(std::filesystem::path const& p_path)
 	m_bookmarks.push_back(new FileBrowserItem(m_bookmarksContainer, p_path, true));
 	updateLayout();
 	m_bookmarks.back()->invalidate();
+	saveBookmarks();
 }
 void Bookmarks::removeBookmark(uint32 p_index)
 {
 	m_bookmarks[p_index]->invalidate();
-	m_bookmarksContainer->removeChild(m_bookmarks[p_index]->getIndex());
+	m_bookmarksContainer->removeChild(m_bookmarks[p_index]);
 	m_bookmarks.erase(m_bookmarks.begin() + p_index);
 	updateLayout();
+	saveBookmarks();
 }
 void Bookmarks::removeBookmark(std::filesystem::path const& p_path)
 {
 	for (uint32 a = 0; a < m_bookmarks.size(); a++)
 	{
 		if (m_bookmarks[a]->getPath() == p_path)
+		{
+			removeBookmark(a);
+			break;
+		}
+	}
+}
+void Bookmarks::removeBookmark(FileBrowserItem* p_bookmark)
+{
+	for (uint32 a = 0; a < m_bookmarks.size(); a++)
+	{
+		if (m_bookmarks[a] == p_bookmark)
 		{
 			removeBookmark(a);
 			break;

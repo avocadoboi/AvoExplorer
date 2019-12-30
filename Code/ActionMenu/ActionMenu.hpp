@@ -65,7 +65,11 @@ public:
 	}
 	std::string const& getShortcut()
 	{
-		return m_text_shortcut->getString();
+		if (m_text_shortcut)
+		{
+			return m_text_shortcut->getString();
+		}
+		return "";
 	}
 
 	//------------------------------
@@ -78,9 +82,11 @@ public:
 		p_context->setOpacity(getThemeValue("opacity"));
 		p_context->setColor(getThemeColor("on background"));
 		p_context->drawText(m_text_action);
-		p_context->setColor(Colors::actionMenuShortcut);
-		p_context->drawText(m_text_shortcut);
-		p_context->setOpacity(1.f);
+		if (m_text_shortcut)
+		{
+			p_context->setColor(Colors::actionMenuShortcut);
+			p_context->drawText(m_text_shortcut);
+		}
 	}
 };
 

@@ -20,8 +20,7 @@ uint32 constexpr WINDOW_HEIGHT_START = 560;
 //
 
 AvoExplorer::AvoExplorer(char const* p_initialPath) :
-	m_titleBar(0), m_topBar(0), m_fileBrowser(0), m_contextMenu(0), 
-	m_windowsImagingFactory(0), m_initialPath(p_initialPath)
+	m_initialPath(p_initialPath)
 {
 	CoInitialize(0);
 	CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));

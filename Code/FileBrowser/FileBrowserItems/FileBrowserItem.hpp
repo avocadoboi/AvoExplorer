@@ -140,6 +140,16 @@ public:
 
 	//------------------------------
 
+	void handleContextMenuItemChoice(std::string const& p_action, std::string const& p_shortcut) override
+	{
+		if (p_action == Strings::removeBookmark)
+		{
+			m_bookmarks->removeBookmark(this);
+		}
+	}
+
+	//------------------------------
+
 	void handleMouseEnter(AvoGUI::MouseEvent const& p_event) override
 	{
 		m_isHovering = true;

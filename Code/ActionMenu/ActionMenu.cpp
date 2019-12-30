@@ -20,12 +20,15 @@ void ActionMenuItem::handleSizeChange()
 	m_text_action->setLeft(ACTION_MENU_ITEM_LEFT_PADDING);
 	m_text_action->setCenterY(getHeight()*0.5f);
 
-	m_text_shortcut->setRight(getWidth() - ACTION_MENU_ITEM_RIGHT_PADDING);
-	m_text_shortcut->setCenterY(getHeight() * 0.5f);
+	if (m_text_shortcut)
+	{
+		m_text_shortcut->setRight(getWidth() - ACTION_MENU_ITEM_RIGHT_PADDING);
+		m_text_shortcut->setCenterY(getHeight() * 0.5f);
+	}
 }
 void ActionMenuItem::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 {
-	if (p_event.mouseButton == AvoGUI::MouseButton::Left)
+	if (p_event.mouseButton == AvoGUI::MouseButton::Left && getSize().getIsContaining(p_event.x, p_event.y))
 	{
 		m_parent->handleActionMenuItemChoice(this);
 	}

@@ -20,13 +20,13 @@ class AvoExplorer :
 	public AvoGUI::Gui
 {
 private:
-	TitleBar* m_titleBar;
-	TopBar* m_topBar;
-	FileBrowser* m_fileBrowser;
+	TitleBar* m_titleBar = 0;
+	TopBar* m_topBar = 0;
+	FileBrowser* m_fileBrowser = 0;
 
-	ContextMenu* m_contextMenu;
+	ContextMenu* m_contextMenu = 0;
 
-	IWICImagingFactory2* m_windowsImagingFactory;
+	IWICImagingFactory2* m_windowsImagingFactory = 0;
 
 	char const* m_initialPath;
 
