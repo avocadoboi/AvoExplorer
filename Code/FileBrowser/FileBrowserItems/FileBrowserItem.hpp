@@ -164,9 +164,10 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
+			m_isDragged = true;
+			
 			if (m_isBookmark)
 			{
-				m_isDragged = true;
 				move(getParent()->getAbsoluteTopLeft());
 				setParent(getGui());
 				setElevation(-1.f);
@@ -208,14 +209,18 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			if (m_isBookmark && m_isDragged)
+			if (m_isDragged)
 			{
 				m_isDragged = false;
-				m_animationStartPosition = getAbsoluteTopLeft();
-				m_positionAnimationTime = 0.f;
-				queueAnimationUpdate();
 
-				m_bookmarks->saveBookmarks();
+				if (m_isBookmark)
+				{
+					m_animationStartPosition = getAbsoluteTopLeft();
+					m_positionAnimationTime = 0.f;
+					queueAnimationUpdate();
+
+					m_bookmarks->saveBookmarks();
+				}
 			}
 		}
 		else
@@ -232,12 +237,20 @@ public:
 	}
 	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override
 	{
-		if (m_isBookmark && m_isDragged)
+		if (m_isDragged)
 		{
-			move(p_event.movementX, p_event.movementY);
-			invalidate();
+			if (m_isBookmark)
+			{
+				move(p_event.movementX, p_event.movementY);
+				invalidate();
 
-			m_bookmarks->handleBookmarkDrag(this);
+				m_bookmarks->handleBookmarkDrag(this);
+			}
+			else if (m_isSelected)
+			{
+				m_fileBrowserItems->dragSelectedItems();
+				m_isDragged = false;
+			}
 		}
 	}
 
