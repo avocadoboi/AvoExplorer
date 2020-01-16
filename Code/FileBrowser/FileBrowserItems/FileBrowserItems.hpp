@@ -204,6 +204,10 @@ public:
 
 	//------------------------------
 
+	void dragSelectedItems();
+
+	//------------------------------
+
 	void handleMouseBackgroundEnter(AvoGUI::MouseEvent const& p_event) override
 	{
 		View::handleMouseBackgroundEnter(p_event);
