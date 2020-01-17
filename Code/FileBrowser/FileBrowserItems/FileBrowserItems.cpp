@@ -531,21 +531,42 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 	}
 
 	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	path.make_preferred();
 	bool existsPath = std::filesystem::exists(path);
+	bool wasDirectory = existsPath ? std::filesystem::is_directory(path) : false;
 
-	if (!p_willReplaceExisting && existsPath)
+	if (existsPath)
 	{
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileAlreadyExistsDialogTitle, Strings::newFileAlreadyExistsDialogMessage);
-		dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-		dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-		dialog->addDialogArgument(p_name);
-		dialog->setId(Ids::newFileAlreadyExistsDialog);
-		dialog->setChoiceDialogBoxListener(this);
-		dialog->detachFromParent();
-		return;
+		if (p_willReplaceExisting)
+		{
+			// Move old file to recycle bin
+
+			std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
+
+			SHFILEOPSTRUCTW fileOperation = { 0 };
+			fileOperation.fFlags = FOF_ALLOWUNDO;
+			fileOperation.wFunc = FO_DELETE;
+			fileOperation.pFrom = doubleNullTerminatedPath.data();
+			SHFileOperationW(&fileOperation);
+
+			if (fileOperation.fAnyOperationsAborted)
+			{
+				return;
+			}
+		}
+		else
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryOrFileAlreadyExistsDialogTitle, Strings::newDirectoryOrFileAlreadyExistsDialogMessage);
+			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addDialogArgument(p_name);
+			dialog->setId(Ids::newFileAlreadyExistsDialog);
+			dialog->setChoiceDialogBoxListener(this);
+			dialog->detachFromParent();
+			return;
+		}
 	}
 
-	path.make_preferred();
 
 	/*
 		If the user wrote for example "parent/child/file.txt", then create those directories first, then the file.
@@ -566,7 +587,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 			}
 		}
 		newItemPath.make_preferred();
-		bool wasNewItemPathAlreadyExisting = std::filesystem::exists(newItemPath);
+		bool existedNewItemPath = std::filesystem::exists(newItemPath);
 
 		std::error_code errorCode;
 		std::filesystem::create_directories(path.parent_path(), errorCode);
@@ -577,56 +598,9 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 			dialog->detachFromParent();
 			return;
 		}
-		else if (!wasNewItemPathAlreadyExisting)
+		else if (!existedNewItemPath)
 		{
 			insertNewDirectoryItem(newItemPath);
-		}
-	}
-
-	//------------------------------
-	// Move old file to recycle bin
-
-	if (p_willReplaceExisting && existsPath)
-	{
-		m_selectedItems.clear();
-		bool wasDirectory = std::filesystem::is_directory(path);
-
-		std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
-
-		SHFILEOPSTRUCTW fileOperation = { 0 };
-		fileOperation.fFlags = FOF_ALLOWUNDO;
-		fileOperation.wFunc = FO_DELETE;
-		fileOperation.pFrom = doubleNullTerminatedPath.data();
-		SHFileOperationW(&fileOperation);
-
-		if (fileOperation.fAnyOperationsAborted)
-		{
-			return;
-		}
-		else
-		{
-			if (wasDirectory)
-			{
-				for (uint32 a = 0; a < m_directoryItems.size(); a++)
-				{
-					if (m_directoryItems[a]->getPath() == path)
-					{
-						m_directoryItems.erase(m_directoryItems.begin() + a);
-						break;
-					}
-				}
-			}
-			else
-			{
-				for (uint32 a = 0; a < m_fileItems.size(); a++)
-				{
-					if (m_fileItems[a]->getPath() == path)
-					{
-						m_fileItems.erase(m_fileItems.begin() + a);
-						break;
-					}
-				}
-			}
 		}
 	}
 
@@ -659,8 +633,22 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		}
 		}
 	}
-	else if (isNewFileInSameDirectory && !p_willReplaceExisting)
+	else if (isNewFileInSameDirectory && wasDirectory == p_willReplaceExisting)
 	{
+		if (wasDirectory)
+		{
+			for (uint32 a = 0; a < m_directoryItems.size(); a++)
+			{
+				if (m_directoryItems[a]->getPath() == path)
+				{
+					deselectAllItems();
+					removeChild(m_directoryItems[a]);
+					m_directoryItems.erase(m_directoryItems.begin() + a);
+					break;
+				}
+			}
+		}
+		
 		insertNewFileItem(path);
 	}
 }
@@ -668,31 +656,6 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 {
 	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
 	path.make_preferred();
-
-	if (std::filesystem::exists(path))
-	{
-		if (p_willReplaceExisting)
-		{
-			std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
-
-			SHFILEOPSTRUCTW fileOperation = { 0 };
-			fileOperation.fFlags = FOF_ALLOWUNDO;
-			fileOperation.wFunc = FO_DELETE;
-			fileOperation.pFrom = doubleNullTerminatedPath.data();
-			SHFileOperationW(&fileOperation);
-		}
-		else
-		{
-			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryAlreadyExistsDialogTitle, Strings::newDirectoryAlreadyExistsDialogMessage);
-			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-			dialog->addDialogArgument(p_name);
-			dialog->setId(Ids::newDirectoryAlreadyExistsDialog);
-			dialog->setChoiceDialogBoxListener(this);
-			dialog->detachFromParent();
-			return;
-		}
-	}
 
 	std::filesystem::path newItemPath;
 	if (std::filesystem::path(p_name).has_parent_path())
@@ -711,7 +674,34 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 	{
 		newItemPath = path;
 	}
-	bool wasNewItemPathAlreadyExisting = std::filesystem::exists(newItemPath);
+
+	bool existedNewItemPath = std::filesystem::exists(newItemPath);
+	bool wasRegularFile = existedNewItemPath ? std::filesystem::is_regular_file(newItemPath) : false;
+
+	if (existedNewItemPath)
+	{
+		if (p_willReplaceExisting)
+		{
+			std::wstring doubleNullTerminatedPath = path.wstring() + L'\0';
+
+			SHFILEOPSTRUCTW fileOperation = { 0 };
+			fileOperation.fFlags = FOF_ALLOWUNDO;
+			fileOperation.wFunc = FO_DELETE;
+			fileOperation.pFrom = doubleNullTerminatedPath.data();
+			SHFileOperationW(&fileOperation);
+		}
+		else
+		{
+			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryOrFileAlreadyExistsDialogTitle, Strings::newDirectoryOrFileAlreadyExistsDialogMessage);
+			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addDialogArgument(p_name);
+			dialog->setId(Ids::newDirectoryAlreadyExistsDialog);
+			dialog->setChoiceDialogBoxListener(this);
+			dialog->detachFromParent();
+			return;
+		}
+	}
 
 	std::error_code errorCode;
 	std::filesystem::create_directories(path, errorCode);
@@ -721,9 +711,47 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
 		dialog->detachFromParent();
 	}
-	else if (!p_willReplaceExisting && !wasNewItemPathAlreadyExisting)
+	else if (p_willReplaceExisting == wasRegularFile)
 	{
-		insertNewDirectoryItem(newItemPath);
+		if (wasRegularFile)
+		{
+			for (uint32 a = 0; a < m_fileItems.size(); a++)
+			{
+				if (m_fileItems[a]->getPath() == path)
+				{
+					deselectAllItems();
+					removeChild(m_fileItems[a]);
+					m_fileItems.erase(m_fileItems.begin() + a);
+					break;
+				}
+			}
+		}
+
+		std::lock_guard<std::mutex> lock(m_directoryItemsMutex);
+
+		FileBrowserItem* newItem = new FileBrowserItem(this, newItemPath, false);
+		FileBrowserItem* lastItem = 0;
+		for (uint32 a = 0; a < m_directoryItems.size(); a++)
+		{
+			if (lastItem)
+			{
+				std::swap(lastItem, m_directoryItems[a]);
+				lastItem->incrementItemIndex();
+			}
+			else if (getIsPathStringLessThan(newItemPath, m_directoryItems[a]->getPath()))
+			{
+				lastItem = m_directoryItems[a];
+				lastItem->incrementItemIndex();
+				m_directoryItems[a] = newItem;
+				newItem->setItemIndex(a);
+				break;
+			}
+		}
+		m_directoryItems.push_back(lastItem ? lastItem : newItem);
+		updateLayout();
+		setSelectedItem(newItem);
+		getParent()->invalidate();
+		tellIconLoadingThreadToLoadMoreIcons();
 	}
 }
 
@@ -761,7 +789,7 @@ void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 	if (m_isDraggingSelectionRectangle)
 	{
 		m_isDraggingSelectionRectangle = false;
-		getGui()->invalidateRectangle((m_selectionRectangle + getAbsoluteTopLeft()).roundCoordinatesOutwards());
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
 	}
 }
 void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
@@ -894,8 +922,8 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			}
 		}
 
-		getGui()->invalidateRectangle((selectionRectangleBefore + getAbsoluteTopLeft()).roundCoordinatesOutwards());
-		getGui()->invalidateRectangle((m_selectionRectangle + getAbsoluteTopLeft()).roundCoordinatesOutwards());
+		getGui()->invalidateRectangle(selectionRectangleBefore + getAbsoluteTopLeft());
+		getGui()->invalidateRectangle(m_selectionRectangle + getAbsoluteTopLeft());
 	}
 }
 

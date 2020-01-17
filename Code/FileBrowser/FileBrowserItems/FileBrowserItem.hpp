@@ -164,16 +164,19 @@ public:
 	{
 		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
 		{
-			m_isDragged = true;
-			
 			if (m_isBookmark)
 			{
+				m_isDragged = true;
 				move(getParent()->getAbsoluteTopLeft());
 				setParent(getGui());
 				setElevation(-1.f);
 			}
 			else 
 			{
+				if (m_isSelected)
+				{
+					m_isDragged = true;
+				}
 				bool isShiftDown = p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift;
 				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
 				{
