@@ -47,6 +47,7 @@ FileBrowserItem::FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path c
 
 	setCornerRadius(6.f);
 	enableMouseEvents();
+	enableDragDropEvents();
 
 	//------------------------------
 

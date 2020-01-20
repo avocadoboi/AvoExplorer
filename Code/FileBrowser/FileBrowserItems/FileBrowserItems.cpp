@@ -765,7 +765,8 @@ void FileBrowserItems::dragSelectedItems()
 	{
 		paths[a] = m_selectedItems[a]->getPath().string();
 	}
-	getGui()->getWindow()->dragAndDropFiles(paths);
+
+	getGui()->getWindow()->dragAndDropFiles(paths, m_selectedItems[0]->getIcon(), m_selectedItems[0]->getIcon()->getInnerSize()*0.5f);
 }
 
 //------------------------------

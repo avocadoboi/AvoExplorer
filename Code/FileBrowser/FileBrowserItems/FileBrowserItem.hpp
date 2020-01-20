@@ -117,6 +117,10 @@ public:
 	//------------------------------
 
 	void setIcon(AvoGUI::Image* p_image);
+	AvoGUI::Image* getIcon()
+	{
+		return m_icon;
+	}
 	bool getHasLoadedIcon()
 	{
 		return m_icon;
@@ -145,6 +149,38 @@ public:
 		if (p_action == Strings::removeBookmark)
 		{
 			m_bookmarks->removeBookmark(this);
+		}
+	}
+
+	//------------------------------
+
+	AvoGUI::DragDropOperation handleDragDropEnter(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_isHovering = true;
+		queueAnimationUpdate();
+		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
+		{
+			return AvoGUI::DragDropOperation::Copy;
+		}
+		return AvoGUI::DragDropOperation::Move;
+	}
+	void handleDragDropLeave(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_isHovering = false;
+		queueAnimationUpdate();
+	}
+	void handleDragDropFinish(AvoGUI::DragDropEvent const& p_event) override
+	{
+		if (m_isFile)
+		{
+			//m_fileBrowserItems->
+		}
+		else
+		{
+			if (m_isBookmark)
+			{
+
+			}
 		}
 	}
 

@@ -205,6 +205,8 @@ public:
 	//------------------------------
 
 	void dragSelectedItems();
+	//void addItems(std::vector<std::string> p_previousPaths);
+	//void addFiles(std::vector<std::string> p_names, )
 
 	//------------------------------
 
