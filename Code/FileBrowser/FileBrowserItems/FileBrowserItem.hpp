@@ -154,15 +154,18 @@ public:
 
 	//------------------------------
 
-	AvoGUI::DragDropOperation handleDragDropEnter(AvoGUI::DragDropEvent const& p_event) override
+	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
 	{
-		m_isHovering = true;
-		queueAnimationUpdate();
 		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
 		{
 			return AvoGUI::DragDropOperation::Copy;
 		}
 		return AvoGUI::DragDropOperation::Move;
+	}
+	void handleDragDropEnter(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_isHovering = true;
+		queueAnimationUpdate();
 	}
 	void handleDragDropLeave(AvoGUI::DragDropEvent const& p_event) override
 	{
@@ -173,7 +176,7 @@ public:
 	{
 		if (m_isFile)
 		{
-			//m_fileBrowserItems->
+			m_fileBrowserItems->dropItems(p_event.data);
 		}
 		else
 		{
@@ -207,12 +210,35 @@ public:
 				setParent(getGui());
 				setElevation(-1.f);
 			}
-			else 
+			else if (m_isSelected)
 			{
-				if (m_isSelected)
+				m_isDragged = true;
+			}
+		}
+		else
+		{
+			ContextView::handleMouseDown(p_event);
+		}
+	}
+	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override
+	{
+		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
+		{
+			if (m_isDragged)
+			{
+				m_isDragged = false;
+
+				if (m_isBookmark)
 				{
-					m_isDragged = true;
+					m_animationStartPosition = getAbsoluteTopLeft();
+					m_positionAnimationTime = 0.f;
+					queueAnimationUpdate();
+
+					m_bookmarks->saveBookmarks();
 				}
+			}
+			else if (!m_isBookmark)
+			{
 				bool isShiftDown = p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift;
 				if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
 				{
@@ -236,29 +262,6 @@ public:
 				else
 				{
 					m_fileBrowserItems->setSelectedItem(this);
-				}
-			}
-		}
-		else
-		{
-			ContextView::handleMouseDown(p_event);
-		}
-	}
-	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override
-	{
-		if (p_event.mouseButton == AvoGUI::MouseButton::Left)
-		{
-			if (m_isDragged)
-			{
-				m_isDragged = false;
-
-				if (m_isBookmark)
-				{
-					m_animationStartPosition = getAbsoluteTopLeft();
-					m_positionAnimationTime = 0.f;
-					queueAnimationUpdate();
-
-					m_bookmarks->saveBookmarks();
 				}
 			}
 		}

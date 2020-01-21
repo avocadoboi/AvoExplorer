@@ -18,6 +18,9 @@ constexpr float DIRECTORY_HEIGHT = 6		* 8.f;
 
 //------------------------------
 
+/*
+	Returns true if p_a is less than p_b.
+*/
 bool getIsPathStringLessThan(std::wstring const& p_a, std::wstring const& p_b)
 {
 	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, p_a.c_str(), p_a.size(), p_b.c_str(), p_b.size());
@@ -727,31 +730,7 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 			}
 		}
 
-		std::lock_guard<std::mutex> lock(m_directoryItemsMutex);
-
-		FileBrowserItem* newItem = new FileBrowserItem(this, newItemPath, false);
-		FileBrowserItem* lastItem = 0;
-		for (uint32 a = 0; a < m_directoryItems.size(); a++)
-		{
-			if (lastItem)
-			{
-				std::swap(lastItem, m_directoryItems[a]);
-				lastItem->incrementItemIndex();
-			}
-			else if (getIsPathStringLessThan(newItemPath, m_directoryItems[a]->getPath()))
-			{
-				lastItem = m_directoryItems[a];
-				lastItem->incrementItemIndex();
-				m_directoryItems[a] = newItem;
-				newItem->setItemIndex(a);
-				break;
-			}
-		}
-		m_directoryItems.push_back(lastItem ? lastItem : newItem);
-		updateLayout();
-		setSelectedItem(newItem);
-		getParent()->invalidate();
-		tellIconLoadingThreadToLoadMoreIcons();
+		insertNewDirectoryItem(newItemPath);
 	}
 }
 
@@ -766,7 +745,107 @@ void FileBrowserItems::dragSelectedItems()
 		paths[a] = m_selectedItems[a]->getPath().string();
 	}
 
-	getGui()->getWindow()->dragAndDropFiles(paths, m_selectedItems[0]->getIcon(), m_selectedItems[0]->getIcon()->getInnerSize()*0.5f);
+	getGui()->getWindow()->dragAndDropFiles(paths, m_selectedItems[0]->getIcon(), m_selectedItems[0]->getIcon()->getOriginalSize()*0.5f);
+}
+void FileBrowserItems::dropItems(AvoGUI::ClipboardData* p_data)
+{
+	std::vector<std::wstring> paths = p_data->getUtf16ItemNames();
+
+	if (!paths.size())
+	{
+		return;
+	}
+
+	std::wstring pathsString;
+	pathsString.reserve(MAX_PATH * paths.size());
+	for (uint32 a = 0; a < paths.size(); a++)
+	{
+		pathsString += paths[a] + L'\0';
+	}
+	pathsString += L'\0';
+
+	std::filesystem::path directoryPath = m_fileBrowser->getPath();
+
+	SHFILEOPSTRUCTW fileOperation = { 0 };
+	fileOperation.fFlags = FOF_ALLOWUNDO;
+	fileOperation.wFunc = FO_COPY;
+	fileOperation.pFrom = pathsString.data();
+	fileOperation.pTo = directoryPath.c_str();
+	SHFileOperationW(&fileOperation);
+
+	if (!fileOperation.fAnyOperationsAborted)
+	{
+		std::vector<std::filesystem::path> directoryPaths;
+		directoryPaths.reserve(paths.size());
+		std::vector<std::filesystem::path> filePaths;
+		filePaths.reserve(paths.size());
+
+		for (uint32 a = 0; a < paths.size(); a++)
+		{
+			std::filesystem::path path = paths[a];
+			if (std::filesystem::is_regular_file(path))
+			{
+				filePaths.push_back(directoryPath / path.filename());
+			}
+			else if (std::filesystem::is_directory(path))
+			{
+				directoryPaths.push_back(directoryPath / path.filename());
+			}
+		}
+
+		deselectAllItems();
+		if (directoryPaths.size())
+		{
+			if (directoryPaths.size() > 1)
+			{
+				std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathStringLessThan);
+			}
+			m_directoryItems.resize(m_directoryItems.size() + directoryPaths.size(), 0);
+			uint32 insertionIndex = m_directoryItems.size() - 1;
+			for (int32 a = m_directoryItems.size() - directoryPaths.size() - 1; a >= 0; a--)
+			{
+				while (directoryPaths.size() && getIsPathStringLessThan(m_directoryItems[a]->getPath(), directoryPaths.back()))
+				{
+					m_directoryItems[insertionIndex] = new FileBrowserItem(this, directoryPaths.back(), false);
+					m_directoryItems[insertionIndex]->setItemIndex(insertionIndex);
+					directoryPaths.pop_back();
+					insertionIndex--;
+				}
+				if (!directoryPaths.size())
+				{
+					break;
+				}
+				m_directoryItems[insertionIndex--] = m_directoryItems[a];
+			}
+		}
+		if (filePaths.size())
+		{
+			if (filePaths.size() > 1)
+			{
+				std::sort(filePaths.begin(), filePaths.end(), getIsPathStringLessThan);
+			}
+			m_fileItems.resize(m_fileItems.size() + filePaths.size(), 0);
+			uint32 insertionIndex = m_fileItems.size() - 1;
+			for (int32 a = m_fileItems.size() - filePaths.size() - 1; a >= 0; a--)
+			{
+				while (filePaths.size() && getIsPathStringLessThan(m_fileItems[a]->getPath(), filePaths.back()))
+				{
+					m_fileItems[insertionIndex] = new FileBrowserItem(this, filePaths.back(), false);
+					m_fileItems[insertionIndex]->setItemIndex(insertionIndex);
+					filePaths.pop_back();
+					insertionIndex--;
+				}
+				if (!filePaths.size())
+				{
+					break;
+				}
+				m_fileItems[insertionIndex--] = m_fileItems[a];
+			}
+		}
+		updateLayout();
+		getParent()->invalidate();
+		tellIconLoadingThreadToLoadMoreIcons();
+	}
 }
 
 //------------------------------
@@ -798,6 +877,7 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 	if (m_isDraggingSelectionRectangle && AvoGUI::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_selectionRectangleAnchor.x, m_selectionRectangleAnchor.y) > 36.f)
 	{
 		AvoGUI::Rectangle<float> selectionRectangleBefore = m_selectionRectangle;
+		// To keep the correct relationship between left and right and top and bottom.
 		if (p_event.x < m_selectionRectangleAnchor.x)
 		{
 			m_selectionRectangle.left = p_event.x;

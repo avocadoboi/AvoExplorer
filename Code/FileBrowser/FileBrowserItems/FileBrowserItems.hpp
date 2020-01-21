@@ -29,6 +29,7 @@ class FileBrowserItems :
 private:
 	FileBrowser* m_fileBrowser;
 
+	//std::set<FileBrowserItem*> m_fileItems
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
 
@@ -45,6 +46,7 @@ private:
 	bool m_isDraggingSelectionRectangle;
 	
 	bool m_isMouseOnBackground;
+	bool m_isDraggingDataOnBackground;
 
 	AvoGUI::Text* m_text_directories = 0;
 	AvoGUI::Text* m_text_files = 0;
@@ -99,11 +101,13 @@ public:
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
 		m_isDraggingSelectionRectangle(false),
 		m_isMouseOnBackground(false),
+		m_isDraggingDataOnBackground(false),
 		m_needsToLoadMoreIcons(false), 
 		m_needsToChangeDirectory(false),
 		m_needsToExitIconLoadingThread(false)
 	{
 		enableMouseEvents();
+		enableDragDropEvents();
 		getGui()->setKeyboardFocus(this);
 
 		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
@@ -205,8 +209,31 @@ public:
 	//------------------------------
 
 	void dragSelectedItems();
-	//void addItems(std::vector<std::string> p_previousPaths);
-	//void addFiles(std::vector<std::string> p_names, )
+	void dropItems(AvoGUI::ClipboardData* p_data);
+
+	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
+	{
+		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
+		{
+			return AvoGUI::DragDropOperation::Copy;
+		}
+		return AvoGUI::DragDropOperation::Move;
+	}
+	void handleDragDropBackgroundEnter(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_isDraggingDataOnBackground = true;
+	}
+	void handleDragDropBackgroundLeave(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_isDraggingDataOnBackground = false;
+	}
+	void handleDragDropFinish(AvoGUI::DragDropEvent const& p_event) override
+	{
+		if (m_isDraggingDataOnBackground)
+		{
+			dropItems(p_event.data);
+		}
+	}
 
 	//------------------------------
 
