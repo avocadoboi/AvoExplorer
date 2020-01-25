@@ -83,6 +83,16 @@ private:
 
 	//------------------------------
 
+	enum class NameCollisionOption
+	{
+		Replace,
+		Skip,
+		Rename,
+		None
+	};
+
+	//------------------------------
+
 	void loadIconForItem(FileBrowserItem* p_item);
 
 	uint32 getNumberOfDirectoriesPerRow();
@@ -203,13 +213,24 @@ public:
 				createDirectory(p_dialog->getDialogArgument(0), true);
 			}
 			break;
+		case Ids::directoriesOrFilesAlreadyExistDialog:
+			AvoGUI::ClipboardData* clipboardData = getGui()->getWindow()->getClipboardData();
+			if (p_choice == Strings::replace)
+			{
+				dropItems(clipboardData, NameCollisionOption::Replace);
+			}
+			else if (p_choice == Strings::addSuffixes)
+			{
+				dropItems(clipboardData, NameCollisionOption::Rename);
+			}
+			//else if (p_choice == Strings::)
 		}
 	}
 
 	//------------------------------
 
 	void dragSelectedItems();
-	void dropItems(AvoGUI::ClipboardData* p_data);
+	void dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOption p_collisionOption = NameCollisionOption::None);
 
 	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
 	{

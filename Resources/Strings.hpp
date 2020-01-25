@@ -6,12 +6,13 @@
 
 namespace Strings_english
 {
+	char const* const addSuffixes = u8"Add suffixes";
 	char const* const bookmarks = u8"BOOKMARKS";
 	char const* const cancel = u8"Cancel";
-	char const* const directoryAlreadyExistsDialogMessage = u8"A directory with the same name already exists. Do you want to replace the old directory with a new one?";
-	char const* const directoryAlreadyExistsDialogTitle = u8"Directory already exists";
 	char const* const directory = u8"Directory";
 	char const* const directories = u8"Directories";
+	char const* const directoriesOrFilesAlreadyExistDialogMessage = u8"%u files with the same names already exist in this directory. \n\nIf you choose Replace, the old items will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate files.\nIf you choose Skip duplicates, only files with unique names will be added.";
+	char const* const directoriesOrFilesAlreadyExistDialogTitle = u8"Files already exist";
 	char const* const file = u8"File";
 	char const* const files = u8"Files";
 	char const* const newDirectoryDialogMessage = u8"Enter the name of the directory below";
@@ -33,6 +34,7 @@ namespace Strings_english
 	char const* const removeBookmark = u8"Remove bookmark";
 	char const* const replace = u8"Replace";
 	char const* const restart = u8"Restart";
+	char const* const skipDuplicates = u8"Skip duplicates";
 	char const* const thisDirectoryIsEmpty = u8"This directory is empty.";
 	char const* const yes = u8"Yes";
 };
