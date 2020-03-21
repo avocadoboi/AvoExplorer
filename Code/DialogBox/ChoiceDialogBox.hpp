@@ -26,8 +26,8 @@ private:
 
 	AvoGUI::Text* m_titleText = 0;
 	AvoGUI::Text* m_messageText = 0;
-	char const* m_titleTextString;
-	char const* m_messageTextString;
+	std::string m_titleTextString;
+	std::string m_messageTextString;
 
 	ChoiceDialogBoxListener* m_listener = 0;
 
@@ -38,6 +38,7 @@ private:
 
 public:
 	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
+	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, std::string const& p_title, std::string const& p_message);
 	~ChoiceDialogBox()
 	{
 		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
@@ -99,6 +100,7 @@ public:
 		setThemeColor("primary on background", Colors::primaryOnBackground);
 
 		m_titleBar = new TitleBar(this);
+		m_titleBar->setWidth(getWidth());
 
 		AvoGUI::DrawingContext* context = getDrawingContext();
 
@@ -120,11 +122,7 @@ public:
 		setHeight(m_messageText->getBottom() + m_messageText->getLeft());
 	}
 
-	void handleSizeChange() override
-	{
-		m_titleBar->setWidth(getWidth());
-		positionButtons();
-	}
+	void handleSizeChange(float p_lastWidth, float p_lastHeight) override;
 
 	//------------------------------
 

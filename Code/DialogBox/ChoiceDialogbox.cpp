@@ -35,8 +35,13 @@ void ChoiceDialogBox::positionButtons()
 // Public
 //
 
-ChoiceDialogBox::ChoiceDialogBox(AvoGUI::Gui* p_parentGui, char const* p_title, char const* p_text) :
-	m_titleTextString(p_title), m_messageTextString(p_text)
+ChoiceDialogBox::ChoiceDialogBox(AvoGUI::Gui* p_parentGui, char const* p_title, char const* p_message) :
+	m_titleTextString(p_title), m_messageTextString(p_message)
+{
+	create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
+}
+ChoiceDialogBox::ChoiceDialogBox(AvoGUI::Gui* p_parentGui, std::string const& p_title, std::string const& p_message) :
+	m_titleTextString(p_title), m_messageTextString(p_message)
 {
 	create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
 }
@@ -51,4 +56,17 @@ void ChoiceDialogBox::addButton(char const* p_text, AvoGUI::Button::Emphasis p_e
 	setHeight(m_messageText->getBottom() + m_messageText->getLeft() + button->getHeight() + BUTTON_MARGIN);
 	positionButtons();
 	includeAnimationThread();
+}
+
+void ChoiceDialogBox::handleSizeChange(float p_lastWidth, float p_lastHeight)
+{
+	if (p_lastWidth != getWidth())
+	{
+		m_titleBar->setWidth(getWidth());
+		m_messageText->setRight(getWidth() - m_titleText->getLeft(), false);
+		m_messageText->fitHeightToText();
+		setHeight(m_messageText->getBottom() + m_messageText->getLeft() + (m_buttons.size() ? m_buttons[0]->getHeight() + BUTTON_MARGIN : 0.f));
+		positionButtons();
+		invalidate();
+	}
 }

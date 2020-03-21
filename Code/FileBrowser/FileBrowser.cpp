@@ -92,7 +92,7 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
 			dialog->setChoiceDialogBoxListener(this);
 			dialog->setId(Ids::openDirectoryAccessDeniedDialog);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 			return;
 		}
 	}

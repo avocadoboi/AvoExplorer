@@ -11,7 +11,7 @@ namespace Strings_english
 	char const* const cancel = u8"Cancel";
 	char const* const directory = u8"Directory";
 	char const* const directories = u8"Directories";
-	char const* const directoriesOrFilesAlreadyExistDialogMessage = u8"%u files with the same names already exist in this directory. \n\nIf you choose Replace, the old items will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate files.\nIf you choose Skip duplicates, only files with unique names will be added.";
+	char const* const directoriesOrFilesAlreadyExistDialogMessage = u8"{0} files with the same names already exist in this directory. \n\nIf you choose Replace, the old items will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate files.\nIf you choose Skip duplicates, only files with unique names will be added.";
 	char const* const directoriesOrFilesAlreadyExistDialogTitle = u8"Files already exist";
 	char const* const file = u8"File";
 	char const* const files = u8"Files";

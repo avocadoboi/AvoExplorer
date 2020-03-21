@@ -34,7 +34,7 @@ private:
 	std::vector<FileBrowserItem*> m_directoryItems;
 
 	/*
-		When selecting between two items (shift + click, shift + arrow key), m_firstSelectedItem is the start of the selection and m_lastSelectedItem is the end of the selection.
+		When selecting between two items (shift + click or shift + arrow key), m_firstSelectedItem is the start of the selection and m_lastSelectedItem is the end of the selection.
 		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
 	*/
 	std::vector<FileBrowserItem*> m_selectedItems;
@@ -166,14 +166,14 @@ public:
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
 		dialog->setId(Ids::createDirectoryDialog);
 		dialog->setInputDialogBoxListener(this);
-		dialog->detachFromParent();
+		dialog->detachFromThread();
 	}
 	void letUserAddFile()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
 		dialog->setId(Ids::createFileDialog);
 		dialog->setInputDialogBoxListener(this);
-		dialog->detachFromParent();
+		dialog->detachFromThread();
 	}
 	void handleDialogBoxInput(InputDialogBox* p_dialog, std::string const& p_input) override
 	{
@@ -223,7 +223,11 @@ public:
 			{
 				dropItems(clipboardData, NameCollisionOption::Rename);
 			}
-			//else if (p_choice == Strings::)
+			else if (p_choice == Strings::skipDuplicates)
+			{
+				dropItems(clipboardData, NameCollisionOption::Skip);
+			}
+			clipboardData->forget();
 		}
 	}
 

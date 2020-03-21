@@ -328,7 +328,6 @@ void FileBrowserItems::insertNewFileItem(std::filesystem::path const& p_path)
 			lastItem->incrementItemIndex();
 			m_fileItems[a] = newItem;
 			newItem->setItemIndex(a);
-			break;
 		}
 	}
 	m_fileItems.push_back(lastItem ? lastItem : newItem);
@@ -356,7 +355,6 @@ void FileBrowserItems::insertNewDirectoryItem(std::filesystem::path const& p_pat
 			lastItem->incrementItemIndex();
 			m_directoryItems[a] = newItem;
 			newItem->setItemIndex(a);
-			break;
 		}
 	}
 	m_directoryItems.push_back(lastItem ? lastItem : newItem);
@@ -565,7 +563,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 			dialog->addDialogArgument(p_name);
 			dialog->setId(Ids::newFileAlreadyExistsDialog);
 			dialog->setChoiceDialogBoxListener(this);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 			return;
 		}
 	}
@@ -598,7 +596,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
 			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 			return;
 		}
 		else if (!existedNewItemPath)
@@ -625,14 +623,14 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
 			dialog->setId(Ids::newFileAccessDeniedDialog);
 			dialog->setChoiceDialogBoxListener(this);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 			break;
 		}
 		default:
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileFailedDialogTitle, Strings::newFileFailedDialogMessage);
 			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 		}
 		}
 	}
@@ -701,7 +699,7 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 			dialog->addDialogArgument(p_name);
 			dialog->setId(Ids::newDirectoryAlreadyExistsDialog);
 			dialog->setChoiceDialogBoxListener(this);
-			dialog->detachFromParent();
+			dialog->detachFromThread();
 			return;
 		}
 	}
@@ -712,7 +710,7 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 	{
 		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
 		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
-		dialog->detachFromParent();
+		dialog->detachFromThread();
 	}
 	else if (p_willReplaceExisting == wasRegularFile)
 	{
@@ -756,14 +754,41 @@ void FileBrowserItems::dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOpt
 		return;
 	}
 
+	std::filesystem::path directoryPath = m_fileBrowser->getPath();
+
+	std::vector<std::filesystem::path> targetDirectoryPaths;
+	targetDirectoryPaths.reserve(paths.size());
+	std::vector<std::filesystem::path> targetFilePaths;
+	targetFilePaths.reserve(paths.size());
+
 	std::wstring pathsString;
 	pathsString.reserve(MAX_PATH * paths.size());
+	
 	uint32 numberOfPathsThatAlreadyExist = 0;
 	for (uint32 a = 0; a < paths.size(); a++)
 	{
-		if (std::filesystem::exists(paths[a]) && p_collisionOption == NameCollisionOption::None)
+		std::filesystem::path path = paths[a];
+		if (std::filesystem::is_regular_file(path))
 		{
-			numberOfPathsThatAlreadyExist++;
+			path = directoryPath / path.filename();
+			targetFilePaths.push_back(path);
+		}
+		else if (std::filesystem::is_directory(path))
+		{
+			path = directoryPath / path.filename();
+			targetDirectoryPaths.push_back(path);
+		}
+		else
+		{
+			continue;
+		}
+
+		if (std::filesystem::exists(path) && (p_collisionOption == NameCollisionOption::Skip || p_collisionOption == NameCollisionOption::None))
+		{
+			if (p_collisionOption == NameCollisionOption::None)
+			{
+				numberOfPathsThatAlreadyExist++;
+			}
 		}
 		else
 		{
@@ -773,62 +798,54 @@ void FileBrowserItems::dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOpt
 	pathsString += L'\0';
 	if (numberOfPathsThatAlreadyExist)
 	{
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::directoriesOrFilesAlreadyExistDialogTitle, Strings::directoriesOrFilesAlreadyExistDialogMessage);
+		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::directoriesOrFilesAlreadyExistDialogTitle, AvoGUI::createFormattedString(Strings::directoriesOrFilesAlreadyExistDialogMessage, { numberOfPathsThatAlreadyExist }));
 		dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
 		dialog->addButton(Strings::addSuffixes, AvoGUI::Button::Emphasis::High);
+		dialog->addButton(Strings::skipDuplicates, AvoGUI::Button::Emphasis::High);
 		dialog->addButton(Strings::cancel, AvoGUI::Button::Emphasis::Medium);
+		dialog->setWidth(900.f);
 		dialog->setId(Ids::directoriesOrFilesAlreadyExistDialog);
 		dialog->setChoiceDialogBoxListener(this);
-		dialog->detachFromParent();
+		dialog->detachFromThread();
 		return;
 	}
 
-	std::filesystem::path directoryPath = m_fileBrowser->getPath();
-	std::wstring directoryPathString = directoryPath.wstring() + L'\0';
-
 	SHFILEOPSTRUCTW fileOperation = { 0 };
-	fileOperation.fFlags = FOF_ALLOWUNDO | (p_willAddSuffix ? FOF_RENAMEONCOLLISION : FOF_NOCONFIRMATION);
+	fileOperation.fFlags = FOF_ALLOWUNDO;
+	if (p_collisionOption == NameCollisionOption::Rename)
+	{
+		fileOperation.fFlags |= FOF_RENAMEONCOLLISION;
+	}
+	else if (p_collisionOption == NameCollisionOption::Replace)
+	{
+		fileOperation.fFlags |= FOF_NOCONFIRMATION;
+	}
 	fileOperation.wFunc = FO_COPY;
 	fileOperation.pFrom = pathsString.data();
+
+	std::wstring directoryPathString = directoryPath.wstring() + L'\0';
 	fileOperation.pTo = directoryPathString.data();
+
 	SHFileOperationW(&fileOperation);
 
 	if (!fileOperation.fAnyOperationsAborted)
 	{
-		std::vector<std::filesystem::path> directoryPaths;
-		directoryPaths.reserve(paths.size());
-		std::vector<std::filesystem::path> filePaths;
-		filePaths.reserve(paths.size());
-
-		for (uint32 a = 0; a < paths.size(); a++)
-		{
-			std::filesystem::path path = paths[a];
-			if (std::filesystem::is_regular_file(path))
-			{
-				filePaths.push_back(directoryPath / path.filename());
-			}
-			else if (std::filesystem::is_directory(path))
-			{
-				directoryPaths.push_back(directoryPath / path.filename());
-			}
-		}
-
 		deselectAllItems();
-		if (directoryPaths.size())
+		if (targetDirectoryPaths.size())
 		{
-			if (directoryPaths.size() > 1)
+			if (targetDirectoryPaths.size() > 1)
 			{
-				std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathStringLessThan);
+				std::sort(targetDirectoryPaths.begin(), targetDirectoryPaths.end(), getIsPathStringLessThan);
 			}
-			m_directoryItems.resize(m_directoryItems.size() + directoryPaths.size(), 0);
+			m_directoryItems.resize(m_directoryItems.size() + targetDirectoryPaths.size(), 0);
 			int32 insertionIndex = m_directoryItems.size() - 1;
-			for (int32 a = m_directoryItems.size() - directoryPaths.size() - 1; a >= 0; a--)
+			for (int32 a = m_directoryItems.size() - targetDirectoryPaths.size() - 1; a >= 0; a--)
 			{
-				while (directoryPaths.size() && getIsPathStringLessThan(m_directoryItems[a]->getPath(), directoryPaths.back()))
+				while (targetDirectoryPaths.size() && getIsPathStringLessThan(m_directoryItems[a]->getPath(), targetDirectoryPaths.back()))
 				{
-					m_directoryItems[insertionIndex] = new FileBrowserItem(this, directoryPaths.back(), false);
+					m_directoryItems[insertionIndex] = new FileBrowserItem(this, targetDirectoryPaths.back(), false);
 					m_directoryItems[insertionIndex]->setItemIndex(insertionIndex);
-					directoryPaths.pop_back();
+					targetDirectoryPaths.pop_back();
 					insertionIndex--;
 				}
 				m_directoryItems[insertionIndex] = m_directoryItems[a];
@@ -837,27 +854,27 @@ void FileBrowserItems::dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOpt
 			}
 			while (insertionIndex >= 0)
 			{
-				m_directoryItems[insertionIndex] = new FileBrowserItem(this, directoryPaths.back(), false);
+				m_directoryItems[insertionIndex] = new FileBrowserItem(this, targetDirectoryPaths.back(), false);
 				m_directoryItems[insertionIndex]->setItemIndex(insertionIndex);
-				directoryPaths.pop_back();
+				targetDirectoryPaths.pop_back();
 				insertionIndex--;
 			}
 		}
-		if (filePaths.size())
+		if (targetFilePaths.size())
 		{
-			if (filePaths.size() > 1)
+			if (targetFilePaths.size() > 1)
 			{
-				std::sort(filePaths.begin(), filePaths.end(), getIsPathStringLessThan);
+				std::sort(targetFilePaths.begin(), targetFilePaths.end(), getIsPathStringLessThan);
 			}
-			m_fileItems.resize(m_fileItems.size() + filePaths.size(), 0);
+			m_fileItems.resize(m_fileItems.size() + targetFilePaths.size(), 0);
 			int32 insertionIndex = m_fileItems.size() - 1;
-			for (int32 a = m_fileItems.size() - filePaths.size() - 1; a >= 0; a--)
+			for (int32 a = m_fileItems.size() - targetFilePaths.size() - 1; a >= 0; a--)
 			{
-				while (filePaths.size() && getIsPathStringLessThan(m_fileItems[a]->getPath(), filePaths.back()))
+				while (targetFilePaths.size() && getIsPathStringLessThan(m_fileItems[a]->getPath(), targetFilePaths.back()))
 				{
-					m_fileItems[insertionIndex] = new FileBrowserItem(this, filePaths.back(), false);
+					m_fileItems[insertionIndex] = new FileBrowserItem(this, targetFilePaths.back(), false);
 					m_fileItems[insertionIndex]->setItemIndex(insertionIndex);
-					filePaths.pop_back();
+					targetFilePaths.pop_back();
 					insertionIndex--;
 				}
 				m_fileItems[insertionIndex] = m_fileItems[a];
@@ -866,9 +883,9 @@ void FileBrowserItems::dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOpt
 			}
 			while (insertionIndex >= 0)
 			{
-				m_fileItems[insertionIndex] = new FileBrowserItem(this, filePaths.back(), false);
+				m_fileItems[insertionIndex] = new FileBrowserItem(this, targetFilePaths.back(), false);
 				m_fileItems[insertionIndex]->setItemIndex(insertionIndex);
-				filePaths.pop_back();
+				targetFilePaths.pop_back();
 				insertionIndex--;
 			}
 		}
