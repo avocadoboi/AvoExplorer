@@ -107,7 +107,7 @@ void Bookmarks::addBookmark(std::filesystem::path const& p_path)
 void Bookmarks::removeBookmark(uint32 p_index)
 {
 	m_bookmarks[p_index]->invalidate();
-	m_bookmarksContainer->removeChild(m_bookmarks[p_index]);
+	m_bookmarksContainer->removeChildView(m_bookmarks[p_index]);
 	m_bookmarks.erase(m_bookmarks.begin() + p_index);
 	updateLayout();
 	saveBookmarks();

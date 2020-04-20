@@ -3,56 +3,108 @@
 #include "FileBrowserItems.hpp"
 #include "../../TopBar/Bookmarks/Bookmarks.hpp"
 #include "../../ActionMenu/ContextMenu.hpp"
+#include "../../../Resources/Ids.hpp"
+#include "../../../Resources/Strings.hpp"
+#include "../../../Resources/Colors.hpp"
 
 //------------------------------
 
 /*
 	This class is used in both the Bookmarks section and the FileBrowserItems section to represent a directory or file.
 */
-
 class FileBrowserItem :
 	public ContextView
 {
+public:
+	static constexpr float FILE_HEIGHT = 16      * 8.f;
+	static constexpr float FILE_NAME_PADDING = 1 * 8.f;
+	static constexpr float BOOKMARK_HEIGHT = 4   * 8.f;
+
 private:
-	FileBrowserItems* m_fileBrowserItems;
-	Bookmarks* m_bookmarks;
-
-	uint32 m_itemIndex;
-
-	AvoGUI::Image* m_icon;
-
-	std::filesystem::path m_path;
-	std::string m_name;
-	AvoGUI::Text* m_text_name;
-	bool m_isFile;
-	bool m_hasThumbnail;
-	
-	bool m_isBookmark;
-	AvoGUI::Point<float> m_animationStartPosition;
-	AvoGUI::Point<float> m_animationTargetPosition;
-	float m_positionAnimationTime;
-	bool m_isDragged;
-
-	float m_hoverAnimationTime;
-	float m_hoverAnimationValue;
-	bool m_isHovering;
-	bool m_isSelected;
-
-protected:
-	void updateClipGeometry()
-	{
-		if (m_isBookmark)
-		{
-			View::updateClipGeometry();
-		}
-		else if (m_fileBrowserItems)
-		{
-			setClipGeometry(m_isFile ? m_fileBrowserItems->getFileGeometry() : m_fileBrowserItems->getDirectoryGeometry());
-		}
-	}
+	FileBrowserItems* m_fileBrowserItems{ nullptr };
+	Bookmarks* m_bookmarks{ nullptr };
 
 public:
-	FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark);
+	FileBrowserItem(AvoGUI::View* p_parent, std::filesystem::path const& p_path, bool p_isBookmark) :
+		ContextView(p_parent), 
+		m_isBookmark(p_isBookmark)
+	{
+		setCornerRadius(6.f);
+		enableMouseEvents();
+		enableDragDropEvents();
+
+		//------------------------------
+
+		std::wstring pathString = p_path.native();
+		for (uint32 a = 0; a < pathString.size(); a++)
+		{
+			if (pathString[a] == L'/')
+			{
+				pathString[a] = L'\\';
+			}
+		}
+		m_path = pathString;
+
+		// I got a _Sharing_Violation on some files for some reason, probaly a bug because it doesn't happen when iterating the directory.
+		try
+		{
+			m_isFile = std::filesystem::is_regular_file(m_path);
+		}
+		catch (std::filesystem::filesystem_error)
+		{
+			m_isFile = true;
+		}
+
+		std::string extension = m_path.extension().u8string();
+		m_hasThumbnail =
+			m_isFile && (
+				extension == u8".jpg" || extension == u8".JPG" ||
+				extension == u8".png" || extension == u8".PNG"
+			);
+
+		//------------------------------
+
+		if (m_isFile)
+		{
+			m_name = p_path.filename().u8string();
+		}
+		else
+		{
+			if (p_path.root_path() == p_path)
+			{
+				m_name = p_path.root_name().u8string();
+			}
+			else if (p_path.has_filename())
+			{
+				m_name = p_path.filename().u8string();
+			}
+			else if (p_path.has_parent_path())
+			{
+				m_name = p_path.parent_path().filename().u8string();
+			}
+		}
+
+		//------------------------------
+
+		m_fileBrowserItems = getViewById<FileBrowserItems>(Ids::fileBrowserItems);
+		m_bookmarks = getViewById<Bookmarks>(Ids::bookmarks);
+
+		//------------------------------
+
+		m_text_name = getDrawingContext()->createText(m_name, 11.f);
+		m_text_name->setIsTopTrimmed(true);
+		m_text_name->fitHeightToText();
+
+		if (m_isBookmark)
+		{
+			setHeight(BOOKMARK_HEIGHT);
+			setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
+			m_fileBrowserItems->tellIconLoadingThreadToLoadIconForItem(this);
+
+			addContextMenuItem(Strings::removeBookmark);
+			setContextMenuWidth(170.f);
+		}
+	}
 	~FileBrowserItem()
 	{
 		if (m_icon)
@@ -65,7 +117,18 @@ public:
 		}
 	}
 
-	void handleSizeChange() override;
+	void handleSizeChange() override
+	{
+		if (m_isFile && !m_isBookmark)
+		{
+			m_text_name->setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
+		}
+		else
+		{
+			m_text_name->setCenterY(getHeight() * 0.5f);
+			m_text_name->setLeft(getHeight() - 1.f);
+		}
+	}
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
 	{
 		ContextView::handleBoundsChange(p_previousBounds);
@@ -73,6 +136,10 @@ public:
 
 	//------------------------------
 
+private:
+	bool m_isBookmark;
+
+public:
 	void setIsBookmark(bool p_isBookmark)
 	{
 		m_isBookmark = p_isBookmark;
@@ -84,6 +151,10 @@ public:
 
 	//------------------------------
 
+private:
+	uint32 m_itemIndex{ 0u };
+
+public:
 	void setItemIndex(uint32 p_index)
 	{
 		m_itemIndex = p_index;
@@ -99,6 +170,10 @@ public:
 
 	//------------------------------
 
+private:
+	bool m_isSelected{ false };
+
+public:
 	void select()
 	{
 		m_isSelected = true;
@@ -116,7 +191,16 @@ public:
 
 	//------------------------------
 
-	void setIcon(AvoGUI::Image* p_image);
+private:
+	AvoGUI::Image* m_icon{ nullptr };
+
+public:
+	void setIcon(AvoGUI::Image* p_image)
+	{
+		p_image->remember();
+		m_icon = p_image;
+		invalidate();
+	}
 	AvoGUI::Image* getIcon()
 	{
 		return m_icon;
@@ -125,10 +209,26 @@ public:
 	{
 		return m_icon;
 	}
+
+	//------------------------------
+
+private:
+	bool m_hasThumbnail{ false };
+
+public:
 	bool getIsIconThumbnail()
 	{
 		return m_hasThumbnail;
 	}
+
+	//------------------------------
+
+private:
+	bool m_isFile{ false };
+	std::filesystem::path m_path;
+	std::string m_name;
+
+public:
 	bool getIsFile()
 	{
 		return m_isFile;
@@ -144,9 +244,9 @@ public:
 
 	//------------------------------
 
-	void handleContextMenuItemChoice(std::string const& p_action, std::string const& p_shortcut) override
+	void handleContextMenuItemChoice(ActionMenuItem* p_item) override
 	{
-		if (p_action == Strings::removeBookmark)
+		if (p_item->getAction() == Strings::removeBookmark)
 		{
 			m_bookmarks->removeBookmark(this);
 		}
@@ -176,7 +276,7 @@ public:
 	{
 		if (m_isFile)
 		{
-			m_fileBrowserItems->dropItems(p_event.data);
+			m_fileBrowserItems->handleDragDropFinish(p_event);
 		}
 		else
 		{
@@ -314,6 +414,13 @@ public:
 
 	//------------------------------
 
+private:
+	AvoGUI::Point<float> m_animationStartPosition;
+	AvoGUI::Point<float> m_animationTargetPosition;
+	float m_positionAnimationTime{ 0.f };
+	bool m_isDragged{ false };
+
+public:
 	void setTargetPosition(float p_left, float p_top)
 	{
 		p_left += m_bookmarks->getBookmarksContainer()->getAbsoluteLeft();
@@ -347,6 +454,12 @@ public:
 
 	//------------------------------
 
+private:
+	float m_hoverAnimationTime{ 0.f };
+	float m_hoverAnimationValue{ 0.f };
+	bool m_isHovering{ false };
+
+public:
 	void updateAnimations()
 	{
 		if (m_isBookmark && !m_isDragged)
@@ -392,5 +505,64 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context) override;
+private:
+	AvoGUI::Text* m_text_name{ nullptr };
+
+protected:
+	void updateClipGeometry() override
+	{
+		if (m_isBookmark)
+		{
+			View::updateClipGeometry();
+		}
+		else if (m_fileBrowserItems)
+		{
+			setClipGeometry(m_isFile ? m_fileBrowserItems->getFileGeometry() : m_fileBrowserItems->getDirectoryGeometry());
+		}
+	}
+
+public:
+	void draw(AvoGUI::DrawingContext* p_context) override
+	{
+		p_context->setColor(Colors::fileBrowserItemBackground);
+		p_context->fillRectangle(getSize());
+
+		if (m_isSelected)
+		{
+			p_context->setColor(AvoGUI::Color(getThemeColor("selection")));
+			p_context->fillRectangle(getSize());
+		}
+
+		AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
+		if (!m_isBookmark && m_text_name->getRight() - getWidth() > gradient->getStartPositionX())
+		{
+			gradient->setOffsetX(getWidth());
+			p_context->setGradient(gradient);
+		}
+		else
+		{
+			p_context->setColor(getThemeColor("on background"));
+		}
+		p_context->drawText(m_text_name);
+
+		if (m_icon)
+		{
+			if (m_isFile && !m_isBookmark)
+			{
+				m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
+				m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
+			}
+			else
+			{
+				m_icon->setSize(getHeight() * 0.65f);
+				m_icon->setCenterY(getHeight() * 0.5f);
+				m_icon->setLeft(m_icon->getTop());
+			}
+
+			p_context->drawImage(m_icon);
+		}
+
+		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), m_hoverAnimationValue * 0.15f));
+		p_context->fillRectangle(getSize());
+	}
 };

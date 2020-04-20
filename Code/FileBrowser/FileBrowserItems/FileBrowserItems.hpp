@@ -2,6 +2,7 @@
 
 #include "../FileBrowser.hpp"
 #include "../../DialogBox/InputDialogBox.hpp"
+#include "../../../Resources/Strings.hpp"
 
 //------------------------------
 
@@ -20,16 +21,22 @@
 
 class FileBrowserItem;
 
-class FileBrowserItems :
-	public AvoGUI::View,
-	public AvoGUI::KeyboardListener,
-	public InputDialogBoxListener,
-	public ChoiceDialogBoxListener
+class FileBrowserItems : public AvoGUI::View
 {
+public:
+	static constexpr float PADDING_TOP = 2          * 8.f;
+	static constexpr float PADDING = 3              * 8.f;
+	static constexpr float MARGIN_HORIZONTAL = 1    * 8.f;
+	static constexpr float MARGIN_VERTICAL = 1      * 8.f;
+	static constexpr float LABEL_MARGIN_TOP = 3     * 8.f;
+	static constexpr float LABEL_MARGIN_BOTTOM = 2  * 8.f;
+	static constexpr float MIN_FILE_WIDTH = 20      * 8.f;
+	static constexpr float MIN_DIRECTORY_WIDTH = 20	* 8.f;
+	static constexpr float DIRECTORY_HEIGHT = 6	    * 8.f;
+
 private:
 	FileBrowser* m_fileBrowser;
 
-	//std::set<FileBrowserItem*> m_fileItems
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
 
@@ -38,30 +45,22 @@ private:
 		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
 	*/
 	std::vector<FileBrowserItem*> m_selectedItems;
-	FileBrowserItem* m_firstSelectedItem = 0;
-	FileBrowserItem* m_lastSelectedItem = 0;
+	FileBrowserItem* m_firstSelectedItem{ nullptr };
+	FileBrowserItem* m_lastSelectedItem{ nullptr };
 
 	AvoGUI::Rectangle<float> m_selectionRectangle;
 	AvoGUI::Point<float> m_selectionRectangleAnchor;
-	bool m_isDraggingSelectionRectangle;
+	bool m_isDraggingSelectionRectangle{ false };
 	
-	bool m_isMouseOnBackground;
-	bool m_isDraggingDataOnBackground;
-
-	AvoGUI::Text* m_text_directories = 0;
-	AvoGUI::Text* m_text_files = 0;
-	AvoGUI::Text* m_text_directoryIsEmpty = 0;
-
-	AvoGUI::Geometry* m_fileGeometry = 0;
-	AvoGUI::Geometry* m_directoryGeometry = 0;
-	AvoGUI::LinearGradient* m_fileNameEndGradient = 0;
+	bool m_isMouseOnBackground{ false };
+	bool m_isDraggingDataOnBackground{ false };
 
 	//------------------------------
 	// Icon loading
 
-	IThumbnailCache* m_thumbnailCache = 0;
-	IImageList2* m_windowsDirectoryIconList = 0;
-	IImageList2* m_windowsFileIconList = 0;
+	IThumbnailCache* m_thumbnailCache{ nullptr };
+	IImageList2* m_windowsDirectoryIconList{ nullptr };
+	IImageList2* m_windowsFileIconList{ nullptr };
 
 	// Icon cache
 	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
@@ -73,80 +72,252 @@ private:
 	std::atomic<bool> m_needsToLoadMoreIcons;
 
 	std::filesystem::path m_lastPath;
-	bool m_needsToChangeDirectory;
+	bool m_needsToChangeDirectory{ false };
 
 	std::mutex m_fileItemsMutex;
 	std::mutex m_directoryItemsMutex;
 	std::atomic<bool> m_needsToExitIconLoadingThread;
 	std::thread m_iconLoadingThread;
-	void thread_loadIcons();
+	void thread_loadIcons()
+	{
+		CoInitialize(0);
+		CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);
+
+		SHGetImageList(SHIL_LARGE, IID_IImageList2, (void**)&m_windowsDirectoryIconList);
+		SHGetImageList(SHIL_JUMBO, IID_IImageList2, (void**)&m_windowsFileIconList);
+
+		while (true)
+		{
+		start:
+			if (m_needsToExitIconLoadingThread)
+			{
+				break;
+			}
+
+			if (!m_needsToLoadMoreIcons)
+			{
+				std::unique_lock<std::mutex> mutexLock(m_needsToLoadMoreIconsMutex);
+				m_needsToLoadMoreIconsConditionVariable.wait(mutexLock, [=] { return (bool)m_needsToLoadMoreIcons; });
+			}
+
+			if (m_needsToChangeDirectory)
+			{
+				m_needsToChangeDirectory = false;
+
+				deselectAllItems();
+				m_firstSelectedItem = 0;
+				m_lastSelectedItem = 0;
+
+				m_selectedItems.clear();
+				m_directoryItems.clear();
+				m_fileItems.clear();
+				getGui()->excludeAnimationThread();
+				removeAllChildViews();
+				getGui()->includeAnimationThread();
+
+				std::vector<std::filesystem::path> directoryPaths;
+				directoryPaths.reserve(128);
+				std::vector<std::filesystem::path> filePaths;
+				filePaths.reserve(256);
+
+				std::filesystem::path const& newPath = m_fileBrowser->getPath();
+				for (auto item : std::filesystem::directory_iterator(newPath))
+				{
+					if (item.is_regular_file())
+					{
+						filePaths.push_back(item.path());
+					}
+					else if (item.is_directory())
+					{
+						directoryPaths.push_back(item.path());
+					}
+				}
+
+				// Sort files and directories separately, because they will be displayed separately.
+				std::sort(filePaths.begin(), filePaths.end(), getIsPathStringLessThan);
+				std::sort(directoryPaths.begin(), directoryPaths.end(), getIsPathStringLessThan);
+
+				m_directoryItems.reserve(directoryPaths.size());
+				m_fileItems.reserve(filePaths.size());
+
+				/*
+					Find the name of the child directory that was last visited, it will be used to find the right item to later be selected.
+				*/
+				int32 lastVisitedDirectoryItemIndex = -1;
+				std::string lastWorkingDirectoryName = m_lastPath.native().size() > newPath.native().size() ? m_lastPath.parent_path().u8string() : "";
+				std::string newPathString = newPath.u8string();
+				if (lastWorkingDirectoryName.size() && newPathString == lastWorkingDirectoryName.substr(0, newPathString.size()))
+				{
+					for (uint32 a = newPathString.size(); a <= lastWorkingDirectoryName.size(); a++)
+					{
+						if (a == lastWorkingDirectoryName.size() || lastWorkingDirectoryName[a] == '\\')
+						{
+							lastWorkingDirectoryName = lastWorkingDirectoryName.substr(newPathString.size(), a - newPathString.size());
+						}
+					}
+				}
+				else
+				{
+					lastWorkingDirectoryName = "";
+				}
+
+				getGui()->excludeAnimationThread();
+				for (uint32 a = 0; a < directoryPaths.size(); a++)
+				{
+					m_directoryItems.push_back(new FileBrowserItem(this, directoryPaths[a], false));
+					m_directoryItems.back()->setItemIndex(a);
+					if (lastWorkingDirectoryName.size() && lastVisitedDirectoryItemIndex == -1 &&
+						m_directoryItems.back()->getName() == lastWorkingDirectoryName)
+					{
+						lastVisitedDirectoryItemIndex = a;
+					}
+				}
+				for (uint32 a = 0; a < filePaths.size(); a++)
+				{
+					m_fileItems.push_back(new FileBrowserItem(this, filePaths[a], false));
+					m_fileItems.back()->setItemIndex(a);
+				}
+
+				if (getParent<View>()->getWidth() && getParent<View>()->getHeight())
+				{
+					updateLayout();
+					getParent<View>()->invalidate();
+				}
+				getGui()->includeAnimationThread();
+
+				if (lastVisitedDirectoryItemIndex >= 0)
+				{
+					setSelectedItem(m_directoryItems[lastVisitedDirectoryItemIndex]);
+				}
+				m_lastPath = newPath;
+			}
+
+			if (m_needsToExitIconLoadingThread)
+			{
+				break;
+			}
+
+			m_needsToLoadMoreIcons = false;
+
+			if (m_directoryItems.size())
+			{
+				std::lock_guard<std::mutex> lock(m_directoryItemsMutex);
+				int32 numberOfColumns = getNumberOfDirectoriesPerRow();
+				int32 firstVisibleDirectoryItemIndex = numberOfColumns * floor((-getTop() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
+				int32 lastVisibleDirectoryItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_directories->getBottom() - LABEL_MARGIN_BOTTOM) / (m_directoryItems[0]->getHeight() + MARGIN_VERTICAL));
+				for (int32 a = AvoGUI::max(0, firstVisibleDirectoryItemIndex); a < lastVisibleDirectoryItemIndex && a < m_directoryItems.size(); a++)
+				{
+					if (m_needsToLoadMoreIcons)
+					{
+						goto start;
+					}
+					loadIconForItem(m_directoryItems[a]);
+				}
+			}
+
+			if (m_fileItems.size())
+			{
+				std::lock_guard<std::mutex> lock(m_fileItemsMutex);
+				int32 numberOfColumns = getNumberOfFilesPerRow();
+				int32 firstVisibleFileItemIndex = numberOfColumns * floor((-getTop() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
+				int32 lastVisibleFileItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent()->getHeight() - m_text_files->getBottom() - LABEL_MARGIN_BOTTOM) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL));
+				for (int32 a = AvoGUI::max(0, firstVisibleFileItemIndex); a < lastVisibleFileItemIndex && a < m_fileItems.size(); a++)
+				{
+					if (m_needsToLoadMoreIcons)
+					{
+						goto start;
+					}
+					loadIconForItem(m_fileItems[a]);
+				}
+			}
+
+			if (m_itemsToLoadIconFor.size())
+			{
+				std::vector<FileBrowserItem*> items = std::move(m_itemsToLoadIconFor);
+				for (FileBrowserItem* item : items)
+				{
+					loadIconForItem(item);
+				}
+			}
+		}
+		m_thumbnailCache->Release();
+		m_windowsDirectoryIconList->Release();
+		m_windowsFileIconList->Release();
+	}
 
 	//------------------------------
 
-	enum class NameCollisionOption
+	/*
+		Stores information about an item drop/paste operation.
+		In the case of file name collisions, we have dialog boxes which allow the user to choose what action to take.
+		This requires us to exit the function while the user makes a choice because the parent window needs to respond to messages 
+		for the dialog window to be responsive (due to the Windows API). I have yet to find a solution to this in AvoGUI, but 
+		I kind of don't see it as a bug because it isn't really normal for event handlers to be asynchronous.
+		dealing with the OS gets complicated sometimes smh
+	*/
+	class ItemDrop
 	{
-		Replace,
-		Skip,
-		Rename,
-		None
-	};
+	public:
+		enum NameCollisionOption
+		{
+			Replace,
+			Skip,
+			Rename,
+			None
+		} nameCollisionOption{ None };
+
+		enum Operation
+		{
+			Copy,
+			Move
+		} operation{ Copy };
+
+		std::filesystem::path targetDirectory;
+		std::wstring pathsString;
+	} m_currentItemDrop;
 
 	//------------------------------
 
 	void loadIconForItem(FileBrowserItem* p_item);
 
-	uint32 getNumberOfDirectoriesPerRow();
-	uint32 getNumberOfFilesPerRow();
-
-	void scrollToShowLastSelectedItem();
-
-	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index);
-	uint32 getAbsoluteIndexFromItem(FileBrowserItem* p_item);
-
-	void insertNewFileItem(std::filesystem::path const& p_path);
-	void insertNewDirectoryItem(std::filesystem::path const& p_path);
-
-public:
-	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
-		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser),
-		m_isDraggingSelectionRectangle(false),
-		m_isMouseOnBackground(false),
-		m_isDraggingDataOnBackground(false),
-		m_needsToLoadMoreIcons(false), 
-		m_needsToChangeDirectory(false),
-		m_needsToExitIconLoadingThread(false)
+	uint32 getNumberOfDirectoriesPerRow()
 	{
-		enableMouseEvents();
-		enableDragDropEvents();
-		getGui()->setKeyboardFocus(this);
-
-		AvoGUI::DrawingContext* context = getGui()->getDrawingContext();
-
-		m_text_directories = context->createText(Strings::directories, 16.f);
-		m_text_files = context->createText(Strings::files, 16.f);
-
-		m_fileNameEndGradient = context->createLinearGradient(
-			{ 
-				{ getThemeColor("on background"), 0.f }, 
-				{ AvoGUI::Color(0.f, 0.f), 1.f } 
-			}, 
-			-25.f, 0.f, 0.f, 0.f
-		);
-
-		m_iconLoadingThread = std::thread(&FileBrowserItems::thread_loadIcons, this);
+		return AvoGUI::max(1u, (uint32)floor((getParent()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_DIRECTORY_WIDTH + MARGIN_HORIZONTAL)));
 	}
-	~FileBrowserItems();
-
-	//------------------------------
-
-	AvoGUI::Geometry* getFileGeometry()
+	uint32 getNumberOfFilesPerRow()
 	{
-		return m_fileGeometry;
+		return AvoGUI::max(1u, (uint32)floor((getParent()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
 	}
-	AvoGUI::Geometry* getDirectoryGeometry()
+
+	void scrollToShowLastSelectedItem()
 	{
-		return m_directoryGeometry;
+		if (!m_lastSelectedItem)
+		{
+			return;
+		}
+		if (m_lastSelectedItem->getAbsoluteTop() < getParent()->getAbsoluteTop())
+		{
+			getParent<ScrollContainer>()->setScrollPosition(0.f, m_lastSelectedItem->getTop() - MARGIN_VERTICAL);
+			getParent()->invalidate();
+		}
+		else if (m_lastSelectedItem->getAbsoluteBottom() > getParent()->getAbsoluteBottom())
+		{
+			getParent<ScrollContainer>()->setScrollPosition(0.f, m_lastSelectedItem->getBottom() - getParent()->getHeight() + MARGIN_VERTICAL);
+			getParent()->invalidate();
+		}
 	}
+
+	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index)
+	{
+		return p_index >= m_directoryItems.size() ? m_fileItems[p_index - m_directoryItems.size()] : m_directoryItems[p_index];
+	}
+	uint32 getAbsoluteIndexFromItem(FileBrowserItem* p_item)
+	{
+		return p_item ? (p_item->getIsFile() ? p_item->getItemIndex() + m_directoryItems.size() : p_item->getItemIndex()) : 0;
+	}
+
+	void insertNewItem(std::filesystem::path const& p_path, std::vector<FileBrowserItem*>& p_targetList);
+	void insertNewItems(std::vector<std::filesystem::path>& p_pathsToInsert, std::vector<FileBrowserItem*>& p_targetList);
 
 	//------------------------------
 
@@ -165,76 +336,26 @@ public:
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
 		dialog->setId(Ids::createDirectoryDialog);
-		dialog->setInputDialogBoxListener(this);
+		dialog->dialogBoxInputListeners += [this](auto input) {
+			createDirectory(input);
+		};
 		dialog->detachFromThread();
 	}
 	void letUserAddFile()
 	{
 		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
 		dialog->setId(Ids::createFileDialog);
-		dialog->setInputDialogBoxListener(this);
+		dialog->dialogBoxInputListeners += [this](auto input) {
+			createFile(input);
+		};
 		dialog->detachFromThread();
-	}
-	void handleDialogBoxInput(InputDialogBox* p_dialog, std::string const& p_input) override
-	{
-		switch (p_dialog->getId())
-		{
-		case Ids::createFileDialog:
-		{
-			createFile(p_input);
-			break;
-		}
-		case Ids::createDirectoryDialog:
-		{
-			createDirectory(p_input);
-			break;
-		}
-		}
-	}
-	void handleDialogBoxChoice(ChoiceDialogBox* p_dialog, std::string const& p_choice) override
-	{
-		switch (p_dialog->getId())
-		{
-		case Ids::newFileAccessDeniedDialog:
-			if (p_choice == Strings::restart)
-			{
-				getGui<AvoExplorer>()->restartWithElevatedPrivileges();
-			}
-			break;
-		case Ids::newFileAlreadyExistsDialog:
-			if (p_choice == Strings::replace)
-			{
-				createFile(p_dialog->getDialogArgument(0), true);
-			}
-			break;
-		case Ids::newDirectoryAlreadyExistsDialog:
-			if (p_choice == Strings::replace)
-			{
-				createDirectory(p_dialog->getDialogArgument(0), true);
-			}
-			break;
-		case Ids::directoriesOrFilesAlreadyExistDialog:
-			AvoGUI::ClipboardData* clipboardData = getGui()->getWindow()->getClipboardData();
-			if (p_choice == Strings::replace)
-			{
-				dropItems(clipboardData, NameCollisionOption::Replace);
-			}
-			else if (p_choice == Strings::addSuffixes)
-			{
-				dropItems(clipboardData, NameCollisionOption::Rename);
-			}
-			else if (p_choice == Strings::skipDuplicates)
-			{
-				dropItems(clipboardData, NameCollisionOption::Skip);
-			}
-			clipboardData->forget();
-		}
 	}
 
 	//------------------------------
 
 	void dragSelectedItems();
-	void dropItems(AvoGUI::ClipboardData* p_data, NameCollisionOption p_collisionOption = NameCollisionOption::None);
+	void tryDroppingItems(AvoGUI::ClipboardData* p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
+	void finishDroppingItems();
 
 	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
 	{
@@ -256,7 +377,7 @@ public:
 	{
 		if (m_isDraggingDataOnBackground)
 		{
-			dropItems(p_event.data);
+			tryDroppingItems(p_event.data, m_fileBrowser->getPath(), p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control ? ItemDrop::Copy : ItemDrop::Move);
 		}
 	}
 
@@ -278,13 +399,6 @@ public:
 	//------------------------------
 
 	void handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event) override;
-
-	//------------------------------
-
-	AvoGUI::LinearGradient* getFileNameEndGradient()
-	{
-		return m_fileNameEndGradient;
-	}
 
 	//------------------------------
 
@@ -311,6 +425,30 @@ public:
 
 	//------------------------------
 
+private:
+	AvoGUI::Geometry* m_fileGeometry{ nullptr };
+	AvoGUI::Geometry* m_directoryGeometry{ nullptr };
+	AvoGUI::LinearGradient* m_fileNameEndGradient{ nullptr };
+public:
+	AvoGUI::Geometry* getFileGeometry()
+	{
+		return m_fileGeometry;
+	}
+	AvoGUI::Geometry* getDirectoryGeometry()
+	{
+		return m_directoryGeometry;
+	}
+	AvoGUI::LinearGradient* getFileNameEndGradient()
+	{
+		return m_fileNameEndGradient;
+	}
+
+private:
+	AvoGUI::Text* m_text_directories{ getDrawingContext()->createText(Strings::directories, 16.f) };
+	AvoGUI::Text* m_text_files{ getDrawingContext()->createText(Strings::files, 16.f) };
+	AvoGUI::Text* m_text_directoryIsEmpty{ nullptr };
+
+public:
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::label);
@@ -338,4 +476,24 @@ public:
 			}
 		}
 	}
+
+public:
+	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
+		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser)
+	{
+		enableMouseEvents();
+		enableDragDropEvents();
+		getGui()->setKeyboardFocus(this);
+
+		m_fileNameEndGradient = getDrawingContext()->createLinearGradient(
+			{
+				{ getThemeColor(ThemeColors::onBackground), 0.f },
+				{ AvoGUI::Color(0.f, 0.f), 1.f }
+			},
+			-25.f, 0.f, 0.f, 0.f
+		);
+
+		m_iconLoadingThread = std::thread(&FileBrowserItems::thread_loadIcons, this);
+	}
+	~FileBrowserItems();
 };

@@ -12,7 +12,7 @@ float constexpr PADDING_TOP = 2			* 8.f;
 //------------------------------
 
 FileBrowser::FileBrowser(AvoExplorer* p_parent) :
-	View(p_parent), m_avoExplorer(p_parent)
+	View(p_parent, Ids::fileBrowser), m_avoExplorer(p_parent)
 {
 	enableMouseEvents();
 

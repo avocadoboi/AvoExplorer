@@ -3,77 +3,88 @@
 #include "../TitleBar/TitleBar.hpp"
 #include "../../Resources/Colors.hpp"
 #include "../../Resources/Strings.hpp"
+#include "../utilities.hpp"
 
 //------------------------------
 
-class ChoiceDialogBox;
-
-class ChoiceDialogBoxListener
+class ChoiceDialogBox : public AvoGUI::Gui
 {
 public:
-	virtual void handleDialogBoxChoice(ChoiceDialogBox* p_dialogBox, std::string const& p_choice) {}
-	virtual void handleChoiceDialogBoxClose(ChoiceDialogBox* p_dialogBox) {}
-};
-
-//------------------------------
-
-class ChoiceDialogBox : 
-	public AvoGUI::Gui,
-	public AvoGUI::ButtonListener
-{
-private:
-	TitleBar* m_titleBar = 0;
-
-	AvoGUI::Text* m_titleText = 0;
-	AvoGUI::Text* m_messageText = 0;
-	std::string m_titleTextString;
-	std::string m_messageTextString;
-
-	ChoiceDialogBoxListener* m_listener = 0;
-
-	std::vector<AvoGUI::Button*> m_buttons;
-	void positionButtons();
-
-	std::vector<std::string> m_dialogArguments;
+	static constexpr uint32 INITIAL_WIDTH = 400;
+	static constexpr uint32 INITIAL_HEIGHT = 250;
+	static constexpr float BUTTON_MARGIN = 2 * 8.f;
 
 public:
-	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, char const* p_title, char const* p_message);
-	ChoiceDialogBox(AvoGUI::Gui* p_parentGUI, std::string const& p_title, std::string const& p_message);
+	ChoiceDialogBox(AvoGUI::Gui* p_parentGui, std::string const& p_title, std::string const& p_message) :
+		m_titleTextString(p_title), m_messageTextString(p_message)
+	{
+		create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
+	}
 	~ChoiceDialogBox()
 	{
 		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
 		{
 			getParent()->getWindow()->enableUserInteraction();
 		}
-		if (m_listener)
-		{
-			m_listener->handleChoiceDialogBoxClose(this);
-		}
+		choiceDialogBoxCloseListeners();
 	}
 
 	//------------------------------
 
-	void setChoiceDialogBoxListener(ChoiceDialogBoxListener* p_listener)
-	{
-		m_listener = p_listener;
-	}
-	void handleButtonClick(AvoGUI::Button* p_button)
-	{
-		getParent()->getWindow()->enableUserInteraction();
-		if (m_listener)
-		{
-			m_listener->handleDialogBoxChoice(this, p_button->getString());
-		}
-		getWindow()->close();
-	}
+	AvoGUI::EventListeners<void(std::string const&)> dialogBoxChoiceListeners;
+	AvoGUI::EventListeners<void()> choiceDialogBoxCloseListeners;
 
 	//------------------------------
 
+private:
+	std::vector<AvoGUI::Button*> m_buttons;
+	void positionButtons()
+	{
+		if (m_buttons.size() > 0)
+		{
+			if (m_buttons.size() == 1)
+			{
+				m_buttons[0]->setCenter(getCenter());
+				m_buttons[0]->setBottom(getHeight() - BUTTON_MARGIN);
+			}
+			else
+			{
+				m_buttons.back()->setBottomRight(getWidth() - BUTTON_MARGIN, getHeight() - BUTTON_MARGIN);
+				for (int32 a = m_buttons.size() - 2; a >= 0; a--)
+				{
+					m_buttons[a]->setBottomRight(m_buttons[a + 1]->getLeft() - BUTTON_MARGIN, getHeight() - BUTTON_MARGIN);
+				}
+			}
+		}
+	}
+public:
 	/*
 		Added in the order the buttons are shown, from left to right.
 	*/
-	void addButton(char const* p_text, AvoGUI::Button::Emphasis p_emphasis);
+	void addButton(std::string const& p_text, AvoGUI::Button::Emphasis p_emphasis)
+	{
+		// Will be called from other threads.
+		excludeAnimationThread();
+		AvoGUI::Button* button = new AvoGUI::Button(this, p_text, p_emphasis);
+		button->buttonClickListeners += [this, button](AvoGUI::Button*) {
+			getParent()->getWindow()->enableUserInteraction();
+			dialogBoxChoiceListeners(button->getString());
+			getWindow()->close();
+		};
+		m_buttons.push_back(button);
+		positionButtons();
+		if (m_buttons.size() == 1)
+		{
+			setHeight(m_messageText->getBottom() + m_messageText->getLeft() + button->getHeight() + BUTTON_MARGIN);
+		}
+		includeAnimationThread();
+	}
 
+	//------------------------------
+
+private:
+	std::vector<std::string> m_dialogArguments;
+public:
 	void addDialogArgument(std::string const& p_argument)
 	{
 		m_dialogArguments.push_back(p_argument);
@@ -89,27 +100,33 @@ public:
 
 	//------------------------------
 
+private:
+	TitleBar* m_titleBar{ nullptr };
+
+	AvoGUI::Text* m_titleText{ nullptr };
+	AvoGUI::Text* m_messageText{ nullptr };
+	std::string m_titleTextString;
+	std::string m_messageTextString;
+
+public:
 	void createContent() override
 	{
 		getParent()->getWindow()->disableUserInteraction();
 
 		enableMouseEvents();
-		setThemeColor("background", Colors::dialogBoxBackground);
-		setThemeColor("on background", Colors::dialogBoxOnBackground);
-		setThemeColor("primary", Colors::primary);
-		setThemeColor("primary on background", Colors::primaryOnBackground);
+		setThemeColor(ThemeColors::background, Colors::dialogBoxBackground);
+		setThemeColor(ThemeColors::onBackground, Colors::dialogBoxOnBackground);
+		setThemeColor(ThemeColors::primary, Colors::primary);
+		setThemeColor(ThemeColors::primaryOnBackground, Colors::primaryOnBackground);
 
 		m_titleBar = new TitleBar(this);
 		m_titleBar->setWidth(getWidth());
 
-		AvoGUI::DrawingContext* context = getDrawingContext();
-
-		m_titleText = context->createText(m_titleTextString, 22.f);
+		m_titleText = getDrawingContext()->createText(m_titleTextString, 22.f);
 		m_titleText->setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
 
-		m_messageText = context->createText(
+		m_messageText = getDrawingContext()->createText(
 			m_messageTextString, 14.f, 
-			AvoGUI::Rectangle<float> 
 			{ 
 				m_titleText->getLeft(), m_titleText->getBottom() + 20.f, 
 				getRight() - m_titleText->getLeft(), getBottom() 
@@ -119,10 +136,21 @@ public:
 		m_messageText->setFontWeight((AvoGUI::FontWeight)400);
 		m_messageText->setLineHeight(1.1f);
 		m_messageText->fitHeightToText();
-		setHeight(m_messageText->getBottom() + m_messageText->getLeft());
+		//setHeight(m_messageText->getBottom() + m_messageText->getLeft());
 	}
 
-	void handleSizeChange(float p_lastWidth, float p_lastHeight) override;
+	void handleSizeChange(float p_lastWidth, float p_lastHeight) override
+	{
+		if (p_lastWidth != getWidth())
+		{
+			m_titleBar->setWidth(getWidth());
+			m_messageText->setRight(getWidth() - m_titleText->getLeft(), false);
+			m_messageText->fitHeightToText();
+			setHeight(m_messageText->getBottom() + m_messageText->getLeft() + (m_buttons.size() ? m_buttons[0]->getHeight() + BUTTON_MARGIN : 0.f));
+			positionButtons();
+			invalidate();
+		}
+	}
 
 	//------------------------------
 
@@ -135,9 +163,9 @@ public:
 
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
-		p_context->setColor(getThemeColor("on background"));
+		p_context->setColor(getThemeColor(ThemeColors::onBackground));
 		p_context->drawText(m_titleText);
-		p_context->setColor(AvoGUI::Color(getThemeColor("on background"), 0.9));
+		p_context->setColor(AvoGUI::Color(getThemeColor(ThemeColors::onBackground), 0.9));
 		p_context->drawText(m_messageText);
 	}
 	void drawOverlay(AvoGUI::DrawingContext* p_context) override
