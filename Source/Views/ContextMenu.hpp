@@ -15,10 +15,6 @@ private:
 	bool m_isMouseHoveringBackground{ false };
 
 public:
-	ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>(0, 0, 0, 0));
-
-	//------------------------------
-
 	void addContextMenuItem(std::string const& p_action, std::string const& p_shortcut = "")
 	{
 		m_contextMenuItems.push_back({ p_action, p_shortcut });
@@ -54,6 +50,8 @@ public:
 		m_isMouseHoveringBackground = false;
 	}
 	inline void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
+
+	inline ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>(0, 0, 0, 0));
 };
 
 //------------------------------

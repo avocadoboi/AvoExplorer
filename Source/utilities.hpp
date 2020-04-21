@@ -26,7 +26,7 @@ inline AvoGUI::Image* loadImageFromResource(uint32 p_resourceID, AvoGUI::Drawing
 /*
 	Returns true if p_a is less than p_b.
 */
-bool getIsPathStringLessThan(std::wstring const& p_a, std::wstring const& p_b)
+inline bool getIsPathStringLessThan(std::wstring const& p_a, std::wstring const& p_b)
 {
 	return CSTR_LESS_THAN == CompareStringW(LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE | SORT_DIGITSASNUMBERS, p_a.c_str(), p_a.size(), p_b.c_str(), p_b.size());
 }

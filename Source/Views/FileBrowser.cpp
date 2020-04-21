@@ -40,7 +40,8 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 	ScrollContainer* scrollContainer = new ScrollContainer(this);
 	scrollContainer->enableMouseEvents();
-	scrollContainer->setContentView(m_items = new FileBrowserItems(scrollContainer, this));
+	m_items = new FileBrowserItems(scrollContainer, this);
+	scrollContainer->setContentView(m_items);
 }
 
 //------------------------------

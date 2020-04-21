@@ -51,6 +51,10 @@ void AvoExplorer::createContent()
 
 	//------------------------------
 
+	setId(Ids::avoExplorer);
+
+	//------------------------------
+
 	auto contextMenu = new ContextMenu(this);
 	contextMenu->setId(Ids::contextMenu, this);
 

@@ -5,7 +5,6 @@
 #include "../Resources/Ids.hpp"
 
 #include <AvoGUI.hpp>
-#include <wincodec.h>
 #include <filesystem>
 
 //------------------------------

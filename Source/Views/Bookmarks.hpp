@@ -22,7 +22,8 @@ private:
 
 public:
 	Bookmarks(TopBar* p_topBar) :
-		View(p_topBar, Ids::bookmarks), m_topBar(p_topBar)
+		View(p_topBar, Ids::bookmarks), 
+		m_topBar(p_topBar)
 	{
 		enableMouseEvents();
 

@@ -7,6 +7,8 @@
 
 #include <AvoGUI.hpp>
 
+//#include <Windows.h>
+#include <wincodec.h>
 #include <CommCtrl.h>
 #include <commoncontrols.h>
 #include <thumbcache.h>

@@ -2,6 +2,8 @@
 
 #include <AvoGUI.hpp>
 
+#include <condition_variable>
+
 class Worker : public AvoGUI::Component
 {
 private:
