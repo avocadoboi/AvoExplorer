@@ -409,9 +409,13 @@ void FileBrowserItems::tryDroppingItems(AvoGUI::ClipboardData* p_data, std::file
 		{
 			continue;
 		}
-		path = p_targetDirectory / path.filename();
+		auto newPath = p_targetDirectory / path.filename();
+		if (path == newPath)
+		{
+			continue;
+		}
 
-		if (std::filesystem::exists(path))
+		if (std::filesystem::exists(newPath))
 		{
 			if (!numberOfPathsThatAlreadyExist)
 			{
@@ -421,13 +425,18 @@ void FileBrowserItems::tryDroppingItems(AvoGUI::ClipboardData* p_data, std::file
 		}
 		pathsString += paths[a] + L'\0';
 	}
+	if (pathsString.empty())
+	{
+		return;
+	}
+
+	// Second null terminator.
 	pathsString += L'\0';
 
-	ItemDrop itemDrop;
-	itemDrop.operation = p_operation;
-	itemDrop.nameCollisionOption = ItemDrop::None;
-	itemDrop.targetDirectory = p_targetDirectory;
-	itemDrop.pathsString = std::move(pathsString);
+	m_itemDrop.operation = p_operation;
+	m_itemDrop.nameCollisionOption = ItemDrop::None;
+	m_itemDrop.targetDirectory = p_targetDirectory;
+	m_itemDrop.pathsString = std::move(pathsString);
 
 	if (numberOfPathsThatAlreadyExist)
 	{
@@ -449,28 +458,28 @@ void FileBrowserItems::tryDroppingItems(AvoGUI::ClipboardData* p_data, std::file
 			dialog->addButton(Strings::cancel, AvoGUI::Button::Emphasis::Medium);
 			dialog->setWidth(600.f);
 		}
-		dialog->dialogBoxChoiceListeners += [this, &itemDrop](std::string const& choice) {
+		dialog->dialogBoxChoiceListeners += [this](std::string const& choice) {
 			if (choice == Strings::replace)
 			{
-				itemDrop.nameCollisionOption = ItemDrop::Replace;
+				m_itemDrop.nameCollisionOption = ItemDrop::Replace;
 			}
 			else if (choice == Strings::addSuffixes)
 			{
-				itemDrop.nameCollisionOption = ItemDrop::Rename;
+				m_itemDrop.nameCollisionOption = ItemDrop::Rename;
 			}
 			else if (choice == Strings::skipDuplicates)
 			{
-				itemDrop.nameCollisionOption = ItemDrop::Skip;
+				m_itemDrop.nameCollisionOption = ItemDrop::Skip;
 			}
-			finishDroppingItems(itemDrop);
+			finishDroppingItems();
 		};
 		dialog->detachFromThread();
 		return;
 	}
 
-	finishDroppingItems(itemDrop);
+	finishDroppingItems();
 }
-void FileBrowserItems::finishDroppingItems(ItemDrop& p_itemDrop)
+void FileBrowserItems::finishDroppingItems()
 {
 	/*
 		This happens after the name collision check.
@@ -479,23 +488,23 @@ void FileBrowserItems::finishDroppingItems(ItemDrop& p_itemDrop)
 
 	SHFILEOPSTRUCTW fileOperation = { 0 };
 	fileOperation.fFlags = FOF_ALLOWUNDO | FOF_WANTMAPPINGHANDLE;
-	if (p_itemDrop.nameCollisionOption == ItemDrop::Rename)
+	if (m_itemDrop.nameCollisionOption == ItemDrop::Rename)
 	{
 		fileOperation.fFlags |= FOF_RENAMEONCOLLISION;
 	}
-	else if (p_itemDrop.nameCollisionOption == ItemDrop::Replace)
+	else if (m_itemDrop.nameCollisionOption == ItemDrop::Replace)
 	{
 		fileOperation.fFlags |= FOF_NOCONFIRMATION;
 	}
-	fileOperation.wFunc = p_itemDrop.operation == ItemDrop::Copy ? FO_COPY : FO_MOVE;
-	fileOperation.pFrom = p_itemDrop.pathsString.data();
+	fileOperation.wFunc = m_itemDrop.operation == ItemDrop::Copy ? FO_COPY : FO_MOVE;
+	fileOperation.pFrom = m_itemDrop.pathsString.data();
 
-	std::wstring directoryPathString = p_itemDrop.targetDirectory.wstring() + L'\0';
+	std::wstring directoryPathString = m_itemDrop.targetDirectory.wstring() + L'\0';
 	fileOperation.pTo = directoryPathString.data();
 
 	SHFileOperationW(&fileOperation);
 
-	if (!fileOperation.fAnyOperationsAborted && p_itemDrop.targetDirectory == m_fileBrowser->getPath())
+	if (!fileOperation.fAnyOperationsAborted && m_itemDrop.targetDirectory == m_fileBrowser->getPath())
 	{
 		deselectAllItems();
 
@@ -526,13 +535,22 @@ void FileBrowserItems::finishDroppingItems(ItemDrop& p_itemDrop)
 		}
 		else
 		{
-			std::wstring& pathsString = p_itemDrop.pathsString;
+			std::wstring& pathsString = m_itemDrop.pathsString;
 			uint32 pathStartIndex = 0u;
-			for (uint32 a = 0; a < pathsString.size(); a++)
+			for (uint32 a = 0; a < pathsString.size() - 1; a++) // size includes double null termination
 			{
 				if (pathsString[a] == '\0')
 				{
-
+					std::filesystem::path path(pathsString.data() + pathStartIndex, pathsString.data() + a);
+					pathStartIndex = a + 1;
+					if (std::filesystem::is_directory(path))
+					{
+						targetDirectoryPaths.push_back(std::move(path));
+					}
+					else
+					{
+						targetFilePaths.push_back(std::move(path));
+					}
 				}
 			}
 		}

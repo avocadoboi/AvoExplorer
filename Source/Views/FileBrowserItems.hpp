@@ -97,12 +97,12 @@ private:
 
 		std::filesystem::path targetDirectory;
 		std::wstring pathsString;
-	};
+	} m_itemDrop;
 
 	bool m_isDraggingDataOnBackground{ false };
 
 	void tryDroppingItems(AvoGUI::ClipboardData* p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
-	void finishDroppingItems(ItemDrop& p_itemDrop);
+	void finishDroppingItems();
 
 public:
 	void dragSelectedItems();
