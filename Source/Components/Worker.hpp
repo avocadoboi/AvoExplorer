@@ -20,10 +20,17 @@ private:
 	{
 		while (getParent())
 		{
+			m_needsToWakeUp = false;
 			while (m_callbackQueue.size())
 			{
-				m_callbackQueue.front()(); // funky
+				m_callbackQueueMutex.lock();
+				auto callback = m_callbackQueue.front();
 				m_callbackQueue.pop_front();
+				m_callbackQueueMutex.unlock();
+
+				// We call it outside of the lock to avoid deadlock, because the callback might be adding another 
+				// callback to the worker and therefore locking the callback queue mutex as well.
+				callback();
 			}
 			
 			if (!m_needsToWakeUp)
@@ -58,8 +65,9 @@ public:
 			{
 				m_needsToWakeUp = true;
 				m_needsToWakeUpMutex.lock();
-				m_thread.join();
+				m_needsToWakeUpConditionVariable.notify_one();
 				m_needsToWakeUpMutex.unlock();
+				m_thread.join();
 			}
 		};
 	}

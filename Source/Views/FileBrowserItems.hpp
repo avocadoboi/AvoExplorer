@@ -30,58 +30,10 @@ public:
 	static constexpr float DIRECTORY_HEIGHT = 6	    * 8.f;
 
 private:
-	FileBrowser* m_fileBrowser;
-
 	std::vector<FileBrowserItem*> m_fileItems;
 	std::vector<FileBrowserItem*> m_directoryItems;
-
-	/*
-		When selecting between two items (shift + click or shift + arrow key), m_firstSelectedItem is the start of the selection and m_lastSelectedItem is the end of the selection.
-		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
-	*/
-	std::vector<FileBrowserItem*> m_selectedItems;
-	FileBrowserItem* m_firstSelectedItem{ nullptr };
-	FileBrowserItem* m_lastSelectedItem{ nullptr };
-
-	AvoGUI::Rectangle<float> m_selectionRectangle;
-	AvoGUI::Point<float> m_selectionRectangleAnchor;
-	bool m_isDraggingSelectionRectangle{ false };
-	
-	bool m_isMouseOnBackground{ false };
-	bool m_isDraggingDataOnBackground{ false };
-
-	//------------------------------
-	// Icon loading
-
-	std::filesystem::path m_lastPath;
-
 	std::mutex m_itemsMutex;
-	std::atomic<bool> m_needsToLoadMoreIcons{ false };
-
-	//------------------------------
-
-	class ItemDrop
-	{
-	public:
-		enum NameCollisionOption
-		{
-			Replace,
-			Skip,
-			Rename,
-			None
-		} nameCollisionOption{ None };
-
-		enum Operation
-		{
-			Copy,
-			Move
-		} operation{ Copy };
-
-		std::filesystem::path targetDirectory;
-		std::wstring pathsString;
-	} m_currentItemDrop;
-
-	//------------------------------
+	std::filesystem::path m_lastPath;
 
 	uint32 getNumberOfDirectoriesPerRow()
 	{
@@ -92,8 +44,6 @@ private:
 		return AvoGUI::max(1u, (uint32)floor((getParent<View>()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
 	}
 
-	void scrollToShowLastSelectedItem();
-
 	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index)
 	{
 		return p_index >= m_directoryItems.size() ? m_fileItems[p_index - m_directoryItems.size()] : m_directoryItems[p_index];
@@ -103,17 +53,11 @@ private:
 	void insertNewItem(std::filesystem::path const& p_path, std::vector<FileBrowserItem*>& p_targetList);
 	void insertNewItems(std::vector<std::filesystem::path>& p_pathsToInsert, std::vector<FileBrowserItem*>& p_targetList);
 
-public:
-	void setSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
-	void addSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
-	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false, bool p_willScrollToShowItem = true);
-	void removeSelectedItem(FileBrowserItem* p_item);
-	void deselectAllItems();
-
-	//------------------------------
-
 	void createFile(std::string const& p_name, bool p_willReplaceExisting = false);
 	void createDirectory(std::string const& p_name, bool p_willReplaceExisting = false);
+
+public:
+	void setWorkingDirectory(std::filesystem::path const& p_path);
 
 	void letUserAddDirectory()
 	{
@@ -134,9 +78,34 @@ public:
 
 	//------------------------------
 
-	void dragSelectedItems();
+private:
+	struct ItemDrop
+	{
+		enum NameCollisionOption
+		{
+			Replace,
+			Skip,
+			Rename,
+			None
+		} nameCollisionOption{ None };
+
+		enum Operation
+		{
+			Copy,
+			Move
+		} operation{ Copy };
+
+		std::filesystem::path targetDirectory;
+		std::wstring pathsString;
+	};
+
+	bool m_isDraggingDataOnBackground{ false };
+
 	void tryDroppingItems(AvoGUI::ClipboardData* p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
-	void finishDroppingItems();
+	void finishDroppingItems(ItemDrop& p_itemDrop);
+
+public:
+	void dragSelectedItems();
 
 	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
 	{
@@ -164,6 +133,35 @@ public:
 
 	//------------------------------
 
+private:
+	/*
+		When selecting between two items (shift + click or shift + arrow key), m_firstSelectedItem is the start of the selection and m_lastSelectedItem is the end of the selection.
+		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
+	*/
+	std::vector<FileBrowserItem*> m_selectedItems;
+	FileBrowserItem* m_firstSelectedItem{ nullptr };
+	FileBrowserItem* m_lastSelectedItem{ nullptr };
+
+	void scrollToShowLastSelectedItem();
+
+public:
+	void setSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
+	void addSelectedItem(FileBrowserItem* p_item, bool p_willScrollToShowItem = true);
+	void selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive = false, bool p_willScrollToShowItem = true);
+	void removeSelectedItem(FileBrowserItem* p_item);
+	void deselectAllItems();
+
+	//------------------------------
+
+private:
+	bool m_isMouseOnBackground{ false };
+	struct {
+		AvoGUI::Rectangle<float> rectangle;
+		AvoGUI::Point<float> anchor;
+		bool isDragging{ false };
+	} m_dragSelection;
+
+public:
 	void handleMouseBackgroundEnter(AvoGUI::MouseEvent const& p_event) override
 	{
 		View::handleMouseBackgroundEnter(p_event);
@@ -183,7 +181,10 @@ public:
 
 	//------------------------------
 
+private:
+	std::atomic<bool> m_needsToLoadMoreIcons{ false };
 	void requestIconLoading();
+public:
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
 	{
 		if (p_previousBounds.top != m_bounds.top && getWidth() && getHeight())
@@ -192,16 +193,17 @@ public:
 		}
 	}
 
+	void updateLayout();
+
 	//------------------------------
 
+private:
+	FileBrowser* m_fileBrowser;
+public:
 	FileBrowser* getFileBrowser()
 	{
 		return m_fileBrowser;
 	}
-
-	void setWorkingDirectory(std::filesystem::path const& p_path);
-
-	void updateLayout();
 
 	//------------------------------
 
@@ -243,21 +245,24 @@ public:
 	}
 	void drawOverlay(AvoGUI::DrawingContext* p_context, AvoGUI::Rectangle<float> const& p_target) override
 	{
-		if (m_isDraggingSelectionRectangle)
+		if (m_dragSelection.isDragging)
 		{
 			p_context->setColor(AvoGUI::Color(Colors::selection, 0.1f));
-			p_context->fillRectangle(m_selectionRectangle);
+			p_context->fillRectangle(m_dragSelection.rectangle);
 			p_context->setColor(AvoGUI::Color(Colors::selection, 0.9f));
-			if (m_selectionRectangle.getWidth() > 1.f && m_selectionRectangle.getHeight() > 1.f)
+
+			auto& rectangle = m_dragSelection.rectangle;
+			if (rectangle.getWidth() > 1.f && rectangle.getHeight() > 1.f)
 			{
 				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Dash);
-				p_context->strokeRectangle(m_selectionRectangle.left + 0.5f, m_selectionRectangle.top + 0.5f, m_selectionRectangle.right - 0.5f, m_selectionRectangle.bottom - 0.5f, 1.f);
+				p_context->strokeRectangle(rectangle.left + 0.5f, rectangle.top + 0.5f, rectangle.right - 0.5f, rectangle.bottom - 0.5f, 1.f);
 				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Solid);
 			}
 		}
 	}
 
-public:
+	//------------------------------
+
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
 		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser)
 	{
