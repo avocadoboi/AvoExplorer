@@ -13,14 +13,14 @@ using AvoGUI::Id;
 
 //------------------------------
 
-inline AvoGUI::Image* loadImageFromResource(uint32 p_resourceID, AvoGUI::DrawingContext* p_context)
+inline AvoGUI::Image loadImageFromResource(uint32 p_resourceID, AvoGUI::DrawingContext* p_context)
 {
 	HRSRC resource = FindResourceW(0, MAKEINTRESOURCEW(p_resourceID), L"IMAGE");
 	if (resource)
 	{
 		return p_context->createImage((uint8*)LockResource(LoadResource(0, resource)), SizeofResource(0, resource));
 	}
-	return 0;
+	return AvoGUI::Image();
 }
 
 /*

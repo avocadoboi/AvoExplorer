@@ -15,22 +15,6 @@ public:
 	static constexpr float BUTTON_MARGIN = 2 * 8.f;
 
 public:
-	ChoiceDialogBox(AvoGUI::Gui* p_parentGui, std::string const& p_title, std::string const& p_message) :
-		m_titleTextString(p_title), m_messageTextString(p_message)
-	{
-		create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
-	}
-	~ChoiceDialogBox()
-	{
-		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
-		{
-			getParent()->getWindow()->enableUserInteraction();
-		}
-		choiceDialogBoxCloseListeners();
-	}
-
-	//------------------------------
-
 	AvoGUI::EventListeners<void(std::string const&)> dialogBoxChoiceListeners;
 	AvoGUI::EventListeners<void()> choiceDialogBoxCloseListeners;
 
@@ -75,7 +59,7 @@ public:
 		positionButtons();
 		if (m_buttons.size() == 1)
 		{
-			setHeight(m_messageText->getBottom() + m_messageText->getLeft() + button->getHeight() + BUTTON_MARGIN);
+			setHeight(m_messageText.getBottom() + m_messageText.getLeft() + button->getHeight() + BUTTON_MARGIN);
 		}
 		includeAnimationThread();
 	}
@@ -103,50 +87,20 @@ public:
 private:
 	TitleBar* m_titleBar{ nullptr };
 
-	AvoGUI::Text* m_titleText{ nullptr };
-	AvoGUI::Text* m_messageText{ nullptr };
+	AvoGUI::Text m_titleText;
+	AvoGUI::Text m_messageText;
 	std::string m_titleTextString;
 	std::string m_messageTextString;
 
 public:
-	void createContent() override
-	{
-		getParent()->getWindow()->disableUserInteraction();
-
-		enableMouseEvents();
-		setThemeColor(ThemeColors::background, Colors::dialogBoxBackground);
-		setThemeColor(ThemeColors::onBackground, Colors::dialogBoxOnBackground);
-		setThemeColor(ThemeColors::primary, Colors::primary);
-		setThemeColor(ThemeColors::primaryOnBackground, Colors::primaryOnBackground);
-
-		m_titleBar = new TitleBar(this);
-		m_titleBar->setWidth(getWidth());
-
-		m_titleText = getDrawingContext()->createText(m_titleTextString, 22.f);
-		m_titleText->setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
-
-		m_messageText = getDrawingContext()->createText(
-			m_messageTextString, 14.f, 
-			{ 
-				m_titleText->getLeft(), m_titleText->getBottom() + 20.f, 
-				getRight() - m_titleText->getLeft(), getBottom() 
-			}
-		);
-		m_messageText->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
-		m_messageText->setFontWeight((AvoGUI::FontWeight)400);
-		m_messageText->setLineHeight(1.1f);
-		m_messageText->fitHeightToText();
-		//setHeight(m_messageText->getBottom() + m_messageText->getLeft());
-	}
-
 	void handleSizeChange(float p_lastWidth, float p_lastHeight) override
 	{
 		if (p_lastWidth != getWidth())
 		{
 			m_titleBar->setWidth(getWidth());
-			m_messageText->setRight(getWidth() - m_titleText->getLeft(), false);
-			m_messageText->fitHeightToText();
-			setHeight(m_messageText->getBottom() + m_messageText->getLeft() + (m_buttons.size() ? m_buttons[0]->getHeight() + BUTTON_MARGIN : 0.f));
+			m_messageText.setRight(getWidth() - m_titleText.getLeft(), false);
+			m_messageText.fitHeightToText();
+			setHeight(m_messageText.getBottom() + m_messageText.getLeft() + (m_buttons.size() ? m_buttons[0]->getHeight() + BUTTON_MARGIN : 0.f));
 			positionButtons();
 			invalidate();
 		}
@@ -172,5 +126,47 @@ public:
 	{
 		p_context->setColor(Colors::dialogBoxOutline);
 		p_context->strokeRectangle(getBounds());
+	}
+
+	//------------------------------
+
+	ChoiceDialogBox(AvoGUI::Gui* p_parentGui, std::string const& p_title, std::string const& p_message) :
+		m_titleTextString(p_title), m_messageTextString(p_message)
+	{
+		create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
+
+		getParent()->getWindow()->disableUserInteraction();
+
+		enableMouseEvents();
+		setThemeColor(ThemeColors::background, Colors::dialogBoxBackground);
+		setThemeColor(ThemeColors::onBackground, Colors::dialogBoxOnBackground);
+		setThemeColor(ThemeColors::primary, Colors::primary);
+		setThemeColor(ThemeColors::primaryOnBackground, Colors::primaryOnBackground);
+
+		m_titleBar = new TitleBar(this);
+		m_titleBar->setWidth(getWidth());
+
+		m_titleText = getDrawingContext()->createText(m_titleTextString, 22.f);
+		m_titleText.setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
+
+		m_messageText = getDrawingContext()->createText(
+			m_messageTextString, 14.f,
+			{
+				m_titleText.getLeft(), m_titleText.getBottom() + 20.f,
+				getRight() - m_titleText.getLeft(), getBottom()
+			}
+		);
+		m_messageText.setWordWrapping(AvoGUI::WordWrapping::WholeWord);
+		m_messageText.setFontWeight((AvoGUI::FontWeight)400);
+		m_messageText.setLineHeight(1.1f);
+		m_messageText.fitHeightToText();
+	}
+	~ChoiceDialogBox()
+	{
+		if (!getParent()->getWindow()->getIsUserInteractionEnabled())
+		{
+			getParent()->getWindow()->enableUserInteraction();
+		}
+		choiceDialogBoxCloseListeners();
 	}
 };

@@ -15,11 +15,11 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 	{
 		if (p_item->getIsIconThumbnail())
 		{
-			IShellItem* item = 0;
+			IShellItem* item = nullptr;
 
-			SHCreateItemFromParsingName(p_item->getPath().c_str(), 0, IID_PPV_ARGS(&item));
+			SHCreateItemFromParsingName(p_item->getPath().c_str(), nullptr, IID_PPV_ARGS(&item));
 
-			ISharedBitmap* bitmap = 0;
+			ISharedBitmap* bitmap = nullptr;
 			WTS_CACHEFLAGS flags;
 			m_thumbnailCache->GetThumbnail(item, 100, WTS_EXTRACT, &bitmap, &flags, 0);
 
@@ -28,9 +28,8 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 				HBITMAP bitmapHandle;
 				bitmap->GetSharedBitmap(&bitmapHandle);
 
-				AvoGUI::Image* newIcon = context->createImageFromHandle(bitmapHandle);
+				AvoGUI::Image newIcon = context->createImageFromHandle(bitmapHandle);
 				p_item->setIcon(newIcon);
-				newIcon->forget();
 
 				DeleteObject(bitmapHandle);
 				bitmap->Release();
@@ -48,7 +47,7 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 				HICON icon;
 				m_windowsFileIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-				AvoGUI::Image* newIcon = context->createImageFromHandle(icon);
+				AvoGUI::Image newIcon = context->createImageFromHandle(icon);
 				p_item->setIcon(newIcon);
 				m_uniqueLoadedFileIcons[fileInfo.iIcon] = newIcon;
 
@@ -70,7 +69,7 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 			HICON icon;
 			m_windowsDirectoryIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-			AvoGUI::Image* newIcon = context->createImageFromHandle(icon);
+			AvoGUI::Image newIcon = context->createImageFromHandle(icon);
 			p_item->setIcon(newIcon);
 			m_uniqueLoadedDirectoryIcons[fileInfo.iIcon] = newIcon;
 

@@ -29,7 +29,6 @@ private:
 	TitleBar* m_titleBar;
 	
 	Icon m_icon;
-	AvoGUI::Ripple* m_ripple{ nullptr };
 
 	AvoGUI::Color m_backgroundColor;
 	float m_hoverAnimationTime{ 0.f };
@@ -152,7 +151,7 @@ public:
 	static constexpr float HEIGHT = 2.9 * 8.f;
 
 private:
-	AvoGUI::Text* m_title;
+	AvoGUI::Text m_title;
 	TitleBarWindowButton* m_minimizeButton{ nullptr };
 	TitleBarWindowButton* m_maximizeButton{ nullptr };
 	TitleBarWindowButton* m_closeButton{ nullptr };
@@ -165,12 +164,12 @@ public:
 		m_isMaximizeEnabled = bool(getWindow()->getStyles() & AvoGUI::WindowStyleFlags::MaximizeButton);
 
 		m_title = getDrawingContext()->createText(getWindow()->getTitle(), 11.f);
-		m_title->setFontWeight(AvoGUI::FontWeight::SemiBold);
-		m_title->setCharacterSpacing(0.5f);
-		m_title->setIsTopTrimmed(true);
-		m_title->fitHeightToText();
-		m_title->moveY(1.f);
-		m_title->setCenterY(HEIGHT * 0.5f);
+		m_title.setFontWeight(AvoGUI::FontWeight::SemiBold);
+		m_title.setCharacterSpacing(0.5f);
+		m_title.setIsTopTrimmed(true);
+		m_title.fitHeightToText();
+		m_title.moveY(1.f);
+		m_title.setCenterY(HEIGHT * 0.5f);
 
 		if (!p_parent->getParent())
 		{
@@ -202,7 +201,7 @@ public:
 
 	void handleSizeChange()
 	{
-		m_title->setCenterX(getCenterX());
+		m_title.setCenterX(getCenterX());
 
 		m_closeButton->setRight(getWidth());
 		if (m_maximizeButton)

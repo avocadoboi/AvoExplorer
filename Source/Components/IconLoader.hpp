@@ -7,7 +7,6 @@
 
 #include <AvoGUI.hpp>
 
-//#include <Windows.h>
 #include <wincodec.h>
 #include <CommCtrl.h>
 #include <commoncontrols.h>
@@ -36,8 +35,8 @@ private:
 	IImageList2* m_windowsFileIconList{ nullptr };
 
 	// Icon cache
-	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedDirectoryIcons;
-	std::unordered_map<uint32, AvoGUI::Image*> m_uniqueLoadedFileIcons;
+	std::unordered_map<uint32, AvoGUI::Image> m_uniqueLoadedDirectoryIcons;
+	std::unordered_map<uint32, AvoGUI::Image> m_uniqueLoadedFileIcons;
 	std::vector<FileBrowserItem*> m_itemsToLoadIconFor;
 
 public:
@@ -67,14 +66,6 @@ public:
 	}
 	~IconLoader()
 	{
-		for (auto& icon : m_uniqueLoadedFileIcons)
-		{
-			icon.second->forget();
-		}
-		for (auto& icon : m_uniqueLoadedDirectoryIcons)
-		{
-			icon.second->forget();
-		}
 		if (m_thumbnailCache)
 		{
 			m_thumbnailCache->Release();

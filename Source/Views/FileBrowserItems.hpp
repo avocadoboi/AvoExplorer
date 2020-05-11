@@ -56,6 +56,9 @@ private:
 	void createFile(std::string const& p_name, bool p_willReplaceExisting = false);
 	void createDirectory(std::string const& p_name, bool p_willReplaceExisting = false);
 
+	// Used to tell when to show "loading" text and when to show "no files" text.
+	std::atomic<bool> m_isLoadingFiles{ false };
+
 public:
 	void setWorkingDirectory(std::filesystem::path const& p_path);
 
@@ -65,7 +68,7 @@ public:
 		dialog->dialogBoxInputListeners += [this](auto input) {
 			createDirectory(input);
 		};
-		dialog->detachFromThread();
+		dialog->run();
 	}
 	void letUserAddFile()
 	{
@@ -73,7 +76,7 @@ public:
 		dialog->dialogBoxInputListeners += [this](auto input) {
 			createFile(input);
 		};
-		dialog->detachFromThread();
+		dialog->run();
 	}
 
 	//------------------------------
@@ -96,12 +99,14 @@ private:
 		} operation{ Copy };
 
 		std::filesystem::path targetDirectory;
-		std::wstring pathsString;
+		std::wstring sourcePathsString;
+		std::vector<std::filesystem::path> targetDirectoryPaths;
+		std::vector<std::filesystem::path> targetFilePaths;
 	} m_itemDrop;
 
 	bool m_isDraggingDataOnBackground{ false };
 
-	void tryDroppingItems(AvoGUI::ClipboardData* p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
+	void tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
 	void finishDroppingItems();
 
 public:
@@ -208,39 +213,54 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Geometry* m_fileGeometry{ nullptr };
-	AvoGUI::Geometry* m_directoryGeometry{ nullptr };
-	AvoGUI::LinearGradient* m_fileNameEndGradient{ nullptr };
+	AvoGUI::Geometry m_fileGeometry;
+	AvoGUI::Geometry m_directoryGeometry;
+	AvoGUI::LinearGradient m_fileNameEndGradient;
 public:
-	AvoGUI::Geometry* getFileGeometry()
+	AvoGUI::Geometry const& getFileGeometry()
 	{
 		return m_fileGeometry;
 	}
-	AvoGUI::Geometry* getDirectoryGeometry()
+	AvoGUI::Geometry const& getDirectoryGeometry()
 	{
 		return m_directoryGeometry;
 	}
-	AvoGUI::LinearGradient* getFileNameEndGradient()
+	AvoGUI::LinearGradient& getFileNameEndGradient()
 	{
 		return m_fileNameEndGradient;
 	}
 
 private:
-	AvoGUI::Text* m_text_directories{ getDrawingContext()->createText(Strings::directories, 16.f) };
-	AvoGUI::Text* m_text_files{ getDrawingContext()->createText(Strings::files, 16.f) };
-	AvoGUI::Text* m_text_directoryIsEmpty{ nullptr };
+	AvoGUI::Text m_text_directories{ getDrawingContext()->createText(Strings::directories, 16.f) };
+	AvoGUI::Text m_text_files{ getDrawingContext()->createText(Strings::files, 16.f) };
+	AvoGUI::Text m_text_directoryIsEmpty{ getDrawingContext()->createText(Strings::thisDirectoryIsEmpty, 24.f) };
+	AvoGUI::Text m_text_loading{ getDrawingContext()->createText(Strings::loading, 24.f) };
 
 public:
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::label);
-		if (m_directoryItems.size())
+		if (m_directoryItems.empty() && m_fileItems.empty())
 		{
-			p_context->drawText(m_text_directories);
+			if (m_isLoadingFiles)
+			{
+				p_context->drawText(m_text_loading);
+			}
+			else
+			{
+				p_context->drawText(m_text_directoryIsEmpty);
+			}
 		}
-		if (m_fileItems.size())
+		else
 		{
-			p_context->drawText(m_text_files);
+			if (!m_directoryItems.empty())
+			{
+				p_context->drawText(m_text_directories);
+			}
+			if (!m_fileItems.empty())
+			{
+				p_context->drawText(m_text_files);
+			}
 		}
 	}
 	void drawOverlay(AvoGUI::DrawingContext* p_context, AvoGUI::Rectangle<float> const& p_target) override
@@ -277,29 +297,5 @@ public:
 			},
 			-25.f, 0.f, 0.f, 0.f
 		);
-	}
-	~FileBrowserItems()
-	{
-		if (m_directoryGeometry)
-		{
-			m_directoryGeometry->forget();
-		}
-		if (m_fileGeometry)
-		{
-			m_fileGeometry->forget();
-		}
-		if (m_fileNameEndGradient)
-		{
-			m_fileNameEndGradient->forget();
-		}
-
-		if (m_text_directories)
-		{
-			m_text_directories->forget();
-		}
-		if (m_text_files)
-		{
-			m_text_files->forget();
-		}
 	}
 };

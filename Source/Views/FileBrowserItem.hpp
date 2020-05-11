@@ -15,8 +15,7 @@
 /*
 	This class is used in both the Bookmarks section and the FileBrowserItems section to represent a directory or file.
 */
-class FileBrowserItem :
-	public ContextView
+class FileBrowserItem : public ContextView
 {
 public:
 	static constexpr float FILE_HEIGHT = 16      * 8.f;
@@ -31,12 +30,12 @@ private:
 	{
 		if (m_isFile && !m_isBookmark)
 		{
-			m_text_name->setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
+			m_text_name.setBottomLeft(FILE_NAME_PADDING * 1.1f, getHeight() - FILE_NAME_PADDING);
 		}
 		else
 		{
-			m_text_name->setCenterY(getHeight() * 0.5f);
-			m_text_name->setLeft(getHeight() - 1.f);
+			m_text_name.setCenterY(getHeight() * 0.5f);
+			m_text_name.setLeft(getHeight() - 1.f);
 		}
 	}
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
@@ -102,16 +101,15 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Image* m_icon{ nullptr };
+	AvoGUI::Image m_icon;
 
 public:
-	void setIcon(AvoGUI::Image* p_image)
+	void setIcon(AvoGUI::Image const& p_image)
 	{
-		p_image->remember();
 		m_icon = p_image;
 		invalidate();
 	}
-	AvoGUI::Image* getIcon()
+	AvoGUI::Image& getIcon()
 	{
 		return m_icon;
 	}
@@ -416,7 +414,7 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Text* m_text_name{ nullptr };
+	AvoGUI::Text m_text_name;
 
 protected:
 	void updateClipGeometry() override
@@ -443,10 +441,10 @@ public:
 			p_context->fillRectangle(getSize());
 		}
 
-		AvoGUI::LinearGradient* gradient = m_fileBrowserItems->getFileNameEndGradient();
-		if (!m_isBookmark && m_text_name->getRight() - getWidth() > gradient->getStartPositionX())
+		auto& gradient = m_fileBrowserItems->getFileNameEndGradient();
+		if (!m_isBookmark && m_text_name.getRight() - getWidth() > gradient.getStartPositionX())
 		{
-			gradient->setOffsetX(getWidth());
+			gradient.setOffsetX(getWidth());
 			p_context->setGradient(gradient);
 		}
 		else
@@ -459,14 +457,14 @@ public:
 		{
 			if (m_isFile && !m_isBookmark)
 			{
-				m_icon->setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name->getTop() - FILE_NAME_PADDING);
-				m_icon->setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
+				m_icon.setBounds(0.f, FILE_NAME_PADDING, getWidth(), m_text_name.getTop() - FILE_NAME_PADDING);
+				m_icon.setBoundsSizing(AvoGUI::ImageBoundsSizing::Contain);
 			}
 			else
 			{
-				m_icon->setSize(getHeight() * 0.65f);
-				m_icon->setCenterY(getHeight() * 0.5f);
-				m_icon->setLeft(m_icon->getTop());
+				m_icon.setSize(getHeight() * 0.65f);
+				m_icon.setCenterY(getHeight() * 0.5f);
+				m_icon.setLeft(m_icon.getTop());
 			}
 
 			p_context->drawImage(m_icon);
@@ -545,29 +543,18 @@ public:
 		//------------------------------
 
 		m_text_name = getDrawingContext()->createText(m_name, 11.f);
-		m_text_name->setIsTopTrimmed(true);
-		m_text_name->fitHeightToText();
+		m_text_name.setIsTopTrimmed(true);
+		m_text_name.fitHeightToText();
 
 		if (m_isBookmark)
 		{
 			setHeight(BOOKMARK_HEIGHT);
-			setWidth(m_text_name->getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name->getHeight()));
+			setWidth(m_text_name.getRight() + 0.5f * (BOOKMARK_HEIGHT - m_text_name.getHeight()));
 
 			getComponentById<IconLoader>(Ids::iconLoader)->requestIconLoadingForItem(this);
 
 			addContextMenuItem(Strings::removeBookmark);
 			setContextMenuWidth(170.f);
-		}
-	}
-	~FileBrowserItem()
-	{
-		if (m_icon)
-		{
-			m_icon->forget();
-		}
-		if (m_text_name)
-		{
-			m_text_name->forget();
 		}
 	}
 };

@@ -6,8 +6,6 @@
 
 //------------------------------
 
-constexpr char const* BOOKMARKS_DATA_PATH = "data";
-
 //
 // Private
 //

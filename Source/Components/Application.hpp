@@ -1,7 +1,5 @@
 #pragma once
 
-#include <AvoGUI.hpp>
-
 #include "Worker.hpp"
 #include "IconLoader.hpp"
 #include "../Views/AvoExplorer.hpp"
@@ -20,9 +18,9 @@ public:
 		auto iconLoader = new IconLoader(this);
 		iconLoader->setId(Ids::iconLoader);
 
-		AvoExplorer* gui = new AvoExplorer(this, p_arguments);
+		auto gui = new AvoExplorer(this, p_arguments);
 		gui->setId(Ids::avoExplorer);
 
-		gui->waitForFinish();
+		gui->run();
 	}
 };

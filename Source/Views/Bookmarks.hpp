@@ -12,6 +12,9 @@ class FileBrowserItem;
 class Bookmarks :
 	public AvoGUI::View
 {
+public:
+	static constexpr char const* BOOKMARKS_DATA_PATH = "data";
+
 private:
 	TopBar* m_topBar;
 

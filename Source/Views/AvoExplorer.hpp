@@ -13,10 +13,7 @@ class TitleBar;
 class TopBar;
 class FileBrowser;
 
-class ContextMenu;
-
-class AvoExplorer : 
-	public AvoGUI::Gui
+class AvoExplorer : public AvoGUI::Gui
 {
 public:
 	static constexpr uint32 WINDOW_WIDTH_MIN = 260;
@@ -31,8 +28,6 @@ private:
 	char const* m_initialPath;
 
 public:
-	void createContent() override;
-
 	void handleSizeChange() override;
 
 	AvoGUI::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y) override;
@@ -41,10 +36,5 @@ public:
 
 	//------------------------------
 
-	AvoExplorer(AvoGUI::Component* p_parent, char const* p_initialPath) :
-		Gui(p_parent),
-		m_initialPath(p_initialPath)
-	{
-		create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::DefaultCustom);
-	}
+	AvoExplorer(AvoGUI::Component* p_parent, char const* p_initialPath);
 };

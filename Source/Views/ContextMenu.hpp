@@ -51,7 +51,10 @@ public:
 	}
 	inline void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
 
-	inline ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>(0, 0, 0, 0));
+	inline ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>(0, 0, 0, 0)) :
+		View(p_parent, p_bounds)
+	{
+	}
 };
 
 //------------------------------
@@ -65,6 +68,12 @@ public:
 	ContextMenu(AvoGUI::Gui* p_gui) :
 		ActionMenu(p_gui)
 	{
+		actionMenuItemChoiceListeners += [this](auto item) {
+			if (m_currentContextView)
+			{
+				m_currentContextView->handleContextMenuItemChoice(item);
+			}
+		};
 	}
 
 	void open(ContextView* p_contextView)
@@ -79,11 +88,6 @@ public:
 
 //------------------------------
 
-ContextView::ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds) :
-	View(p_parent, p_bounds)
-{
-	getComponentById<ContextMenu>(Ids::contextMenu)->actionMenuItemChoiceListeners += AvoGUI::bind(&ContextView::handleContextMenuItemChoice, this);
-}
 void ContextView::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 {
 	if (p_event.mouseButton == AvoGUI::MouseButton::Right && m_isMouseHoveringBackground)

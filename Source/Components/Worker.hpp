@@ -50,10 +50,10 @@ public:
 
 		if (!m_needsToWakeUp)
 		{
-			m_needsToWakeUp = true;
 			m_needsToWakeUpMutex.lock();
-			m_needsToWakeUpConditionVariable.notify_one();
+			m_needsToWakeUp = true;
 			m_needsToWakeUpMutex.unlock();
+			m_needsToWakeUpConditionVariable.notify_one();
 		}
 	}
 
@@ -63,16 +63,12 @@ public:
 		parentChangeListeners += [this](Component* oldParent) {
 			if (oldParent && !getParent())
 			{
-				m_needsToWakeUp = true;
 				m_needsToWakeUpMutex.lock();
-				m_needsToWakeUpConditionVariable.notify_one();
+				m_needsToWakeUp = true;
 				m_needsToWakeUpMutex.unlock();
+				m_needsToWakeUpConditionVariable.notify_one();
 				m_thread.join();
 			}
 		};
-	}
-	~Worker()
-	{
-
 	}
 };

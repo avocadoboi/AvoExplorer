@@ -30,10 +30,10 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 	m_button_add->setSize(36.f);
 	m_button_add->setCornerRadius(m_button_add->getWidth() * 0.5f);
-	m_button_add->getText()->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
-	m_button_add->getText()->setFontSize(24.f);
-	m_button_add->getText()->fitSizeToText();
-	m_button_add->getText()->setCenter(m_button_add->getSize() * 0.5f);
+	m_button_add->getText().setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+	m_button_add->getText().setFontSize(24.f);
+	m_button_add->getText().fitSizeToText();
+	m_button_add->getText().setCenter(m_button_add->getSize() * 0.5f);
 	m_button_add->buttonClickListeners += [this, actionMenu](auto p_button) {
 		actionMenu->open(p_button->getCenter());
 	};
@@ -80,7 +80,7 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 					getGui<AvoExplorer>()->restartWithElevatedPrivileges();
 				}
 			};
-			dialog->detachFromThread();
+			dialog->run();
 			return;
 		}
 	}

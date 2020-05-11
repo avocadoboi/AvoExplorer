@@ -12,8 +12,8 @@ float constexpr TOP_BAR_BOOKMARKS_MARGIN_BOTTOM = 1.f			*8.f;
 //------------------------------
 
 TopBar::TopBar(AvoExplorer* p_parent) :
-	View(p_parent), m_avoExplorer(p_parent),
-	m_title(0), m_bookmarks(0)
+	View(p_parent), 
+	m_avoExplorer(p_parent)
 {
 	setHeight(TOP_BAR_HEIGHT);
 
@@ -26,10 +26,10 @@ TopBar::TopBar(AvoExplorer* p_parent) :
 	//------------------------------
 
 	m_title = getGui()->getDrawingContext()->createText(Strings::bookmarks, 14.f);
-	m_title->setLeft(TOP_BAR_BOOKMARKS_MARGIN_HORIZONTAL + 4.f);
-	m_title->setCenterY(TOP_BAR_BOOKMARKS_MARGIN_TOP * 0.5f);
-	m_title->setFontWeight(AvoGUI::FontWeight::Light);
-	m_title->fitSizeToText();
+	m_title.setLeft(TOP_BAR_BOOKMARKS_MARGIN_HORIZONTAL + 4.f);
+	m_title.setCenterY(TOP_BAR_BOOKMARKS_MARGIN_TOP * 0.5f);
+	m_title.setFontWeight(AvoGUI::FontWeight::Light);
+	m_title.fitSizeToText();
 
 	m_bookmarks = new Bookmarks(this);
 }

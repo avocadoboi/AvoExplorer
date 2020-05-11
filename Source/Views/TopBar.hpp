@@ -11,16 +11,12 @@ class TopBar :
 {
 private:
 	AvoExplorer* m_avoExplorer;
-	AvoGUI::Text* m_title;
+	AvoGUI::Text m_title;
 
-	Bookmarks* m_bookmarks;
+	Bookmarks* m_bookmarks{ nullptr };
 
 public:
 	TopBar(AvoExplorer* p_parent);
-	~TopBar()
-	{
-		m_title->forget();
-	}
 
 	//------------------------------
 

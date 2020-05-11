@@ -35,8 +35,8 @@ private:
 	ActionMenu* m_parent;
 	AvoGUI::Ripple* m_ripple{ new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.3f)) };
 
-	AvoGUI::Text* m_text_action{ nullptr };
-	AvoGUI::Text* m_text_shortcut{ nullptr };
+	AvoGUI::Text m_text_action;
+	AvoGUI::Text m_text_shortcut;
 
 public:
 	ActionMenuItem(ActionMenu* p_parent, std::string const& p_action, std::string const& p_shortcut = "") :
@@ -47,7 +47,7 @@ public:
 		if (!p_shortcut.empty())
 		{
 			m_text_shortcut = getDrawingContext()->createText(p_shortcut, getThemeValue(ThemeValues::fontSize)*0.75f);
-			m_text_shortcut->setFontWeight(AvoGUI::FontWeight::Medium);
+			m_text_shortcut.setFontWeight(AvoGUI::FontWeight::Medium);
 		}
 
 		setCursor(AvoGUI::Cursor::Hand);
@@ -62,13 +62,13 @@ public:
 
 	std::string const& getAction()
 	{
-		return m_text_action->getString();
+		return m_text_action.getString();
 	}
 	std::string getShortcut()
 	{
 		if (m_text_shortcut)
 		{
-			return m_text_shortcut->getString();
+			return m_text_shortcut.getString();
 		}
 		return "";
 	}
@@ -77,13 +77,13 @@ public:
 
 	void handleSizeChange() override
 	{
-		m_text_action->setLeft(LEFT_PADDING);
-		m_text_action->setCenterY(getHeight() * 0.5f);
+		m_text_action.setLeft(LEFT_PADDING);
+		m_text_action.setCenterY(getHeight() * 0.5f);
 
 		if (m_text_shortcut)
 		{
-			m_text_shortcut->setRight(getWidth() - RIGHT_PADDING);
-			m_text_shortcut->setCenterY(getHeight() * 0.5f);
+			m_text_shortcut.setRight(getWidth() - RIGHT_PADDING);
+			m_text_shortcut.setCenterY(getHeight() * 0.5f);
 		}
 	}
 

@@ -12,10 +12,10 @@ namespace Strings_english
 	inline std::string const directory = u8"Directory";
 	inline std::string const directories = u8"Directories";
 
-	inline std::string const directoriesOrFilesAlreadyExistDialogMessage = u8"{0} file with the same names already exist in this directory. \n\nIf you choose Replace, the old items will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate files.\nIf you choose Skip duplicates, only files with unique names will be added.";
+	inline std::string const directoriesOrFilesAlreadyExistDialogMessage = u8"{0} files with the same names already exist in this directory. \n\nIf you choose \"Replace\", the old items will be moved to the recycle bin. \nIf you choose \"Add suffixes\", a number will be added at the end of the duplicate files.\nIf you choose \"Skip duplicates\", only files with unique names will be added.";
 	inline std::string const directoriesOrFilesAlreadyExistDialogTitle = u8"Files already exist";
 
-	inline std::string const fileAlreadyExistsDialogMessage = u8"A file with the same name already exists in this directory. \n\nIf you choose Replace, the old file will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate file.";
+	inline std::string const fileAlreadyExistsDialogMessage = u8"A file with the same name already exists in this directory. \n\nIf you choose \"Replace\", the old file will be moved to the recycle bin. \nIf you choose \"Add suffixes\", a number will be added at the end of the duplicate file.";
 	inline std::string const fileAlreadyExistsDialogTitle = u8"File already exists";
 
 	inline std::string const directoryAlreadyExistsDialogMessage = u8"A directory with the same name already exists in this directory. \n\nIf you choose Replace, the old directory will be moved to the recycle bin. \nIf you choose Add suffixes, a number will be added at the end of the duplicate directory.";
@@ -23,6 +23,8 @@ namespace Strings_english
 
 	inline std::string const file = u8"File";
 	inline std::string const files = u8"Files";
+
+	inline std::string const loading = u8"Loading...";
 
 	inline std::string const newDirectoryDialogMessage = u8"Enter the name of the directory below";
 	inline std::string const newDirectoryDialogTitle = u8"Create new directory";

@@ -17,8 +17,8 @@ public:
 private:
 	TitleBar* m_titleBar{ nullptr };
 
-	AvoGUI::Text* m_titleText{ nullptr };
-	AvoGUI::Text* m_messageText{ nullptr };
+	AvoGUI::Text m_titleText;
+	AvoGUI::Text m_messageText;
 	std::string m_titleTextString;
 	std::string m_messageTextString;
 
@@ -26,58 +26,6 @@ private:
 	AvoGUI::Button* m_okButton{ nullptr };
 
 public:
-	void createContent()
-	{
-		getParent()->getWindow()->disableUserInteraction();
-		enableMouseEvents();
-
-		setThemeColor(ThemeColors::background, Colors::dialogBoxBackground);
-		setThemeColor(ThemeColors::onBackground, Colors::dialogBoxOnBackground);
-		setThemeColor(ThemeColors::primary, Colors::primary);
-		setThemeColor(ThemeColors::primaryOnBackground, Colors::primaryOnBackground);
-
-		setThemeValue(ThemeValues::textFieldHeight, 2.2f);
-		setThemeValue(ThemeValues::textFieldFontSize, 13.f);
-
-		//------------------------------
-
-		m_titleBar = new TitleBar(this);
-
-		m_titleText = getDrawingContext()->createText(m_titleTextString, 22.f);
-		m_titleText->setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
-
-		m_messageText = getDrawingContext()->createText(m_messageTextString, 14.f, AvoGUI::Rectangle<float>(m_titleText->getLeft(), m_titleText->getBottom() + 20.f, getRight() - m_titleText->getLeft(), getBottom() - 50.f));
-		m_messageText->setWordWrapping(AvoGUI::WordWrapping::WholeWord);
-		m_messageText->setFontWeight((AvoGUI::FontWeight)400);
-		m_messageText->setLineHeight(1.1f);
-		m_messageText->fitSizeToText();
-
-		//------------------------------
-
-		m_inputField = new AvoGUI::TextField(this, AvoGUI::TextField::Type::Filled);
-		m_inputField->setTop(m_messageText->getBottom() + INPUT_PADDING);
-		setKeyboardFocus(m_inputField);
-
-		//------------------------------
-
-		m_okButton = new AvoGUI::Button(this, Strings::ok, AvoGUI::Button::Emphasis::High);
-		m_okButton->setCenterY(m_inputField->getCenterY());
-
-		//------------------------------
-
-		auto buttonClickListener = [=](auto) {
-			getParent()->getWindow()->enableUserInteraction();
-			dialogBoxInputListeners(m_inputField->getString());
-			getWindow()->close();
-		};
-		m_inputField->getEditableText()->editableTextEnterListeners += buttonClickListener;
-		m_okButton->buttonClickListeners += buttonClickListener;
-
-		//------------------------------
-
-		setHeight(m_inputField->getBottom() + INPUT_PADDING);
-	}
-
 	void handleSizeChange() override
 	{
 		m_titleBar->setWidth(getWidth());
@@ -123,6 +71,55 @@ public:
 		m_titleTextString(p_title), m_messageTextString(p_message)
 	{
 		create(p_title, INITIAL_WIDTH, INITIAL_HEIGHT, AvoGUI::WindowStyleFlags::CustomBorder, p_parentGui);
+
+		getParent()->getWindow()->disableUserInteraction();
+		enableMouseEvents();
+
+		setThemeColor(ThemeColors::background, Colors::dialogBoxBackground);
+		setThemeColor(ThemeColors::onBackground, Colors::dialogBoxOnBackground);
+		setThemeColor(ThemeColors::primary, Colors::primary);
+		setThemeColor(ThemeColors::primaryOnBackground, Colors::primaryOnBackground);
+
+		setThemeValue(ThemeValues::textFieldHeight, 2.2f);
+		setThemeValue(ThemeValues::textFieldFontSize, 13.f);
+
+		//------------------------------
+
+		m_titleBar = new TitleBar(this);
+
+		m_titleText = getDrawingContext()->createText(m_titleTextString, 22.f);
+		m_titleText.setTopLeft(30.f, m_titleBar->getBottom() + 20.f);
+
+		m_messageText = getDrawingContext()->createText(m_messageTextString, 14.f, AvoGUI::Rectangle<float>(m_titleText.getLeft(), m_titleText.getBottom() + 20.f, getRight() - m_titleText.getLeft(), getBottom() - 50.f));
+		m_messageText.setWordWrapping(AvoGUI::WordWrapping::WholeWord);
+		m_messageText.setFontWeight((AvoGUI::FontWeight)400);
+		m_messageText.setLineHeight(1.1f);
+		m_messageText.fitSizeToText();
+
+		//------------------------------
+
+		m_inputField = new AvoGUI::TextField(this, AvoGUI::TextField::Type::Filled);
+		m_inputField->setTop(m_messageText.getBottom() + INPUT_PADDING);
+		setKeyboardFocus(m_inputField);
+
+		//------------------------------
+
+		m_okButton = new AvoGUI::Button(this, Strings::ok, AvoGUI::Button::Emphasis::High);
+		m_okButton->setCenterY(m_inputField->getCenterY());
+
+		//------------------------------
+
+		auto buttonClickListener = [=](auto) {
+			getParent()->getWindow()->enableUserInteraction();
+			dialogBoxInputListeners(m_inputField->getString());
+			getWindow()->close();
+		};
+		m_inputField->getEditableText()->editableTextEnterListeners += buttonClickListener;
+		m_okButton->buttonClickListeners += buttonClickListener;
+
+		//------------------------------
+
+		setHeight(m_inputField->getBottom() + INPUT_PADDING);
 	}
 	~InputDialogBox()
 	{

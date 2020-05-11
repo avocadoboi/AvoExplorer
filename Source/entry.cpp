@@ -9,6 +9,5 @@
 
 int main(int p_numberOfArguments, char** p_arguments)
 {
-	Application* application = new Application(p_numberOfArguments > 1 ? p_arguments[1] : "C:");
-	application->forget();
+	Application application(p_numberOfArguments > 1 ? p_arguments[1] : "C:");
 }

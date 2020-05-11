@@ -23,7 +23,7 @@ public:
 	}
 
 private:
-	AvoGUI::Text* m_text{ nullptr };
+	AvoGUI::Text m_text;
 public:
 	void draw(AvoGUI::DrawingContext* p_context) override
 	{
@@ -38,23 +38,19 @@ public:
 		m_path(p_path)
 	{
 		m_text = getDrawingContext()->createText(p_name, 15.f);
-		m_text->setIsTopTrimmed(false);
-		m_text->fitSizeToText();
+		m_text.setIsTopTrimmed(false);
+		m_text.fitSizeToText();
 
-		setSize(m_text->getWidth() + 2.f * PADDING_HORIZONTAL, 15 + 2.f * PADDING_VERTICAL);
+		setSize(m_text.getWidth() + 2.f * PADDING_HORIZONTAL, 15 + 2.f * PADDING_VERTICAL);
 
-		m_text->setCenterX(getCenterX());
-		m_text->setTop(PADDING_VERTICAL);
+		m_text.setCenterX(getCenterX());
+		m_text.setTop(PADDING_VERTICAL);
 
 		new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor(ThemeColors::onBackground), 0.2f));
 
 		setCornerRadius(5.f);
 		enableMouseEvents();
 		setCursor(AvoGUI::Cursor::Hand);
-	}
-	~FileBrowserPathEditorDirectoryButton()
-	{
-		m_text->forget();
 	}
 };
 
@@ -67,7 +63,7 @@ public:
 	static constexpr float DIRECTORY_SEPARATOR_SIZE = 2.f      * 8.f;
 
 private:
-	AvoGUI::Text* m_directorySeparatorIcon{ getDrawingContext()->createText(MaterialIcons::CHEVRON_RIGHT, DIRECTORY_SEPARATOR_SIZE) };
+	AvoGUI::Text m_directorySeparatorIcon{ getDrawingContext()->createText(MaterialIcons::CHEVRON_RIGHT, DIRECTORY_SEPARATOR_SIZE) };
 	std::vector<FileBrowserPathEditorDirectoryButton*> m_directoryButtons;
 public:
 	void setWorkingDirectory(std::filesystem::path const& p_path)
@@ -89,7 +85,7 @@ public:
 				button->setCenterY(getHeight() * 0.5f);
 				if (m_directoryButtons.size())
 				{
-					button->setLeft(m_directoryButtons.back()->getRight() + 2.f * DIRECTORY_SEPARATOR_MARGIN + m_directorySeparatorIcon->getWidth());
+					button->setLeft(m_directoryButtons.back()->getRight() + 2.f * DIRECTORY_SEPARATOR_MARGIN + m_directorySeparatorIcon.getWidth());
 				}
 				else
 				{
@@ -109,7 +105,7 @@ public:
 	
 	void handleSizeChange() override
 	{
-		m_directorySeparatorIcon->setCenterY(getHeight() * 0.5f);
+		m_directorySeparatorIcon.setCenterY(getHeight() * 0.5f);
 	}
 
 	void draw(AvoGUI::DrawingContext* p_context) override
@@ -117,7 +113,7 @@ public:
 		p_context->setColor(AvoGUI::Color(getThemeColor(ThemeColors::onBackground), 0.7f));
 		for (uint32 a = 0; a < m_directoryButtons.size() - 1; a++)
 		{
-			m_directorySeparatorIcon->setLeft(m_directoryButtons[a]->getRight() + DIRECTORY_SEPARATOR_MARGIN);
+			m_directorySeparatorIcon.setLeft(m_directoryButtons[a]->getRight() + DIRECTORY_SEPARATOR_MARGIN);
 			p_context->drawText(m_directorySeparatorIcon);
 		}
 	}
@@ -129,13 +125,9 @@ public:
 	{
 		enableMouseEvents();
 
-		m_directorySeparatorIcon->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
-		m_directorySeparatorIcon->setIsTopTrimmed(true);
-		m_directorySeparatorIcon->fitSizeToText();
-	}
-	~FileBrowserPathEditorPath()
-	{
-		m_directorySeparatorIcon->forget();
+		m_directorySeparatorIcon.setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+		m_directorySeparatorIcon.setIsTopTrimmed(true);
+		m_directorySeparatorIcon.fitSizeToText();
 	}
 };
 
@@ -157,10 +149,10 @@ private:
 	{
 		m_bookmarkButton->setString(m_isBookmark ? MaterialIcons::BOOKMARK : MaterialIcons::BOOKMARK_BORDER);
 		m_bookmarkButton->setSize(32.f);
-		m_bookmarkButton->getText()->setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
-		m_bookmarkButton->getText()->setFontSize(PATH_EDITOR_BOOKMARK_ICON_SIZE);
-		m_bookmarkButton->getText()->fitSizeToText();
-		m_bookmarkButton->getText()->setCenter(m_bookmarkButton->getSize() * 0.5f);
+		m_bookmarkButton->getText().setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+		m_bookmarkButton->getText().setFontSize(PATH_EDITOR_BOOKMARK_ICON_SIZE);
+		m_bookmarkButton->getText().fitSizeToText();
+		m_bookmarkButton->getText().setCenter(m_bookmarkButton->getSize() * 0.5f);
 	}
 
 	//------------------------------
@@ -202,7 +194,7 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::LinearGradient* m_pathFadeGradient = { getDrawingContext()->createLinearGradient(
+	AvoGUI::LinearGradient m_pathFadeGradient = { getDrawingContext()->createLinearGradient(
 		{
 			{ getThemeColor(ThemeColors::background), 0.f },
 			{ AvoGUI::Color(getThemeColor(ThemeColors::background), 0.f), 1.f }
@@ -258,9 +250,5 @@ public:
 		setCornerRadius(4.f);
 		setElevation(3.f);
 		setHeight(HEIGHT);
-	}
-	~FileBrowserPathEditor()
-	{
-		m_pathFadeGradient->forget();
 	}
 };

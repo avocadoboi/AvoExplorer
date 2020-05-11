@@ -19,8 +19,8 @@ TitleBarWindowButton::TitleBarWindowButton(TitleBar* p_parent, Icon p_icon, bool
 
 	if (p_isEnabled)
 	{
-		m_ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor(ThemeColors::onBackground), p_isCloseButton ? 0.5f : 0.2f));
-		m_ripple->setHasHoverEffect(false);
+		auto ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor(ThemeColors::onBackground), p_isCloseButton ? 0.5f : 0.2f));
+		ripple->setHasHoverEffect(false);
 	}
 
 	enableMouseEvents();
