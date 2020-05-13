@@ -3,4 +3,6 @@
 !*.hpp
 !*.pdf
 !*.png
+!*.md
 !**/
+changelog.md
