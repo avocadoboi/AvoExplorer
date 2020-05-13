@@ -48,7 +48,7 @@ public:
 	void addButton(std::string const& p_text, AvoGUI::Button::Emphasis p_emphasis)
 	{
 		// Will be called from other threads.
-		excludeAnimationThread();
+		auto lock(createThreadLock());
 		AvoGUI::Button* button = new AvoGUI::Button(this, p_text, p_emphasis);
 		button->buttonClickListeners += [this, button](AvoGUI::Button*) {
 			getParent()->getWindow()->enableUserInteraction();
@@ -61,7 +61,6 @@ public:
 		{
 			setHeight(m_messageText.getBottom() + m_messageText.getLeft() + button->getHeight() + BUTTON_MARGIN);
 		}
-		includeAnimationThread();
 	}
 
 	//------------------------------

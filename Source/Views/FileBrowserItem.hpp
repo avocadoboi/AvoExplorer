@@ -22,6 +22,8 @@ public:
 	static constexpr float FILE_NAME_PADDING = 1 * 8.f;
 	static constexpr float BOOKMARK_HEIGHT = 4   * 8.f;
 
+	static constexpr float CUT_OPACITY = 0.5f;
+
 private:
 	FileBrowserItems* m_fileBrowserItems{ nullptr };
 	Bookmarks* m_bookmarks{ nullptr };
@@ -413,8 +415,13 @@ public:
 
 	//------------------------------
 
-private:
-	AvoGUI::Text m_text_name;
+	void setIsCut(bool p_isCut)
+	{
+		setOpacity(p_isCut ? CUT_OPACITY : 1.f);
+		invalidate();
+	}
+
+	//------------------------------
 
 protected:
 	void updateClipGeometry() override
@@ -428,6 +435,9 @@ protected:
 			setClipGeometry(m_isFile ? m_fileBrowserItems->getFileGeometry() : m_fileBrowserItems->getDirectoryGeometry());
 		}
 	}
+
+private:
+	AvoGUI::Text m_text_name;
 
 public:
 	void draw(AvoGUI::DrawingContext* p_context) override

@@ -17,7 +17,10 @@ void Bookmarks::updateLayout()
 		float padding = 0.5f * (getHeight() - m_bookmarks[0]->getHeight());
 		for (uint32 a = 0; a < m_bookmarks.size(); a++)
 		{
-			m_bookmarks[a]->setTargetPosition((a ? m_bookmarks[a - 1]->getTargetPosition().x + m_bookmarks[a - 1]->getWidth() : 0) + padding, padding);
+			m_bookmarks[a]->setTargetPosition(
+				(a ? m_bookmarks[a - 1]->getTargetPosition().x + m_bookmarks[a - 1]->getWidth() : 0) + padding, 
+				padding
+			);
 		}
 		m_bookmarksContainer->setWidth(m_bookmarks.back()->getTargetPosition().x + m_bookmarks.back()->getWidth() + padding);
 		m_bookmarksContainer->setHeight(padding + m_bookmarks[0]->getHeight());
@@ -27,15 +30,6 @@ void Bookmarks::updateLayout()
 //
 // Public
 //
-
-void Bookmarks::handleSizeChange(float p_previousWidth, float p_previousHeight)
-{
-	m_bookmarksScrollContainer->setSize(getSize());
-	if (p_previousHeight != getHeight() || (p_previousWidth > m_bookmarksContainer->getWidth()) != (getWidth() < m_bookmarksContainer->getWidth()))
-	{
-		updateLayout();
-	}
-}
 
 void Bookmarks::handleBookmarkDrag(FileBrowserItem* p_bookmark)
 {
@@ -89,10 +83,9 @@ void Bookmarks::saveBookmarks()
 
 	for (FileBrowserItem* bookmark : m_bookmarks)
 	{
-		fileStream.write(bookmark->getPath().c_str(), bookmark->getPath().wstring().size() + 1);
+		auto path = bookmark->getPath().wstring();
+		fileStream.write(path.c_str(), path.size() + 1);
 	}
-
-	fileStream.close();
 }
 
 void Bookmarks::addBookmark(std::filesystem::path const& p_path)
@@ -112,34 +105,11 @@ void Bookmarks::removeBookmark(uint32 p_index)
 }
 void Bookmarks::removeBookmark(std::filesystem::path const& p_path)
 {
-	for (uint32 a = 0; a < m_bookmarks.size(); a++)
-	{
-		if (m_bookmarks[a]->getPath() == p_path)
-		{
-			removeBookmark(a);
-			break;
-		}
-	}
-}
-void Bookmarks::removeBookmark(FileBrowserItem* p_bookmark)
-{
-	for (uint32 a = 0; a < m_bookmarks.size(); a++)
-	{
-		if (m_bookmarks[a] == p_bookmark)
-		{
-			removeBookmark(a);
-			break;
-		}
-	}
+	removeBookmark(std::find_if(m_bookmarks.begin(), m_bookmarks.end(), [=](FileBrowserItem* bookmark) { 
+		return bookmark->getPath() == p_path; 
+	}));
 }
 bool Bookmarks::getIsPathBookmarked(std::filesystem::path const& p_path)
 {
-	for (uint32 a = 0; a < m_bookmarks.size(); a++)
-	{
-		if (m_bookmarks[a]->getPath() == p_path)
-		{
-			return true;
-		}
-	}
-	return false;
+	return std::any_of(m_bookmarks.begin(), m_bookmarks.end(), [=](FileBrowserItem* bookmark) { return bookmark->getPath() == p_path; });
 }

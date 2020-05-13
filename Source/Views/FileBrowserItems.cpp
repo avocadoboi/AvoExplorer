@@ -15,7 +15,7 @@ uint32 FileBrowserItems::getAbsoluteIndexFromItem(FileBrowserItem* p_item)
 
 void FileBrowserItems::insertNewItem(std::filesystem::path const& p_path, std::vector<FileBrowserItem*>& p_targetList)
 {
-	std::lock_guard<std::mutex> lock(m_itemsMutex);
+	std::scoped_lock lock(m_itemsMutex);
 
 	auto newItem = new FileBrowserItem(this, p_path, false);
 	FileBrowserItem* lastItem = nullptr;
@@ -269,7 +269,7 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 	std::filesystem::create_directories(path, errorCode);
 	if (errorCode)
 	{
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
+		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, Strings::newDirectoryFailedDialogMessage + errorCode.message());
 		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
 		dialog->run();
 	}
@@ -299,16 +299,18 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 
 	// Loading the files in a big directory can take some time so we do it in the worker thread.
 	getComponentById<Worker>(Ids::worker)->requestCallback([this]() {
-		deselectAllItems();
-		m_firstSelectedItem = 0;
-		m_lastSelectedItem = 0;
+		{
+			auto lock(getGui()->createThreadLock());
 
-		m_selectedItems.clear();
-		m_directoryItems.clear();
-		m_fileItems.clear();
-		getGui()->excludeAnimationThread();
-		removeAllChildViews();
-		getGui()->includeAnimationThread();
+			deselectAllItems();
+			m_firstSelectedItem = 0;
+			m_lastSelectedItem = 0;
+
+			m_selectedItems.clear();
+			m_directoryItems.clear();
+			m_fileItems.clear();
+			removeAllChildViews();
+		}
 
 		std::vector<std::filesystem::path> directoryPaths;
 		directoryPaths.reserve(128);
@@ -358,7 +360,7 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 			m_directoryItems.reserve(directoryPaths.size());
 			m_fileItems.reserve(filePaths.size());
 
-			getGui()->excludeAnimationThread();
+			auto lock(getGui()->createThreadLock());
 			for (uint32 a = 0; a < directoryPaths.size(); a++)
 			{
 				m_directoryItems.push_back(new FileBrowserItem(this, directoryPaths[a], false));
@@ -374,9 +376,8 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 				m_fileItems.push_back(new FileBrowserItem(this, filePaths[a], false));
 				m_fileItems.back()->setItemIndex(a);
 			}
-
-			getGui()->includeAnimationThread();
 		}
+		auto lock(getGui()->createThreadLock());
 		if (getParent<View>()->getWidth() && getParent<View>()->getHeight())
 		{
 			updateLayout();
@@ -387,6 +388,7 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 		{
 			setSelectedItem(m_directoryItems[lastVisitedDirectoryItemIndex]);
 		}
+
 		m_lastPath = newPath;
 
 		m_isLoadingFiles = false;
@@ -463,7 +465,8 @@ void FileBrowserItems::tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> c
 		ChoiceDialogBox* dialog = nullptr;
 		if (numberOfPathsThatAlreadyExist == 1)
 		{
-			dialog = new ChoiceDialogBox(getGui(), isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogTitle : Strings::fileAlreadyExistsDialogTitle, isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogMessage : Strings::fileAlreadyExistsDialogMessage);
+			dialog = new ChoiceDialogBox(getGui(), isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogTitle : Strings::fileAlreadyExistsDialogTitle, 
+				                                   isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogMessage : Strings::fileAlreadyExistsDialogMessage);
 			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
 			dialog->addButton(Strings::addSuffixes, AvoGUI::Button::Emphasis::High);
 			dialog->addButton(Strings::cancel, AvoGUI::Button::Emphasis::Medium);
@@ -519,6 +522,16 @@ void FileBrowserItems::finishDroppingItems()
 	else if (m_itemDrop.nameCollisionOption == ItemDrop::Replace)
 	{
 		fileOperation.fFlags |= FOF_NOCONFIRMATION;
+	}
+	else if (m_itemDrop.nameCollisionOption == ItemDrop::Skip)
+	{
+		//auto exists = [](std::filesystem::path& p_path) { 
+		//	return std::filesystem::exists(p_path); 
+		//};
+		//auto& directories = m_itemDrop.targetDirectoryPaths;
+		//auto& files = m_itemDrop.targetFilePaths;
+		//directories.resize(std::remove_if(directories.begin(), directories.end(), exists) - directories.begin());
+		//files.resize(std::remove_if(files.begin(), files.end(), exists) - files.begin());
 	}
 	fileOperation.wFunc = m_itemDrop.operation == ItemDrop::Copy ? FO_COPY : FO_MOVE;
 	fileOperation.pFrom = m_itemDrop.sourcePathsString.data();
@@ -736,6 +749,7 @@ void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 		getGui()->invalidateRectangle(m_dragSelection.rectangle + getAbsoluteTopLeft());
 	}
 }
+
 void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 {
 	if (m_dragSelection.isDragging && AvoGUI::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_dragSelection.anchor.x, m_dragSelection.anchor.y) > 36.f)
@@ -772,87 +786,55 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			Here we first do a broad phase and then a narrow phase, like collision detection in games 🤔
 		*/
 
-		FileBrowserItem* itemToScrollTo = 0;
+		FileBrowserItem* itemToScrollTo = nullptr;
 		int32 leftIndex = 0;
 		int32 rightIndex = 0;
 		int32 topIndex = 0;
 		int32 bottomIndex = 0;
-		if (m_directoryItems.size())
+		static auto selectItemsWithRectangle = [&](std::vector<FileBrowserItem*> p_items, uint32 p_numberOfItemsPerRow)
 		{
-			uint32 numberOfDirectoriesPerRow = getNumberOfDirectoriesPerRow();
-			topIndex = int32(m_dragSelection.rectangle.top - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
-			bottomIndex = int32(m_dragSelection.rectangle.bottom - m_directoryItems[0]->getTop()) / int32(m_directoryItems[0]->getHeight() + MARGIN_VERTICAL);
-			if (topIndex <= int32(m_directoryItems.size() / numberOfDirectoriesPerRow) && bottomIndex >= 0)
+			if (p_items.size())
 			{
-				if (topIndex < 0)
+				topIndex = int32(m_dragSelection.rectangle.top - p_items[0]->getTop()) / int32(p_items[0]->getHeight() + MARGIN_VERTICAL);
+				bottomIndex = int32(m_dragSelection.rectangle.bottom - p_items[0]->getTop()) / int32(p_items[0]->getHeight() + MARGIN_VERTICAL);
+				if (topIndex <= int32(p_items.size() / p_numberOfItemsPerRow) && bottomIndex >= 0)
 				{
-					topIndex = 0;
-				}
-
-				leftIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.left - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfDirectoriesPerRow - 1);
-
-				rightIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.right - PADDING) / int32(m_directoryItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfDirectoriesPerRow - 1);
-
-				for (uint32 y = topIndex; y <= bottomIndex; y++)
-				{
-					for (uint32 x = leftIndex; x <= rightIndex; x++)
+					if (topIndex < 0)
 					{
-						uint32 index = y * numberOfDirectoriesPerRow + x;
-						if (index >= m_directoryItems.size())
+						topIndex = 0;
+					}
+
+					leftIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.left - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)p_numberOfItemsPerRow - 1);
+
+					rightIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.right - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)p_numberOfItemsPerRow - 1);
+
+					for (uint32 y = topIndex; y <= bottomIndex; y++)
+					{
+						for (uint32 x = leftIndex; x <= rightIndex; x++)
 						{
-							y = bottomIndex + 1;
-							break;
-						}
-						if (m_directoryItems[index]->getIsIntersecting(m_dragSelection.rectangle) && !m_directoryItems[index]->getIsSelected())
-						{
-							if (!itemToScrollTo || p_event.y < m_dragSelection.anchor.y && m_directoryItems[index]->getTop() < itemToScrollTo->getTop() || p_event.y > m_dragSelection.anchor.y && m_directoryItems[index]->getBottom() > itemToScrollTo->getBottom())
+							uint32 index = y * p_numberOfItemsPerRow + x;
+							if (index >= p_items.size())
 							{
-								itemToScrollTo = m_directoryItems[index];
+								y = bottomIndex + 1;
+								break;
 							}
-							addSelectedItem(m_directoryItems[index], false);
+							if (p_items[index]->getIsIntersecting(m_dragSelection.rectangle) && !p_items[index]->getIsSelected())
+							{
+								if (!itemToScrollTo || p_event.y < m_dragSelection.anchor.y && p_items[index]->getTop() < itemToScrollTo->getTop() ||
+									p_event.y > m_dragSelection.anchor.y && p_items[index]->getBottom() > itemToScrollTo->getBottom())
+								{
+									itemToScrollTo = p_items[index];
+								}
+								addSelectedItem(p_items[index], false);
+							}
 						}
 					}
 				}
 			}
-		}
-		if (m_fileItems.size())
-		{
-			uint32 numberOfFilesPerRow = getNumberOfFilesPerRow();
-			topIndex = (m_dragSelection.rectangle.top - m_fileItems[0]->getTop()) / (m_fileItems[0]->getHeight() + MARGIN_VERTICAL);
-			bottomIndex = int32(m_dragSelection.rectangle.bottom - m_fileItems[0]->getTop()) / int32(m_fileItems[0]->getHeight() + MARGIN_VERTICAL);
-			if (topIndex <= int32(m_fileItems.size() / numberOfFilesPerRow) && bottomIndex >= 0)
-			{
-				if (topIndex < 0)
-				{
-					topIndex = 0;
-				}
+		};
+		selectItemsWithRectangle(m_directoryItems, getNumberOfDirectoriesPerRow());
+		selectItemsWithRectangle(m_fileItems, getNumberOfFilesPerRow());
 
-				leftIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.left - PADDING) / int32(m_fileItems[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)numberOfFilesPerRow - 1);
-
-				rightIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.right - PADDING) / int32(m_fileItems[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)numberOfFilesPerRow - 1);
-
-				for (uint32 y = topIndex; y <= bottomIndex; y++)
-				{
-					for (uint32 x = leftIndex; x <= rightIndex; x++)
-					{
-						uint32 index = y * numberOfFilesPerRow + x;
-						if (index >= m_fileItems.size())
-						{
-							y = bottomIndex + 1;
-							break;
-						}
-						if (m_fileItems[index]->getIsIntersecting(m_dragSelection.rectangle) && !m_fileItems[index]->getIsSelected())
-						{
-							if (!itemToScrollTo || p_event.y < m_dragSelection.anchor.y && m_fileItems[index]->getTop() < itemToScrollTo->getTop() || p_event.y > m_dragSelection.anchor.y && m_fileItems[index]->getBottom() > itemToScrollTo->getBottom())
-							{
-								itemToScrollTo = m_fileItems[index];
-							}
-							addSelectedItem(m_fileItems[index], false);
-						}
-					}
-				}
-			}
-		}
 		if (itemToScrollTo)
 		{
 			if (itemToScrollTo->getAbsoluteTop() < getParent<View>()->getAbsoluteTop())
@@ -884,9 +866,9 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			/*
 				What happens here is
 				1. Concatenate a string of the paths of all selected items.
-				2. Remove all deleted items from their lists and update their indexes.
+				2. Remove all deleted items from their lists and update their indices.
 				The best way to do this seems to be to just zero their values first and then 
-				remove them in a single sweep afterwards if the operation was not aborted.
+				remove them afterwards if the operation was not aborted.
 			*/
 			std::wstring paths;
 			int32 firstErasedFileItemIndex = -1;
@@ -902,7 +884,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 					{
 						firstErasedFileItemIndex = itemIndex;
 					}
-					m_fileItems[itemIndex] = 0;
+					m_fileItems[itemIndex] = nullptr;
 				}
 				else
 				{
@@ -910,7 +892,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 					{
 						firstErasedDirectoryItemIndex = itemIndex;
 					}
-					m_directoryItems[itemIndex] = 0;
+					m_directoryItems[itemIndex] = nullptr;
 				}
 				removeChildView(m_selectedItems[a]);
 			}
@@ -929,39 +911,29 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			else
 			{
 				/*
-					Remove all deleted items in single sweep
+					Remove all deleted items
 				*/
-				if (firstErasedFileItemIndex >= 0)
-				{
-					uint32 lastEmptyIndex = firstErasedFileItemIndex;
-					for (uint32 a = firstErasedFileItemIndex + 1; a < m_fileItems.size(); a++)
+				auto index = firstErasedFileItemIndex;
+				static auto getIsItemNull = [&](FileBrowserItem* p_item) {
+					if (p_item)
 					{
-						if (m_fileItems[a])
-						{
-							m_fileItems[a]->setItemIndex(lastEmptyIndex);
-							m_fileItems[lastEmptyIndex++] = m_fileItems[a];
-							m_fileItems[a] = 0;
-						}
+						p_item->setItemIndex(index++);
 					}
-					m_fileItems.resize(lastEmptyIndex);
-				}
-				if (firstErasedDirectoryItemIndex >= 0)
+					return !p_item;
+				};
+				if (index >= 0)
 				{
-					uint32 lastEmptyIndex = firstErasedDirectoryItemIndex;
-					for (uint32 a = firstErasedDirectoryItemIndex + 1; a < m_directoryItems.size(); a++)
-					{
-						if (m_directoryItems[a])
-						{
-							m_directoryItems[a]->setItemIndex(lastEmptyIndex);
-							m_directoryItems[lastEmptyIndex++] = m_directoryItems[a];
-							m_directoryItems[a] = 0;
-						}
-					}
-					m_directoryItems.resize(lastEmptyIndex);
+					m_fileItems.resize(std::remove_if(m_fileItems.begin() + firstErasedFileItemIndex, m_fileItems.end(), getIsItemNull) - m_fileItems.begin());
 				}
 
-				m_firstSelectedItem = 0;
-				m_lastSelectedItem = 0;
+				index = firstErasedDirectoryItemIndex;
+				if (index >= 0)
+				{
+					m_directoryItems.resize(std::remove_if(m_directoryItems.begin() + firstErasedDirectoryItemIndex, m_directoryItems.end(), getIsItemNull) - m_directoryItems.begin());
+				}
+
+				m_firstSelectedItem = nullptr;
+				m_lastSelectedItem = nullptr;
 				m_selectedItems.clear();
 				updateLayout();
 				getParent<View>()->invalidate();
@@ -1156,9 +1128,14 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 		{
 			if (isControlDown && m_selectedItems.size())
 			{
+				bool isCut = p_event.key == AvoGUI::KeyboardKey::X;
 				if (m_selectedItems.size() == 1)
 				{
-					getWindow()->setClipboardFile(m_selectedItems[0]->getPath().wstring(), p_event.key == AvoGUI::KeyboardKey::X);
+					if (isCut)
+					{
+						m_selectedItems[0]->setIsCut(true);
+					}
+					getWindow()->setClipboardFile(m_selectedItems[0]->getPath().wstring(), isCut);
 				}
 				else
 				{
@@ -1166,9 +1143,13 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 					paths.reserve(m_selectedItems.size());
 					for (uint32 a = 0; a < m_selectedItems.size(); a++)
 					{
+						if (isCut)
+						{
+							m_selectedItems[a]->setIsCut(true);
+						}
 						paths.push_back(m_selectedItems[a]->getPath().wstring());
 					}
-					getWindow()->setClipboardFiles(paths, p_event.key == AvoGUI::KeyboardKey::X);
+					getWindow()->setClipboardFiles(paths, isCut);
 				}
 			}
 			break;
@@ -1178,10 +1159,10 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 void FileBrowserItems::requestIconLoading()
 {
-	auto loadIconsForItems = [this](std::vector<FileBrowserItem*> items, AvoGUI::Text const& itemsTitle, int32 numberOfColumns) {
+	static auto loadIconsForItems = [this](std::vector<FileBrowserItem*>& items, AvoGUI::Text const& itemsTitle, int32 numberOfColumns) {
 		if (items.size())
 		{
-			std::lock_guard<std::mutex> lock(m_itemsMutex);
+			std::scoped_lock lock(m_itemsMutex);
 			int32 firstVisibleItemIndex = numberOfColumns * floor((-getTop() - itemsTitle.getBottom() - LABEL_MARGIN_BOTTOM) / (items[0]->getHeight() + MARGIN_VERTICAL));
 			int32 lastVisibleItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent<View>()->getHeight() - itemsTitle.getBottom() - LABEL_MARGIN_BOTTOM) / (items[0]->getHeight() + MARGIN_VERTICAL));
 			for (int32 a = AvoGUI::max(0, firstVisibleItemIndex); a < lastVisibleItemIndex && a < items.size(); a++)
@@ -1197,7 +1178,7 @@ void FileBrowserItems::requestIconLoading()
 	};
 
 	m_needsToLoadMoreIcons = true;
-	getComponentById<Worker>(Ids::worker)->requestCallback([this, loadIconsForItems]() {
+	getComponentById<Worker>(Ids::worker)->requestCallback([this]() {
 		m_needsToLoadMoreIcons = false;
 		if (loadIconsForItems(m_directoryItems, m_text_directories, getNumberOfDirectoriesPerRow()))
 		{

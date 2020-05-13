@@ -70,9 +70,7 @@ public:
 	{
 		std::string pathString = p_path.u8string();
 
-		getGui()->excludeAnimationThread();
 		removeAllChildViews();
-		getGui()->includeAnimationThread();
 
 		m_directoryButtons.clear();
 
