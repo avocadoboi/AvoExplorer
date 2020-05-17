@@ -19,15 +19,16 @@ class FileBrowserItem;
 class FileBrowserItems : public AvoGUI::View
 {
 public:
-	static constexpr float PADDING_TOP = 2          * 8.f;
-	static constexpr float PADDING = 3              * 8.f;
-	static constexpr float MARGIN_HORIZONTAL = 1    * 8.f;
-	static constexpr float MARGIN_VERTICAL = 1      * 8.f;
-	static constexpr float LABEL_MARGIN_TOP = 3     * 8.f;
-	static constexpr float LABEL_MARGIN_BOTTOM = 2  * 8.f;
-	static constexpr float MIN_FILE_WIDTH = 20      * 8.f;
-	static constexpr float MIN_DIRECTORY_WIDTH = 20	* 8.f;
-	static constexpr float DIRECTORY_HEIGHT = 6	    * 8.f;
+	static constexpr float 
+		PADDING_TOP = 2grid,
+		PADDING = 3grid,
+		MARGIN_HORIZONTAL = 1grid,
+		MARGIN_VERTICAL = 1grid,
+		LABEL_MARGIN_TOP = 3grid,
+		LABEL_MARGIN_BOTTOM = 2grid,
+		MIN_FILE_WIDTH = 20grid,
+		MIN_DIRECTORY_WIDTH = 20grid,
+		DIRECTORY_HEIGHT = 6grid;
 
 private:
 	std::vector<FileBrowserItem*> m_fileItems;
@@ -57,14 +58,14 @@ private:
 	void createDirectory(std::string const& p_name, bool p_willReplaceExisting = false);
 
 	// Used to tell when to show "loading" text and when to show "no files" text.
-	std::atomic<bool> m_isLoadingFiles{ false };
+	std::atomic<bool> m_isLoadingFiles = false;
 
 public:
 	void setWorkingDirectory(std::filesystem::path const& p_path);
 
 	void letUserAddDirectory()
 	{
-		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
+		auto dialog = new InputDialogBox(getGui(), Strings::newDirectoryDialogTitle, Strings::newDirectoryDialogMessage);
 		dialog->dialogBoxInputListeners += [this](auto input) {
 			createDirectory(input);
 		};
@@ -72,7 +73,7 @@ public:
 	}
 	void letUserAddFile()
 	{
-		InputDialogBox* dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
+		auto dialog = new InputDialogBox(getGui(), Strings::newFileDialogTitle, Strings::newFileDialogMessage);
 		dialog->dialogBoxInputListeners += [this](auto input) {
 			createFile(input);
 		};
@@ -90,13 +91,13 @@ private:
 			Skip,
 			Rename,
 			None
-		} nameCollisionOption{ None };
+		} nameCollisionOption = None;
 
 		enum Operation
 		{
 			Copy,
 			Move
-		} operation{ Copy };
+		} operation = Copy;
 
 		std::filesystem::path targetDirectory;
 		std::wstring sourcePathsString;
@@ -104,7 +105,7 @@ private:
 		std::vector<std::filesystem::path> targetFilePaths;
 	} m_itemDrop;
 
-	bool m_isDraggingDataOnBackground{ false };
+	bool m_isDraggingDataOnBackground = false;
 
 	void tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
 	void finishDroppingItems();
@@ -144,8 +145,8 @@ private:
 		m_lastSelectedItem is equal to m_firstSelectedItem when the user is just selecting individual items, and they are equal to the last selected item.
 	*/
 	std::vector<FileBrowserItem*> m_selectedItems;
-	FileBrowserItem* m_firstSelectedItem{ nullptr };
-	FileBrowserItem* m_lastSelectedItem{ nullptr };
+	FileBrowserItem* m_firstSelectedItem = nullptr;
+	FileBrowserItem* m_lastSelectedItem = nullptr;
 
 	void scrollToShowLastSelectedItem();
 
@@ -159,7 +160,7 @@ public:
 	//------------------------------
 
 private:
-	bool m_isMouseOnBackground{ false };
+	bool m_isMouseOnBackground = false;
 	struct {
 		AvoGUI::Rectangle<float> rectangle;
 		AvoGUI::Point<float> anchor;
@@ -187,7 +188,7 @@ public:
 	//------------------------------
 
 private:
-	std::atomic<bool> m_needsToLoadMoreIcons{ false };
+	std::atomic<bool> m_needsToLoadMoreIcons = false;
 	void requestIconLoading();
 public:
 	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
@@ -231,10 +232,10 @@ public:
 	}
 
 private:
-	AvoGUI::Text m_text_directories{ getDrawingContext()->createText(Strings::directories, 16.f) };
-	AvoGUI::Text m_text_files{ getDrawingContext()->createText(Strings::files, 16.f) };
-	AvoGUI::Text m_text_directoryIsEmpty{ getDrawingContext()->createText(Strings::thisDirectoryIsEmpty, 24.f) };
-	AvoGUI::Text m_text_loading{ getDrawingContext()->createText(Strings::loading, 24.f) };
+	AvoGUI::Text m_text_directories = getDrawingContext()->createText(Strings::directories, 16.f);
+	AvoGUI::Text m_text_files = getDrawingContext()->createText(Strings::files, 16.f);
+	AvoGUI::Text m_text_directoryIsEmpty = getDrawingContext()->createText(Strings::thisDirectoryIsEmpty, 24.f);
+	AvoGUI::Text m_text_loading = getDrawingContext()->createText(Strings::loading, 24.f);
 
 public:
 	void draw(AvoGUI::DrawingContext* p_context) override
@@ -267,9 +268,9 @@ public:
 	{
 		if (m_dragSelection.isDragging)
 		{
-			p_context->setColor(AvoGUI::Color(Colors::selection, 0.1f));
+			p_context->setColor({ Colors::selection, 0.1f });
 			p_context->fillRectangle(m_dragSelection.rectangle);
-			p_context->setColor(AvoGUI::Color(Colors::selection, 0.9f));
+			p_context->setColor({ Colors::selection, 0.9f });
 
 			auto& rectangle = m_dragSelection.rectangle;
 			if (rectangle.getWidth() > 1.f && rectangle.getHeight() > 1.f)
@@ -284,7 +285,8 @@ public:
 	//------------------------------
 
 	FileBrowserItems(ScrollContainer* p_parent, FileBrowser* p_fileBrowser) :
-		View(p_parent, Ids::fileBrowserItems), m_fileBrowser(p_fileBrowser)
+		View{ p_parent, Ids::fileBrowserItems },
+		m_fileBrowser{ p_fileBrowser }
 	{
 		enableMouseEvents();
 		enableDragDropEvents();

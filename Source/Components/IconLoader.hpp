@@ -21,7 +21,7 @@ class FileBrowserItem;
 class IconLoader : public AvoGUI::Component
 {
 private:
-	IWICImagingFactory2* m_windowsImagingFactory{ nullptr };
+	IWICImagingFactory2* m_windowsImagingFactory = nullptr;
 
 public:
 	IWICImagingFactory2* getWindowsImagingFactory()
@@ -30,9 +30,9 @@ public:
 	}
 
 private:
-	IThumbnailCache* m_thumbnailCache{ nullptr };
-	IImageList2* m_windowsDirectoryIconList{ nullptr };
-	IImageList2* m_windowsFileIconList{ nullptr };
+	IThumbnailCache* m_thumbnailCache = nullptr;
+	IImageList2* m_windowsDirectoryIconList = nullptr;
+	IImageList2* m_windowsFileIconList = nullptr;
 
 	// Icon cache
 	std::unordered_map<uint32, AvoGUI::Image> m_uniqueLoadedDirectoryIcons;
@@ -46,7 +46,7 @@ public:
 	void loadIconForItem(FileBrowserItem* p_item);
 	void requestIconLoadingForItem(FileBrowserItem* p_item)
 	{
-		getComponentById<Worker>(Ids::worker)->requestCallback([this, p_item]() {
+		getComponentById<Worker>(Ids::worker)->requestCallback([this, p_item] {
 			loadIconForItem(p_item);
 		});
 	}
@@ -55,7 +55,7 @@ public:
 	IconLoader(Component* p_parent) :
 		Component(p_parent)
 	{
-		getComponentById<Worker>(Ids::worker)->requestCallback([this]() {
+		getComponentById<Worker>(Ids::worker)->requestCallback([this] {
 			CoInitialize(0);
 			CoCreateInstance(CLSID_WICImagingFactory2, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_windowsImagingFactory));
 			CoCreateInstance(CLSID_LocalThumbnailCache, 0, CLSCTX_INPROC, IID_IThumbnailCache, (void**)&m_thumbnailCache);

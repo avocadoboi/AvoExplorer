@@ -13,6 +13,18 @@ using AvoGUI::Id;
 
 //------------------------------
 
+constexpr float operator "" grid(long double p_value)
+{
+	return p_value * 8.f;
+}
+
+constexpr float operator "" grid(unsigned long long int p_value)
+{
+	return p_value * 8.f;
+}
+
+//------------------------------
+
 inline AvoGUI::Image loadImageFromResource(uint32 p_resourceID, AvoGUI::DrawingContext* p_context)
 {
 	HRSRC resource = FindResourceW(0, MAKEINTRESOURCEW(p_resourceID), L"IMAGE");

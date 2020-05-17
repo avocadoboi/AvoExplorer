@@ -9,7 +9,7 @@ class Worker : public AvoGUI::Component
 private:
 	std::condition_variable m_needsToWakeUpConditionVariable;
 	std::mutex m_needsToWakeUpMutex;
-	std::atomic<bool> m_needsToWakeUp{ false };
+	std::atomic<bool> m_needsToWakeUp = false;
 
 	std::mutex m_callbackQueueMutex;
 	std::deque<std::function<void()>> m_callbackQueue;
@@ -58,7 +58,7 @@ public:
 	}
 
 	Worker(Component* p_parent) :
-		Component(p_parent)
+		Component{ p_parent }
 	{
 		parentChangeListeners += [this](Component* oldParent) {
 			if (oldParent && !getParent())

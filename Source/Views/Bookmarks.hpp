@@ -24,10 +24,10 @@ public:
 	}
 
 private:
-	ScrollContainer* m_bookmarksScrollContainer{ nullptr };
-	AvoGUI::View* m_bookmarksContainer{ nullptr };
+	ScrollContainer* m_bookmarksScrollContainer = nullptr;
+	AvoGUI::View* m_bookmarksContainer = nullptr;
 public:
-	AvoGUI::View* getBookmarksContainer()
+	auto getBookmarksContainer()
 	{
 		return m_bookmarksContainer;
 	}
@@ -85,7 +85,7 @@ public:
 	}
 
 	Bookmarks(View* p_topBar) :
-		View(p_topBar, Ids::bookmarks)
+		View{ p_topBar, Ids::bookmarks }
 	{
 		enableMouseEvents();
 
@@ -93,7 +93,7 @@ public:
 
 		setThemeColor(ThemeColors::background, Colors::topBarBookmarksBackground);
 
-		m_bookmarksScrollContainer = new ScrollContainer(this);
+		m_bookmarksScrollContainer = new ScrollContainer{ this };
 		m_bookmarksScrollContainer->setScrollbarMargin(2.f);
 		m_bookmarksContainer = m_bookmarksScrollContainer->getContent();
 

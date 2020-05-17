@@ -25,8 +25,8 @@ public:
 	static constexpr float CUT_OPACITY = 0.5f;
 
 private:
-	FileBrowserItems* m_fileBrowserItems{ nullptr };
-	Bookmarks* m_bookmarks{ nullptr };
+	FileBrowserItems* m_fileBrowserItems = nullptr;
+	Bookmarks* m_bookmarks = nullptr;
 
 	void handleSizeChange() override
 	{
@@ -49,7 +49,6 @@ private:
 
 private:
 	bool m_isBookmark;
-
 public:
 	void setIsBookmark(bool p_isBookmark)
 	{
@@ -63,8 +62,7 @@ public:
 	//------------------------------
 
 private:
-	uint32 m_itemIndex{ 0u };
-
+	uint32 m_itemIndex = 0u;
 public:
 	void setItemIndex(uint32 p_index)
 	{
@@ -104,7 +102,6 @@ public:
 
 private:
 	AvoGUI::Image m_icon;
-
 public:
 	void setIcon(AvoGUI::Image const& p_image)
 	{
@@ -123,8 +120,7 @@ public:
 	//------------------------------
 
 private:
-	bool m_hasThumbnail{ false };
-
+	bool m_hasThumbnail = false;
 public:
 	bool getIsIconThumbnail()
 	{
@@ -134,19 +130,24 @@ public:
 	//------------------------------
 
 private:
-	bool m_isFile{ false };
-	std::filesystem::path m_path;
-	std::string m_name;
-
+	bool m_isFile = false;
 public:
 	bool getIsFile()
 	{
 		return m_isFile;
 	}
+
+private:
+	std::filesystem::path m_path;
+public:
 	std::filesystem::path const& getPath()
 	{
 		return m_path;
 	}
+
+private:
+	std::string m_name;
+public:
 	std::string const& getName()
 	{
 		return m_name;
@@ -172,16 +173,6 @@ public:
 		}
 		return AvoGUI::DragDropOperation::Move;
 	}
-	void handleDragDropEnter(AvoGUI::DragDropEvent const& p_event) override
-	{
-		m_isHovering = true;
-		queueAnimationUpdate();
-	}
-	void handleDragDropLeave(AvoGUI::DragDropEvent const& p_event) override
-	{
-		m_isHovering = false;
-		queueAnimationUpdate();
-	}
 	void handleDragDropFinish(AvoGUI::DragDropEvent const& p_event) override
 	{
 		if (m_isFile)
@@ -203,15 +194,29 @@ public:
 
 	//------------------------------
 
+private:
+	AvoGUI::Color m_overlayColor{ 0.f, 0.f };
+
+	AvoGUI::Animation* m_hoverAnimation = createAnimation(ThemeEasings::inOut, 70, [this](float p_value) {
+		m_overlayColor = { getThemeColor(ThemeColors::onBackground), p_value * 0.15f };
+		invalidate();
+	});
+public:
 	void handleMouseEnter(AvoGUI::MouseEvent const& p_event) override
 	{
-		m_isHovering = true;
-		queueAnimationUpdate();
+		m_hoverAnimation->play(false);
 	}
 	void handleMouseLeave(AvoGUI::MouseEvent const& p_event) override
 	{
-		m_isHovering = false;
-		queueAnimationUpdate();
+		m_hoverAnimation->play(true);
+	}
+	void handleDragDropEnter(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_hoverAnimation->play(false);
+	}
+	void handleDragDropLeave(AvoGUI::DragDropEvent const& p_event) override
+	{
+		m_hoverAnimation->play(true);
 	}
 	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
 	{
@@ -219,6 +224,7 @@ public:
 		{
 			if (m_isBookmark)
 			{
+				m_positionAnimation->stop();
 				m_isDragged = true;
 				move(getParent<View>()->getAbsoluteTopLeft());
 				setParent(getGui());
@@ -245,8 +251,9 @@ public:
 				if (m_isBookmark)
 				{
 					m_animationStartPosition = getAbsoluteTopLeft();
-					m_positionAnimationTime = 0.f;
-					queueAnimationUpdate();
+					//m_positionAnimationTime = 0.f;
+					//queueAnimationUpdate();
+					m_positionAnimation->replay();
 
 					m_bookmarks->saveBookmarks();
 				}
@@ -327,8 +334,21 @@ public:
 private:
 	AvoGUI::Point<float> m_animationStartPosition;
 	AvoGUI::Point<float> m_animationTargetPosition;
-	float m_positionAnimationTime{ 0.f };
-	bool m_isDragged{ false };
+	//float m_positionAnimationTime = 0.f;
+	bool m_isDragged = false;
+
+	AvoGUI::Animation* m_positionAnimation = createAnimation(ThemeEasings::out, 200, [this](float p_value) {
+		if (p_value < 1.f)
+		{
+			setAbsoluteTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, p_value));
+			invalidate();
+		}
+		else if (getParent() == getGui())
+		{
+			setParent(m_bookmarks->getBookmarksContainer());
+			move(-getParent<View>()->getAbsoluteTopLeft());
+		}
+	});
 
 public:
 	void setTargetPosition(float p_left, float p_top)
@@ -337,12 +357,14 @@ public:
 		p_top += m_bookmarks->getBookmarksContainer()->getAbsoluteTop();
 		if (getLeft() || getTop())
 		{
-			m_animationTargetPosition.set(p_left, p_top);
-			if (!m_isDragged)
+			if (m_animationTargetPosition.x != p_left)
 			{
-				m_animationStartPosition = getAbsoluteTopLeft();
-				m_positionAnimationTime = 0.f;
-				queueAnimationUpdate();
+				m_animationTargetPosition.set(p_left, p_top);
+				if (!m_isDragged)
+				{
+					m_animationStartPosition = getAbsoluteTopLeft();
+					m_positionAnimation->replay();
+				}
 			}
 		}
 		else if (!m_isDragged)
@@ -350,7 +372,8 @@ public:
 			m_animationStartPosition.set(p_left, p_top);
 			m_animationTargetPosition.set(p_left, p_top);
 			setAbsoluteTopLeft(p_left, p_top);
-			m_positionAnimationTime = 1.f;
+			m_positionAnimation->stop();
+			//m_positionAnimationTime = 1.f;
 		}
 	}
 	void setTargetPosition(AvoGUI::Point<float> const& p_targetPosition)
@@ -364,54 +387,24 @@ public:
 
 	//------------------------------
 
-private:
-	float m_hoverAnimationTime{ 0.f };
-	float m_hoverAnimationValue{ 0.f };
-	bool m_isHovering{ false };
-
-public:
-	void updateAnimations()
-	{
-		if (m_isBookmark && !m_isDragged)
-		{
-			if (m_positionAnimationTime < 1.f)
-			{
-				float animationValue = getThemeEasing(ThemeEasings::out).easeValue(m_positionAnimationTime += getThemeValue(ThemeValues::positionAnimationSpeed));
-				setAbsoluteTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, animationValue));
-				queueAnimationUpdate();
-			}
-			else if (getParent() == getGui())
-			{
-				setParent(m_bookmarks->getBookmarksContainer());
-				move(-getParent<View>()->getAbsoluteTopLeft());
-			}
-		}
-		if (m_isHovering)
-		{
-			if (m_hoverAnimationTime < 1.f)
-			{
-				m_hoverAnimationValue = getThemeEasing(ThemeEasings::inOut).easeValue(m_hoverAnimationTime += getThemeValue(ThemeValues::hoverAnimationSpeed));
-				queueAnimationUpdate();
-			}
-			else
-			{
-				m_hoverAnimationTime = 1.f;
-			}
-		}
-		else
-		{
-			if (m_hoverAnimationTime > 0.f)
-			{
-				m_hoverAnimationValue = getThemeEasing(ThemeEasings::inOut).easeValue(m_hoverAnimationTime -= getThemeValue(ThemeValues::hoverAnimationSpeed));
-				queueAnimationUpdate();
-			}
-			else
-			{
-				m_hoverAnimationTime = 0.f;
-			}
-		}
-		invalidate();
-	}
+	//void updateAnimations()
+	//{
+	//	if (m_isBookmark && !m_isDragged)
+	//	{
+	//		if (m_positionAnimationTime < 1.f)
+	//		{
+	//			float animationValue = getThemeEasing(ThemeEasings::out).easeValue(m_positionAnimationTime += getThemeValue(ThemeValues::positionAnimationSpeed));
+	//			setAbsoluteTopLeft(AvoGUI::interpolate(m_animationStartPosition, m_animationTargetPosition, animationValue));
+	//			queueAnimationUpdate();
+	//		}
+	//		else if (getParent() == getGui())
+	//		{
+	//			setParent(m_bookmarks->getBookmarksContainer());
+	//			move(-getParent<View>()->getAbsoluteTopLeft());
+	//		}
+	//	}
+	//	invalidate();
+	//}
 
 	//------------------------------
 
@@ -480,7 +473,7 @@ public:
 			p_context->drawImage(m_icon);
 		}
 
-		p_context->setColor(AvoGUI::Color(getThemeColor(ThemeColors::onBackground), m_hoverAnimationValue * 0.15f));
+		p_context->setColor(m_overlayColor);
 		p_context->fillRectangle(getSize());
 	}
 
