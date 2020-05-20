@@ -31,21 +31,21 @@ void AvoExplorer::handleSizeChange()
 	m_fileBrowser->setBounds(0.f, m_topBar->getBottom(), getWidth(), getHeight());
 }
 
-AvoGUI::WindowBorderArea AvoExplorer::getWindowBorderAreaAtPosition(float p_x, float p_y)
+Avo::WindowBorderArea AvoExplorer::getWindowBorderAreaAtPosition(float p_x, float p_y)
 {
-	AvoGUI::WindowBorderArea area = Gui::getWindowBorderAreaAtPosition(p_x, p_y);
-	if (area == AvoGUI::WindowBorderArea::None && m_titleBar->getIsContaining(p_x, p_y))
+	Avo::WindowBorderArea area = Gui::getWindowBorderAreaAtPosition(p_x, p_y);
+	if (area == Avo::WindowBorderArea::None && m_titleBar->getIsContaining(p_x, p_y))
 	{
 		return m_titleBar->getWindowBorderAreaAtPosition(p_x, p_y);
 	}
 	return area;
 }
 
-AvoExplorer::AvoExplorer(AvoGUI::Component* p_parent, char const* p_initialPath) :
+AvoExplorer::AvoExplorer(Avo::Component* p_parent, char const* p_initialPath) :
 	Gui(p_parent),
 	m_initialPath(p_initialPath)
 {
-	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, AvoGUI::WindowStyleFlags::DefaultCustom);
+	create("AvoExplorer", WINDOW_WIDTH_START, WINDOW_HEIGHT_START, Avo::WindowStyleFlags::DefaultCustom);
 
 	getWindow()->setMinSize(WINDOW_WIDTH_MIN, WINDOW_HEIGHT_MIN);
 
@@ -65,10 +65,10 @@ AvoExplorer::AvoExplorer(AvoGUI::Component* p_parent, char const* p_initialPath)
 
 	//------------------------------
 
-	AvoGUI::TextProperties textProperties = getDrawingContext()->getDefaultTextProperties();
+	Avo::TextProperties textProperties = getDrawingContext()->getDefaultTextProperties();
 	textProperties.fontFamilyName = "Roboto";
 	textProperties.fontSize = 16.f;
-	textProperties.fontWeight = AvoGUI::FontWeight::Light;
+	textProperties.fontWeight = Avo::FontWeight::Light;
 	textProperties.lineHeight = 1.1f;
 	textProperties.characterSpacing = 0.3f;
 	getDrawingContext()->setDefaultTextProperties(textProperties);

@@ -11,7 +11,7 @@
 //------------------------------
 
 class Scrollbar :
-	public AvoGUI::View
+	public Avo::View
 {
 public:
 	enum class Orientation
@@ -31,13 +31,13 @@ private:
 	float m_dragAnchorPosition{ 0.f };
 
 public:
-	void handleMouseEnter(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseEnter(Avo::MouseEvent const& p_event) override
 	{
 		m_isHovering = true;
 		m_opacityAnimationTime = 0.f;
 		queueAnimationUpdate();
 	}
-	void handleMouseLeave(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseLeave(Avo::MouseEvent const& p_event) override
 	{
 		if (!m_isDragging)
 		{
@@ -46,16 +46,16 @@ public:
 			queueAnimationUpdate();
 		}
 	}
-	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseDown(Avo::MouseEvent const& p_event) override
 	{
 		m_isDragging = true;
 		m_dragAnchorPosition = m_orientation == Orientation::Vertical ? p_event.y : p_event.x;
 	}
-	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseUp(Avo::MouseEvent const& p_event) override
 	{
 		m_isDragging = false;
 	}
-	inline void handleMouseMove(AvoGUI::MouseEvent const& p_event) override;
+	inline void handleMouseMove(Avo::MouseEvent const& p_event) override;
 
 	//------------------------------
 
@@ -71,7 +71,7 @@ public:
 		{
 			if (m_opacityAnimationTime < 1.f)
 			{
-				m_opacity = AvoGUI::interpolate(
+				m_opacity = Avo::interpolate(
 					SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING,
 					getThemeEasing(ThemeEasings::inOut).easeValue(m_opacityAnimationTime += getThemeValue(ThemeValues::hoverAnimationSpeed))
 				);
@@ -86,7 +86,7 @@ public:
 		{
 			if (m_opacityAnimationTime > 0.f)
 			{
-				m_opacity = AvoGUI::interpolate(
+				m_opacity = Avo::interpolate(
 					SCROLLBAR_OPACITY_NORMAL, SCROLLBAR_OPACITY_HOVERING,
 					getThemeEasing(ThemeEasings::inOut).easeValue(m_opacityAnimationTime -= getThemeValue(ThemeValues::hoverAnimationSpeed))
 				);
@@ -100,16 +100,16 @@ public:
 		invalidate();
 	}
 
-	void draw(AvoGUI::DrawingContext* p_context)
+	void draw(Avo::DrawingContext* p_context)
 	{
-		p_context->setColor(AvoGUI::Color(Colors::scrollbar, m_opacity));
+		p_context->setColor(Avo::Color(Colors::scrollbar, m_opacity));
 		p_context->fillRectangle(getSize());
 	}
 
 	//------------------------------
 
-	Scrollbar(AvoGUI::View* p_parent, Orientation p_orientation) :
-		AvoGUI::View(p_parent),
+	Scrollbar(Avo::View* p_parent, Orientation p_orientation) :
+		Avo::View(p_parent),
 		m_orientation(p_orientation)
 	{
 		setCornerRadius(3.f);
@@ -129,7 +129,7 @@ public:
 //------------------------------
 
 class ScrollContainer :
-	public AvoGUI::View
+	public Avo::View
 {
 public:
 	static constexpr float SCROLLBAR_MIN_LENGTH = 2 * 8.f;
@@ -137,9 +137,9 @@ public:
 	static constexpr float SCROLL_STEP_SIZE = 4 * 8.f;
 
 private:
-	AvoGUI::View* m_content{ new AvoGUI::View(this) };
+	Avo::View* m_content{ new Avo::View(this) };
 public:
-	void setContentView(AvoGUI::View* p_content)
+	void setContentView(Avo::View* p_content)
 	{
 		if (m_content)
 		{
@@ -179,18 +179,18 @@ private:
 		m_verticalScrollbar->setIsVisible(m_content->getHeight() > getHeight());
 		if (m_content->getHeight() > getHeight())
 		{
-			m_verticalScrollbar->setHeight(AvoGUI::max((getHeight() - 2.f * m_scrollbarMargin) * getHeight() / m_content->getHeight(), SCROLLBAR_MIN_LENGTH));
+			m_verticalScrollbar->setHeight(Avo::max((getHeight() - 2.f * m_scrollbarMargin) * getHeight() / m_content->getHeight(), SCROLLBAR_MIN_LENGTH));
 		}
 
 		m_horizontalScrollbar->setIsVisible(m_content->getWidth() > getWidth());
 		if (m_content->getWidth() > getWidth())
 		{
-			m_horizontalScrollbar->setWidth(AvoGUI::max((getWidth() - 2.f * m_scrollbarMargin) * getWidth() / m_content->getWidth(), SCROLLBAR_MIN_LENGTH));
+			m_horizontalScrollbar->setWidth(Avo::max((getWidth() - 2.f * m_scrollbarMargin) * getWidth() / m_content->getWidth(), SCROLLBAR_MIN_LENGTH));
 		}
 	}
 
 public:
-	void setScrollPosition(AvoGUI::Point<float> const& p_position)
+	void setScrollPosition(Avo::Point<float> const& p_position)
 	{
 		setScrollPosition(p_position.x, p_position.y);
 	}
@@ -203,7 +203,7 @@ public:
 	{
 		if (m_horizontalScrollbar->getIsVisible())
 		{
-			p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getWidth() - getWidth(), p_position));
+			p_position = Avo::max(0.f, Avo::min(m_content->getWidth() - getWidth(), p_position));
 
 			m_content->setLeft(-p_position);
 			m_horizontalScrollbar->setLeft(m_scrollbarMargin + p_position * (getWidth() - m_horizontalScrollbar->getWidth() - 2.f * m_scrollbarMargin) / (m_content->getWidth() - getWidth()));
@@ -219,7 +219,7 @@ public:
 	{
 		if (m_verticalScrollbar->getIsVisible())
 		{
-			p_position = AvoGUI::max(0.f, AvoGUI::min(m_content->getHeight() - getHeight(), p_position));
+			p_position = Avo::max(0.f, Avo::min(m_content->getHeight() - getHeight(), p_position));
 
 			m_content->setTop(-p_position);
 			m_verticalScrollbar->setTop(m_scrollbarMargin + p_position * (getHeight() - m_verticalScrollbar->getHeight() - 2.f * m_scrollbarMargin) / (m_content->getHeight() - getHeight()));
@@ -232,7 +232,7 @@ public:
 		}
 	}
 
-	AvoGUI::Point<float> const& getScrollPosition()
+	Avo::Point<float> const& getScrollPosition()
 	{
 		return -m_content->getTopLeft();
 	}
@@ -258,11 +258,11 @@ public:
 
 	//------------------------------
 
-	void handleMouseScroll(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseScroll(Avo::MouseEvent const& p_event) override
 	{
 		if (m_verticalScrollbar && m_horizontalScrollbar)
 		{
-			if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Shift)
+			if (p_event.modifierKeys & Avo::ModifierKeyFlags::Shift)
 			{
 				setHorizontalScrollPosition(-m_content->getLeft() - p_event.scrollDelta * SCROLL_STEP_SIZE);
 				invalidate();
@@ -290,11 +290,11 @@ public:
 private:
 	void attachContentListener()
 	{
-		m_content->sizeChangeListeners += AvoGUI::bind(&ScrollContainer::handleContentSizeChange, this);
+		m_content->sizeChangeListeners += Avo::bind(&ScrollContainer::handleContentSizeChange, this);
 	}
 	void detachContentListener()
 	{
-		m_content->sizeChangeListeners -= AvoGUI::bind(&ScrollContainer::handleContentSizeChange, this);
+		m_content->sizeChangeListeners -= Avo::bind(&ScrollContainer::handleContentSizeChange, this);
 	}
 
 public:
@@ -329,16 +329,16 @@ public:
 		invalidate();
 	}
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
-		p_context->setColor(getThemeColor(AvoGUI::ThemeColors::background));
+		p_context->setColor(getThemeColor(Avo::ThemeColors::background));
 		p_context->fillRectangle(getSize());
 	}
 
 	//------------------------------
 
-	ScrollContainer(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>()) :
-		AvoGUI::View(p_parent, p_bounds)
+	ScrollContainer(Avo::View* p_parent, Avo::Rectangle<float> const& p_bounds = Avo::Rectangle<float>()) :
+		Avo::View(p_parent, p_bounds)
 	{
 		enableMouseEvents();
 		attachContentListener();
@@ -347,7 +347,7 @@ public:
 
 //------------------------------
 
-void Scrollbar::handleMouseMove(AvoGUI::MouseEvent const& p_event)
+void Scrollbar::handleMouseMove(Avo::MouseEvent const& p_event)
 {
 	if (m_isDragging)
 	{

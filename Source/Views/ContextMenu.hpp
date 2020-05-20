@@ -7,7 +7,7 @@
 
 class ContextMenu;
 
-class ContextView : public AvoGUI::View
+class ContextView : public Avo::View
 {
 private:
 	std::vector<ActionMenuItemData> m_contextMenuItems;
@@ -39,19 +39,19 @@ public:
 
 	//------------------------------
 
-	void handleMouseBackgroundEnter(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseBackgroundEnter(Avo::MouseEvent const& p_event) override
 	{
 		View::handleMouseBackgroundEnter(p_event);
 		m_isMouseHoveringBackground = true;
 	}
-	void handleMouseBackgroundLeave(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseBackgroundLeave(Avo::MouseEvent const& p_event) override
 	{
 		View::handleMouseBackgroundLeave(p_event);
 		m_isMouseHoveringBackground = false;
 	}
-	inline void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
+	inline void handleMouseDown(Avo::MouseEvent const& p_event) override;
 
-	inline ContextView(AvoGUI::View* p_parent, AvoGUI::Rectangle<float> const& p_bounds = AvoGUI::Rectangle<float>(0, 0, 0, 0)) :
+	inline ContextView(Avo::View* p_parent, Avo::Rectangle<float> const& p_bounds = Avo::Rectangle<float>(0, 0, 0, 0)) :
 		View(p_parent, p_bounds)
 	{
 	}
@@ -65,7 +65,7 @@ private:
 	ContextView* m_currentContextView{ nullptr };
 
 public:
-	ContextMenu(AvoGUI::Gui* p_gui) :
+	ContextMenu(Avo::Gui* p_gui) :
 		ActionMenu(p_gui)
 	{
 		actionMenuItemChoiceListeners += [this](auto item) {
@@ -88,9 +88,9 @@ public:
 
 //------------------------------
 
-void ContextView::handleMouseDown(AvoGUI::MouseEvent const& p_event)
+void ContextView::handleMouseDown(Avo::MouseEvent const& p_event)
 {
-	if (p_event.mouseButton == AvoGUI::MouseButton::Right && m_isMouseHoveringBackground)
+	if (p_event.mouseButton == Avo::MouseButton::Right && m_isMouseHoveringBackground)
 	{
 		getComponentById<ContextMenu>(Ids::contextMenu)->open(this);
 	}

@@ -7,7 +7,7 @@
 /*
 	The root component of the application.
 */
-class Application : public AvoGUI::Component
+class Application : public Avo::Component
 {
 public:
 	Application(char const* p_arguments)

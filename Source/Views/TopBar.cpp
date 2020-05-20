@@ -28,7 +28,7 @@ TopBar::TopBar(AvoExplorer* p_parent) :
 	m_title = getGui()->getDrawingContext()->createText(Strings::bookmarks, 14.f);
 	m_title.setLeft(TOP_BAR_BOOKMARKS_MARGIN_HORIZONTAL + 4.f);
 	m_title.setCenterY(TOP_BAR_BOOKMARKS_MARGIN_TOP * 0.5f);
-	m_title.setFontWeight(AvoGUI::FontWeight::Light);
+	m_title.setFontWeight(Avo::FontWeight::Light);
 	m_title.fitSizeToText();
 
 	m_bookmarks = new Bookmarks(this);

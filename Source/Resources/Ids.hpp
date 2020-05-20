@@ -1,7 +1,7 @@
 #pragma once
 
 #include <AvoGUI.hpp>
-using AvoGUI::Id;
+using Avo::Id;
 
 namespace Ids
 {

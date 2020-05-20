@@ -7,20 +7,32 @@
 
 //------------------------------
 
-namespace ThemeColors = AvoGUI::ThemeColors;
-namespace ThemeEasings = AvoGUI::ThemeEasings;
-using AvoGUI::Id;
+namespace ThemeColors = Avo::ThemeColors;
+namespace ThemeEasings = Avo::ThemeEasings;
+using Avo::Id;
 
 //------------------------------
 
-inline AvoGUI::Image loadImageFromResource(uint32 p_resourceID, AvoGUI::DrawingContext* p_context)
+constexpr float operator "" grid(long double p_value)
+{
+	return p_value * 8.f;
+}
+
+constexpr float operator "" grid(unsigned long long int p_value)
+{
+	return p_value * 8.f;
+}
+
+//------------------------------
+
+inline Avo::Image loadImageFromResource(uint32 p_resourceID, Avo::DrawingContext* p_context)
 {
 	HRSRC resource = FindResourceW(0, MAKEINTRESOURCEW(p_resourceID), L"IMAGE");
 	if (resource)
 	{
 		return p_context->createImage((uint8*)LockResource(LoadResource(0, resource)), SizeofResource(0, resource));
 	}
-	return AvoGUI::Image();
+	return Avo::Image();
 }
 
 /*

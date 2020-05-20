@@ -30,7 +30,7 @@ FileBrowser::FileBrowser(AvoExplorer* p_parent) :
 
 	m_button_add->setSize(36.f);
 	m_button_add->setCornerRadius(m_button_add->getWidth() * 0.5f);
-	m_button_add->getText().setFontFamily(AvoGUI::FONT_FAMILY_MATERIAL_ICONS);
+	m_button_add->getText().setFontFamily(Avo::FONT_FAMILY_MATERIAL_ICONS);
 	m_button_add->getText().setFontSize(24.f);
 	m_button_add->getText().fitSizeToText();
 	m_button_add->getText().setCenter(m_button_add->getSize() * 0.5f);
@@ -72,8 +72,8 @@ void FileBrowser::setWorkingDirectory(std::filesystem::path p_path)
 		if (error.code().value() == 5)
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::openDirectoryAccessDeniedDialogTitle, Strings::openDirectoryAccessDeniedDialogMessage);
-			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addButton(Strings::restart, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::no, Avo::Button::Emphasis::Medium);
 			dialog->dialogBoxChoiceListeners += [this](std::string const& choice) {
 				if (choice == Strings::restart)
 				{

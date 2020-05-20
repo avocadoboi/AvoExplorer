@@ -16,7 +16,7 @@ class FileBrowserPathEditor;
 class FileBrowserItems;
 class FileBrowserItem;
 
-class FileBrowser : public AvoGUI::View
+class FileBrowser : public Avo::View
 {
 public:
 	static constexpr float PADDING_HORIZONTAL = 2 * 8.f;
@@ -26,7 +26,7 @@ private:
 	AvoExplorer* m_avoExplorer;
 
 	FileBrowserPathEditor* m_pathEditor{ nullptr };
-	AvoGUI::Button* m_button_add{ new AvoGUI::Button(this, MaterialIcons::ADD, AvoGUI::Button::Emphasis::High, true) };
+	Avo::Button* m_button_add{ new Avo::Button(this, MaterialIcons::ADD, Avo::Button::Emphasis::High, true) };
 
 	FileBrowserItems* m_items{ nullptr };
 

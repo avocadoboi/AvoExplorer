@@ -81,7 +81,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		return;
 	}
 
-	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	std::filesystem::path path = m_fileBrowser->getPath().native() + Avo::convertUtf8ToUtf16(p_name);
 	path.make_preferred();
 	bool existsPath = std::filesystem::exists(path);
 	bool wasDirectory = existsPath ? std::filesystem::is_directory(path) : false;
@@ -108,8 +108,8 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		else
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryOrFileAlreadyExistsDialogTitle, Strings::newDirectoryOrFileAlreadyExistsDialogMessage);
-			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addButton(Strings::replace, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::no, Avo::Button::Emphasis::Medium);
 			dialog->addDialogArgument(p_name);
 			dialog->dialogBoxChoiceListeners += [this, dialog](std::string const& choice) {
 				if (choice == Strings::replace)
@@ -137,7 +137,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		{
 			if (p_name[a] == '/' || p_name[a] == '\\')
 			{
-				newItemPath = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name.substr(0, a));
+				newItemPath = m_fileBrowser->getPath().native() + Avo::convertUtf8ToUtf16(p_name.substr(0, a));
 				break;
 			}
 		}
@@ -149,7 +149,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		if (errorCode)
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, (Strings::newDirectoryFailedDialogMessage + errorCode.message()).c_str());
-			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::ok, Avo::Button::Emphasis::High);
 			dialog->run();
 			return;
 		}
@@ -173,8 +173,8 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		case ERROR_ACCESS_DENIED:
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileAccessDeniedDialogTitle, Strings::newFileAccessDeniedDialogMessage);
-			dialog->addButton(Strings::restart, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
+			dialog->addButton(Strings::restart, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::no, Avo::Button::Emphasis::Medium);
 			dialog->dialogBoxChoiceListeners += [this](std::string const& choice) {
 				if (choice == Strings::restart)
 				{
@@ -187,7 +187,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 		default:
 		{
 			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newFileFailedDialogTitle, Strings::newFileFailedDialogMessage);
-			dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+			dialog->addButton(Strings::ok, Avo::Button::Emphasis::High);
 			dialog->run();
 		}
 		}
@@ -213,7 +213,7 @@ void FileBrowserItems::createFile(std::string const& p_name, bool p_willReplaceE
 }
 void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willReplaceExisting)
 {
-	std::filesystem::path path = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name);
+	std::filesystem::path path = m_fileBrowser->getPath().native() + Avo::convertUtf8ToUtf16(p_name);
 	path.make_preferred();
 
 	std::filesystem::path newItemPath;
@@ -223,7 +223,7 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 		{
 			if (p_name[a] == '/' || p_name[a] == '\\')
 			{
-				newItemPath = m_fileBrowser->getPath().native() + AvoGUI::convertUtf8ToUtf16(p_name.substr(0, a));
+				newItemPath = m_fileBrowser->getPath().native() + Avo::convertUtf8ToUtf16(p_name.substr(0, a));
 				break;
 			}
 		}
@@ -251,10 +251,10 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 		}
 		else
 		{
-			ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryOrFileAlreadyExistsDialogTitle, Strings::newDirectoryOrFileAlreadyExistsDialogMessage);
-			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::no, AvoGUI::Button::Emphasis::Medium);
-			dialog->dialogBoxChoiceListeners += [this, p_name, dialog](std::string const& choice) {
+			auto dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryOrFileAlreadyExistsDialogTitle, Strings::newDirectoryOrFileAlreadyExistsDialogMessage);
+			dialog->addButton(Strings::replace, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::no, Avo::Button::Emphasis::Medium);
+			dialog->dialogBoxChoiceListeners += [this, &p_name, dialog](std::string const& choice) {
 				if (choice == Strings::replace)
 				{
 					createDirectory(p_name, true);
@@ -269,8 +269,8 @@ void FileBrowserItems::createDirectory(std::string const& p_name, bool p_willRep
 	std::filesystem::create_directories(path, errorCode);
 	if (errorCode)
 	{
-		ChoiceDialogBox* dialog = new ChoiceDialogBox(getGui(), Strings::newDirectoryFailedDialogTitle, Strings::newDirectoryFailedDialogMessage + errorCode.message());
-		dialog->addButton(Strings::ok, AvoGUI::Button::Emphasis::High);
+		auto dialog = new ChoiceDialogBox{ getGui(), Strings::newDirectoryFailedDialogTitle, Strings::newDirectoryFailedDialogMessage + errorCode.message() };
+		dialog->addButton(Strings::ok, Avo::Button::Emphasis::High);
 		dialog->run();
 	}
 	else if (p_willReplaceExisting == wasRegularFile)
@@ -395,7 +395,8 @@ void FileBrowserItems::setWorkingDirectory(std::filesystem::path const& p_path)
 	});
 }
 
-void FileBrowserItems::tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation)
+void FileBrowserItems::tryDroppingItems(std::unique_ptr<Avo::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, 
+	ItemDrop::Operation p_operation)
 {
 	auto sourcePaths = p_data->getUtf16ItemNames();
 
@@ -465,20 +466,26 @@ void FileBrowserItems::tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> c
 		ChoiceDialogBox* dialog = nullptr;
 		if (numberOfPathsThatAlreadyExist == 1)
 		{
-			dialog = new ChoiceDialogBox(getGui(), isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogTitle : Strings::fileAlreadyExistsDialogTitle, 
-				                                   isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogMessage : Strings::fileAlreadyExistsDialogMessage);
-			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::addSuffixes, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::cancel, AvoGUI::Button::Emphasis::Medium);
+			dialog = new ChoiceDialogBox{ 
+				getGui(), 
+				isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogTitle : Strings::fileAlreadyExistsDialogTitle,
+				isSingleDuplicatePathDirectory ? Strings::directoryAlreadyExistsDialogMessage : Strings::fileAlreadyExistsDialogMessage 
+			};
+			dialog->addButton(Strings::replace, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::addSuffixes, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::cancel, Avo::Button::Emphasis::Medium);
 			dialog->setWidth(500.f);
 		}
 		else
 		{
-			dialog = new ChoiceDialogBox(getGui(), Strings::directoriesOrFilesAlreadyExistDialogTitle, AvoGUI::createFormattedString(Strings::directoriesOrFilesAlreadyExistDialogMessage, numberOfPathsThatAlreadyExist));
-			dialog->addButton(Strings::replace, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::addSuffixes, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::skipDuplicates, AvoGUI::Button::Emphasis::High);
-			dialog->addButton(Strings::cancel, AvoGUI::Button::Emphasis::Medium);
+			dialog = new ChoiceDialogBox{
+				getGui(), Strings::directoriesOrFilesAlreadyExistDialogTitle,
+				Avo::createFormattedString(Strings::directoriesOrFilesAlreadyExistDialogMessage, numberOfPathsThatAlreadyExist)
+			};
+			dialog->addButton(Strings::replace, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::addSuffixes, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::skipDuplicates, Avo::Button::Emphasis::High);
+			dialog->addButton(Strings::cancel, Avo::Button::Emphasis::Medium);
 			dialog->setWidth(600.f);
 		}
 		dialog->dialogBoxChoiceListeners += [this](std::string const& choice) {
@@ -714,7 +721,7 @@ void FileBrowserItems::selectItemsTo(FileBrowserItem* p_item, bool p_isAdditive,
 void FileBrowserItems::removeSelectedItem(FileBrowserItem* p_item)
 {
 	p_item->deselect();
-	AvoGUI::removeVectorElementWithoutKeepingOrder(m_selectedItems, p_item);
+	Avo::removeVectorElementWithoutKeepingOrder(m_selectedItems, p_item);
 	m_firstSelectedItem = p_item;
 	m_lastSelectedItem = p_item;
 }
@@ -727,11 +734,11 @@ void FileBrowserItems::deselectAllItems()
 	m_selectedItems.clear();
 }
 
-void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
+void FileBrowserItems::handleMouseDown(Avo::MouseEvent const& p_event)
 {
-	if (m_isMouseOnBackground && p_event.modifierKeys & AvoGUI::ModifierKeyFlags::LeftMouse)
+	if (m_isMouseOnBackground && p_event.modifierKeys & Avo::ModifierKeyFlags::LeftMouse)
 	{
-		if (!(p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control))
+		if (!(p_event.modifierKeys & Avo::ModifierKeyFlags::Control))
 		{
 			deselectAllItems();
 		}
@@ -741,7 +748,7 @@ void FileBrowserItems::handleMouseDown(AvoGUI::MouseEvent const& p_event)
 	}
 	getGui()->setKeyboardFocus(this);
 }
-void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
+void FileBrowserItems::handleMouseUp(Avo::MouseEvent const& p_event)
 {
 	if (m_dragSelection.isDragging)
 	{
@@ -750,9 +757,10 @@ void FileBrowserItems::handleMouseUp(AvoGUI::MouseEvent const& p_event)
 	}
 }
 
-void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
+void FileBrowserItems::handleMouseMove(Avo::MouseEvent const& p_event)
 {
-	if (m_dragSelection.isDragging && AvoGUI::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_dragSelection.anchor.x, m_dragSelection.anchor.y) > 36.f)
+	if (m_dragSelection.isDragging && 
+		Avo::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_dragSelection.anchor.x, m_dragSelection.anchor.y) > 36.f)
 	{
 		AvoGUI::Rectangle<float> selectionRectangleBefore = m_dragSelection.rectangle;
 		// To keep the correct relationship between left and right and top and bottom.
@@ -777,7 +785,7 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 			m_dragSelection.rectangle.bottom = p_event.y;
 		}
 
-		if (!getGui()->getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control))
+		if (!getGui()->getWindow()->getIsKeyDown(Avo::KeyboardKey::Control))
 		{
 			deselectAllItems();
 		}
@@ -804,9 +812,9 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 						topIndex = 0;
 					}
 
-					leftIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.left - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)p_numberOfItemsPerRow - 1);
+					leftIndex = Avo::constrain(int32(m_dragSelection.rectangle.left - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), 0, (int32)p_numberOfItemsPerRow - 1);
 
-					rightIndex = AvoGUI::constrain(int32(m_dragSelection.rectangle.right - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)p_numberOfItemsPerRow - 1);
+					rightIndex = Avo::constrain(int32(m_dragSelection.rectangle.right - PADDING) / int32(p_items[0]->getWidth() + MARGIN_HORIZONTAL), leftIndex, (int32)p_numberOfItemsPerRow - 1);
 
 					for (uint32 y = topIndex; y <= bottomIndex; y++)
 					{
@@ -854,14 +862,14 @@ void FileBrowserItems::handleMouseMove(AvoGUI::MouseEvent const& p_event)
 	}
 }
 
-void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event)
+void FileBrowserItems::handleKeyboardKeyDown(Avo::KeyboardEvent const& p_event)
 {
-	bool isControlDown = getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Control);
-	bool isShiftDown = getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Shift);
-	bool isAltDown = getWindow()->getIsKeyDown(AvoGUI::KeyboardKey::Alt);
+	bool isControlDown = getWindow()->getIsKeyDown(Avo::KeyboardKey::Control);
+	bool isShiftDown = getWindow()->getIsKeyDown(Avo::KeyboardKey::Shift);
+	bool isAltDown = getWindow()->getIsKeyDown(Avo::KeyboardKey::Alt);
 	switch (p_event.key)
 	{
-		case AvoGUI::KeyboardKey::Delete:
+		case Avo::KeyboardKey::Delete:
 		{
 			/*
 				What happens here is
@@ -940,7 +948,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::A:
+		case Avo::KeyboardKey::A:
 		{
 			if (isControlDown)
 			{
@@ -963,7 +971,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::Left:
+		case Avo::KeyboardKey::Left:
 		{
 			if (isAltDown)
 			{
@@ -995,7 +1003,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::Right:
+		case Avo::KeyboardKey::Right:
 		{
 			if (m_lastSelectedItem)
 			{
@@ -1023,7 +1031,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::Up:
+		case Avo::KeyboardKey::Up:
 		{
 			if (m_lastSelectedItem)
 			{
@@ -1057,7 +1065,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::Down:
+		case Avo::KeyboardKey::Down:
 		{
 			if (m_lastSelectedItem)
 			{
@@ -1091,7 +1099,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::N:
+		case Avo::KeyboardKey::N:
 		{
 			if (isControlDown)
 			{
@@ -1106,7 +1114,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::Enter:
+		case Avo::KeyboardKey::Enter:
 		{
 			if (m_selectedItems.size() == 1)
 			{
@@ -1114,7 +1122,7 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::V:
+		case Avo::KeyboardKey::V:
 		{
 			if (isControlDown)
 			{
@@ -1123,12 +1131,12 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 			}
 			break;
 		}
-		case AvoGUI::KeyboardKey::X:
-		case AvoGUI::KeyboardKey::C:
+		case Avo::KeyboardKey::X:
+		case Avo::KeyboardKey::C:
 		{
 			if (isControlDown && m_selectedItems.size())
 			{
-				bool isCut = p_event.key == AvoGUI::KeyboardKey::X;
+				bool isCut = p_event.key == Avo::KeyboardKey::X;
 				if (m_selectedItems.size() == 1)
 				{
 					if (isCut)
@@ -1159,13 +1167,13 @@ void FileBrowserItems::handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_even
 
 void FileBrowserItems::requestIconLoading()
 {
-	static auto loadIconsForItems = [this](std::vector<FileBrowserItem*>& items, AvoGUI::Text const& itemsTitle, int32 numberOfColumns) {
+	static auto loadIconsForItems = [this](std::vector<FileBrowserItem*>& items, Avo::Text const& itemsTitle, int32 numberOfColumns) {
 		if (items.size())
 		{
 			std::scoped_lock lock(m_itemsMutex);
 			int32 firstVisibleItemIndex = numberOfColumns * floor((-getTop() - itemsTitle.getBottom() - LABEL_MARGIN_BOTTOM) / (items[0]->getHeight() + MARGIN_VERTICAL));
 			int32 lastVisibleItemIndex = numberOfColumns * floor(1 + (-getTop() + getParent<View>()->getHeight() - itemsTitle.getBottom() - LABEL_MARGIN_BOTTOM) / (items[0]->getHeight() + MARGIN_VERTICAL));
-			for (int32 a = AvoGUI::max(0, firstVisibleItemIndex); a < lastVisibleItemIndex && a < items.size(); a++)
+			for (int32 a = Avo::max(0, firstVisibleItemIndex); a < lastVisibleItemIndex && a < items.size(); a++)
 			{
 				if (m_needsToLoadMoreIcons)
 				{
@@ -1251,7 +1259,7 @@ void FileBrowserItems::updateLayout()
 		{
 			height = m_directoryItems.back()->getBottom();
 		}
-		setSize(getParent<View>()->getWidth() - PADDING, AvoGUI::max(m_fileBrowser->getHeight() - getParent<View>()->getTop(), height + PADDING));
+		setSize(getParent<View>()->getWidth() - PADDING, Avo::max(m_fileBrowser->getHeight() - getParent<View>()->getTop(), height + PADDING));
 	}
 
 	requestIconLoading();
