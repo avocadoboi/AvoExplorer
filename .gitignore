@@ -4,5 +4,7 @@
 !*.pdf
 !*.png
 !*.md
+!CMakeLists.txt
 !**/
 changelog.md
+out/**
