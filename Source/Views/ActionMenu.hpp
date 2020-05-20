@@ -23,8 +23,7 @@ struct ActionMenuItemData
 
 class ActionMenu;
 
-class ActionMenuItem :
-	public Avo::View
+class ActionMenuItem : public Avo::View
 {
 public:
 	static constexpr float HEIGHT = 4.f        * 8.f;

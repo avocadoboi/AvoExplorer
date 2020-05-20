@@ -762,7 +762,7 @@ void FileBrowserItems::handleMouseMove(Avo::MouseEvent const& p_event)
 	if (m_dragSelection.isDragging && 
 		Avo::Point<float>::getDistanceSquared(p_event.x, p_event.y, m_dragSelection.anchor.x, m_dragSelection.anchor.y) > 36.f)
 	{
-		AvoGUI::Rectangle<float> selectionRectangleBefore = m_dragSelection.rectangle;
+		Avo::Rectangle<float> selectionRectangleBefore = m_dragSelection.rectangle;
 		// To keep the correct relationship between left and right and top and bottom.
 		if (p_event.x < m_dragSelection.anchor.x)
 		{

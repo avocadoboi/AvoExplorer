@@ -27,7 +27,7 @@ private:
 	
 	Icon m_icon;
 
-	AvoGUI::Color m_backgroundColor;
+	Avo::Color m_backgroundColor;
 	float m_hoverAnimationTime{ 0.f };
 	bool m_isHovering{ false };
 	bool m_isEnabled;
@@ -65,7 +65,7 @@ public:
 			{
 				if (m_hoverAnimationTime < 1.f)
 				{
-					m_backgroundColor = AvoGUI::interpolate(
+					m_backgroundColor = Avo::interpolate(
 						Colors::titleBarBackground, getThemeColor(ThemeColors::background),
 						getThemeEasing(ThemeEasings::inOut).easeValue(m_hoverAnimationTime += getThemeValue(ThemeValues::hoverAnimationSpeed))
 					);
@@ -81,7 +81,7 @@ public:
 			{
 				if (m_hoverAnimationTime > 0.f)
 				{
-					m_backgroundColor = AvoGUI::interpolate(
+					m_backgroundColor = Avo::interpolate(
 						Colors::titleBarBackground, getThemeColor(ThemeColors::background),
 						getThemeEasing(ThemeEasings::inOut).easeValue(m_hoverAnimationTime -= getThemeValue(ThemeValues::hoverAnimationSpeed))
 					);

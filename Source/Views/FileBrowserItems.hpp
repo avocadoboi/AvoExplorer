@@ -267,9 +267,9 @@ public:
 	{
 		if (m_dragSelection.isDragging)
 		{
-			p_context->setColor(AvoGUI::Color(Colors::selection, 0.1f));
+			p_context->setColor(Avo::Color(Colors::selection, 0.1f));
 			p_context->fillRectangle(m_dragSelection.rectangle);
-			p_context->setColor(AvoGUI::Color(Colors::selection, 0.9f));
+			p_context->setColor(Avo::Color(Colors::selection, 0.9f));
 
 			auto& rectangle = m_dragSelection.rectangle;
 			if (rectangle.getWidth() > 1.f && rectangle.getHeight() > 1.f)

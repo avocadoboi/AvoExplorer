@@ -464,7 +464,7 @@ public:
 			p_context->drawImage(m_icon);
 		}
 
-		p_context->setColor(AvoGUI::Color(getThemeColor(ThemeColors::onBackground), m_hoverAnimationValue * 0.15f));
+		p_context->setColor(Avo::Color(getThemeColor(ThemeColors::onBackground), m_hoverAnimationValue * 0.15f));
 		p_context->fillRectangle(getSize());
 	}
 

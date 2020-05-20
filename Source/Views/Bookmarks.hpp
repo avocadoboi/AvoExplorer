@@ -27,7 +27,7 @@ private:
 	ScrollContainer* m_bookmarksScrollContainer = nullptr;
 	Avo::View* m_bookmarksContainer = nullptr;
 public:
-	AvoGUI::View* getBookmarksContainer()
+	Avo::View* getBookmarksContainer()
 	{
 		return m_bookmarksContainer;
 	}
