@@ -1246,8 +1246,6 @@ void FileBrowserItems::updateLayout()
 	if (m_fileItems.empty() && m_directoryItems.empty())
 	{
 		setSize(getParent<View>()->getSize());
-		m_text_directoryIsEmpty.setCenter(getSize() * 0.5f);
-		m_text_loading.setCenter(getSize() * 0.5f);
 	}
 	else
 	{
@@ -1262,6 +1260,8 @@ void FileBrowserItems::updateLayout()
 		}
 		setSize(getParent<View>()->getWidth() - PADDING, Avo::max(m_fileBrowser->getHeight() - getParent<View>()->getTop(), height + PADDING));
 	}
+	m_text_directoryIsEmpty.setCenter(getParent<View>()->getSize() * 0.5f);
+	m_text_loading.setCenter(getParent<View>()->getSize() * 0.5f);
 
 	requestIconLoading();
 }

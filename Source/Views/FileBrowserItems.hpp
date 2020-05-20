@@ -164,7 +164,7 @@ private:
 	struct {
 		Avo::Rectangle<float> rectangle;
 		Avo::Point<float> anchor;
-		bool isDragging{ false };
+		bool isDragging = false;
 	} m_dragSelection;
 
 public:
