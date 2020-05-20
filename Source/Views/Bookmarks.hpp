@@ -10,7 +10,7 @@
 class FileBrowserItem;
 
 class Bookmarks :
-	public AvoGUI::View
+	public Avo::View
 {
 public:
 	static constexpr char const* BOOKMARKS_DATA_PATH = "data";
@@ -25,9 +25,9 @@ public:
 
 private:
 	ScrollContainer* m_bookmarksScrollContainer = nullptr;
-	AvoGUI::View* m_bookmarksContainer = nullptr;
+	Avo::View* m_bookmarksContainer = nullptr;
 public:
-	auto getBookmarksContainer()
+	Avo::View* getBookmarksContainer()
 	{
 		return m_bookmarksContainer;
 	}
@@ -75,7 +75,7 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(getThemeColor(ThemeColors::background));
 		p_context->fillRectangle(getSize());

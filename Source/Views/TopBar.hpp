@@ -7,11 +7,11 @@
 class Bookmarks;
 
 class TopBar :
-	public AvoGUI::View
+	public Avo::View
 {
 private:
 	AvoExplorer* m_avoExplorer;
-	AvoGUI::Text m_title;
+	Avo::Text m_title;
 
 	Bookmarks* m_bookmarks{ nullptr };
 
@@ -29,7 +29,7 @@ public:
 
 	void handleSizeChange() override;
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::topBarBackground);
 		p_context->fillRectangle(getSize());

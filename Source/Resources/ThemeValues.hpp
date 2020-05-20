@@ -1,13 +1,13 @@
 #pragma once
 
 #include <AvoGUI.hpp>
-using AvoGUI::Id;
+using Avo::Id;
 
-namespace AvoGUI::ThemeValues
+namespace Avo::ThemeValues
 {
 	inline Id const fontSize;
 	inline Id const opacity;
 	inline Id const positionAnimationSpeed;
 }
 
-namespace ThemeValues = AvoGUI::ThemeValues;
+namespace ThemeValues = Avo::ThemeValues;

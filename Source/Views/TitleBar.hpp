@@ -8,7 +8,7 @@
 
 //------------------------------
 
-class TitleBarWindowButton : public AvoGUI::View
+class TitleBarWindowButton : public Avo::View
 {
 public:
 	enum class Icon
@@ -26,7 +26,7 @@ private:
 	bool m_isEnabled;
 	
 public:
-	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override;
+	void handleMouseUp(Avo::MouseEvent const& p_event) override;
 
 	//------------------------------
 
@@ -41,19 +41,19 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Animation* m_hoverAnimation = createAnimation(ThemeEasings::inOut, 100, [this](float p_value) {
-		m_backgroundColor = AvoGUI::interpolate(Colors::titleBarBackground, getThemeColor(ThemeColors::background), p_value);
+	Avo::Animation* m_hoverAnimation = createAnimation(ThemeEasings::inOut, 100, [this](float p_value) {
+		m_backgroundColor = Avo::interpolate(Colors::titleBarBackground, getThemeColor(ThemeColors::background), p_value);
 		invalidate();
 	});
 public:
-	void handleMouseEnter(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseEnter(Avo::MouseEvent const& p_event) override
 	{
 		if (m_isEnabled)
 		{
 			m_hoverAnimation->play(false);
 		}
 	}
-	void handleMouseLeave(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseLeave(Avo::MouseEvent const& p_event) override
 	{
 		if (m_isEnabled)
 		{
@@ -64,14 +64,14 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Color m_backgroundColor;
+	Avo::Color m_backgroundColor;
 public:
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(m_backgroundColor);
 		p_context->fillRectangle(getSize());
 
-		AvoGUI::Color strokeColor{ getThemeColor(ThemeColors::onBackground), m_isEnabled ? 1.f : 0.5f };
+		Avo::Color strokeColor{ getThemeColor(ThemeColors::onBackground), m_isEnabled ? 1.f : 0.5f };
 		p_context->setColor(strokeColor);
 
 		p_context->moveOrigin((getWidth() - getHeight()) * 0.5f + BUTTON_ICON_PADDING, BUTTON_ICON_PADDING);
@@ -113,12 +113,12 @@ public:
 	{
 		setSize(BUTTON_WIDTH_FACTOR * p_parent->getHeight(), p_parent->getHeight());
 
-		setThemeColor(ThemeColors::background, p_isCloseButton ? Colors::titleBarCloseButton : AvoGUI::interpolate(getThemeColor(ThemeColors::background), getThemeColor(ThemeColors::onBackground), 0.3f));
+		setThemeColor(ThemeColors::background, p_isCloseButton ? Colors::titleBarCloseButton : Avo::interpolate(getThemeColor(ThemeColors::background), getThemeColor(ThemeColors::onBackground), 0.3f));
 		m_backgroundColor.alpha = 0.f;
 
 		if (p_isEnabled)
 		{
-			auto ripple = new AvoGUI::Ripple(this, AvoGUI::Color(getThemeColor(ThemeColors::onBackground), p_isCloseButton ? 0.5f : 0.2f));
+			auto ripple = new Avo::Ripple(this, Avo::Color(getThemeColor(ThemeColors::onBackground), p_isCloseButton ? 0.5f : 0.2f));
 			ripple->setHasHoverEffect(false);
 		}
 
@@ -128,26 +128,26 @@ public:
 
 //------------------------------
 
-class TitleBar : public AvoGUI::View
+class TitleBar : public Avo::View
 {
 public:
 	static constexpr float HEIGHT = 2.9grid;
 
 private:
-	AvoGUI::Text m_title;
+	Avo::Text m_title;
 	TitleBarWindowButton* m_minimizeButton = nullptr;
 	TitleBarWindowButton* m_maximizeButton = nullptr;
 	TitleBarWindowButton* m_closeButton = nullptr;
 	bool m_isMaximizeEnabled = false;
 
 public:
-	TitleBar(AvoGUI::Gui* p_parent) :
-		View(p_parent, AvoGUI::Rectangle<float>(0, 0, 0, HEIGHT))
+	TitleBar(Avo::Gui* p_parent) :
+		View(p_parent, Avo::Rectangle<float>(0, 0, 0, HEIGHT))
 	{
-		m_isMaximizeEnabled = bool(getWindow()->getStyles() & AvoGUI::WindowStyleFlags::MaximizeButton);
+		m_isMaximizeEnabled = bool(getWindow()->getStyles() & Avo::WindowStyleFlags::MaximizeButton);
 
 		m_title = getDrawingContext()->createText(getWindow()->getTitle(), 11.f);
-		m_title.setFontWeight(AvoGUI::FontWeight::SemiBold);
+		m_title.setFontWeight(Avo::FontWeight::SemiBold);
 		m_title.setCharacterSpacing(0.5f);
 		m_title.setIsTopTrimmed(true);
 		m_title.fitHeightToText();
@@ -197,9 +197,9 @@ public:
 		}
 	}
 
-	AvoGUI::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y)
+	Avo::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y)
 	{
-		return p_y < getHeight() && p_x < (m_minimizeButton ? m_minimizeButton : m_closeButton)->getLeft() ? AvoGUI::WindowBorderArea::Dragging : AvoGUI::WindowBorderArea::None;
+		return p_y < getHeight() && p_x < (m_minimizeButton ? m_minimizeButton : m_closeButton)->getLeft() ? Avo::WindowBorderArea::Dragging : Avo::WindowBorderArea::None;
 	}
 	void handleTitleBarButtonClick(TitleBarWindowButton* p_button)
 	{
@@ -213,7 +213,7 @@ public:
 		}
 		else if (m_isMaximizeEnabled)
 		{
-			if (getGui()->getWindow()->getState() == AvoGUI::WindowState::Maximized)
+			if (getGui()->getWindow()->getState() == Avo::WindowState::Maximized)
 			{
 				getGui()->getWindow()->restore();
 			}
@@ -226,7 +226,7 @@ public:
 
 	//------------------------------
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::titleBarBackground);
 		p_context->fillRectangle(getSize());

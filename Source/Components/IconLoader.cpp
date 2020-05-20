@@ -28,7 +28,7 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 				HBITMAP bitmapHandle;
 				bitmap->GetSharedBitmap(&bitmapHandle);
 
-				AvoGUI::Image newIcon = context->createImageFromHandle(bitmapHandle);
+				Avo::Image newIcon = context->createImageFromHandle(bitmapHandle);
 				p_item->setIcon(newIcon);
 
 				DeleteObject(bitmapHandle);
@@ -47,7 +47,7 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 				HICON icon;
 				m_windowsFileIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-				AvoGUI::Image newIcon = context->createImageFromHandle(icon);
+				Avo::Image newIcon = context->createImageFromHandle(icon);
 				p_item->setIcon(newIcon);
 				m_uniqueLoadedFileIcons[fileInfo.iIcon] = newIcon;
 
@@ -69,7 +69,7 @@ void IconLoader::loadIconForItem(FileBrowserItem* p_item)
 			HICON icon;
 			m_windowsDirectoryIconList->GetIcon(fileInfo.iIcon, 0, &icon);
 
-			AvoGUI::Image newIcon = context->createImageFromHandle(icon);
+			Avo::Image newIcon = context->createImageFromHandle(icon);
 			p_item->setIcon(newIcon);
 			m_uniqueLoadedDirectoryIcons[fileInfo.iIcon] = newIcon;
 

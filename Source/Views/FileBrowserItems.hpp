@@ -16,7 +16,7 @@
 
 class FileBrowserItem;
 
-class FileBrowserItems : public AvoGUI::View
+class FileBrowserItems : public Avo::View
 {
 public:
 	static constexpr float 
@@ -38,11 +38,11 @@ private:
 
 	uint32 getNumberOfDirectoriesPerRow()
 	{
-		return AvoGUI::max(1u, (uint32)floor((getParent<View>()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_DIRECTORY_WIDTH + MARGIN_HORIZONTAL)));
+		return Avo::max(1u, (uint32)floor((getParent<View>()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_DIRECTORY_WIDTH + MARGIN_HORIZONTAL)));
 	}
 	uint32 getNumberOfFilesPerRow()
 	{
-		return AvoGUI::max(1u, (uint32)floor((getParent<View>()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
+		return Avo::max(1u, (uint32)floor((getParent<View>()->getWidth() - PADDING + MARGIN_HORIZONTAL) / (MIN_FILE_WIDTH + MARGIN_HORIZONTAL)));
 	}
 
 	FileBrowserItem* getItemFromAbsoluteIndex(uint32 p_index)
@@ -107,33 +107,33 @@ private:
 
 	bool m_isDraggingDataOnBackground = false;
 
-	void tryDroppingItems(std::unique_ptr<AvoGUI::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
+	void tryDroppingItems(std::unique_ptr<Avo::ClipboardData> const& p_data, std::filesystem::path const& p_targetDirectory, ItemDrop::Operation p_operation);
 	void finishDroppingItems();
 
 public:
 	void dragSelectedItems();
 
-	AvoGUI::DragDropOperation getDragDropOperation(AvoGUI::DragDropEvent const& p_event) override
+	Avo::DragDropOperation getDragDropOperation(Avo::DragDropEvent const& p_event) override
 	{
-		if (p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control)
+		if (p_event.modifierKeys & Avo::ModifierKeyFlags::Control)
 		{
-			return AvoGUI::DragDropOperation::Copy;
+			return Avo::DragDropOperation::Copy;
 		}
-		return AvoGUI::DragDropOperation::Move;
+		return Avo::DragDropOperation::Move;
 	}
-	void handleDragDropBackgroundEnter(AvoGUI::DragDropEvent const& p_event) override
+	void handleDragDropBackgroundEnter(Avo::DragDropEvent const& p_event) override
 	{
 		m_isDraggingDataOnBackground = true;
 	}
-	void handleDragDropBackgroundLeave(AvoGUI::DragDropEvent const& p_event) override
+	void handleDragDropBackgroundLeave(Avo::DragDropEvent const& p_event) override
 	{
 		m_isDraggingDataOnBackground = false;
 	}
-	void handleDragDropFinish(AvoGUI::DragDropEvent const& p_event) override
+	void handleDragDropFinish(Avo::DragDropEvent const& p_event) override
 	{
 		if (m_isDraggingDataOnBackground)
 		{
-			tryDroppingItems(p_event.data, m_fileBrowser->getPath(), p_event.modifierKeys & AvoGUI::ModifierKeyFlags::Control ? ItemDrop::Copy : ItemDrop::Move);
+			tryDroppingItems(p_event.data, m_fileBrowser->getPath(), p_event.modifierKeys & Avo::ModifierKeyFlags::Control ? ItemDrop::Copy : ItemDrop::Move);
 		}
 	}
 
@@ -162,28 +162,28 @@ public:
 private:
 	bool m_isMouseOnBackground = false;
 	struct {
-		AvoGUI::Rectangle<float> rectangle;
-		AvoGUI::Point<float> anchor;
+		Avo::Rectangle<float> rectangle;
+		Avo::Point<float> anchor;
 		bool isDragging{ false };
 	} m_dragSelection;
 
 public:
-	void handleMouseBackgroundEnter(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseBackgroundEnter(Avo::MouseEvent const& p_event) override
 	{
 		View::handleMouseBackgroundEnter(p_event);
 		m_isMouseOnBackground = true;
 	}
-	void handleMouseBackgroundLeave(AvoGUI::MouseEvent const& p_event) override
+	void handleMouseBackgroundLeave(Avo::MouseEvent const& p_event) override
 	{
 		m_isMouseOnBackground = false;
 	}
-	void handleMouseDown(AvoGUI::MouseEvent const& p_event) override;
-	void handleMouseUp(AvoGUI::MouseEvent const& p_event) override;
-	void handleMouseMove(AvoGUI::MouseEvent const& p_event) override;
+	void handleMouseDown(Avo::MouseEvent const& p_event) override;
+	void handleMouseUp(Avo::MouseEvent const& p_event) override;
+	void handleMouseMove(Avo::MouseEvent const& p_event) override;
 
 	//------------------------------
 
-	void handleKeyboardKeyDown(AvoGUI::KeyboardEvent const& p_event) override;
+	void handleKeyboardKeyDown(Avo::KeyboardEvent const& p_event) override;
 
 	//------------------------------
 
@@ -191,7 +191,7 @@ private:
 	std::atomic<bool> m_needsToLoadMoreIcons = false;
 	void requestIconLoading();
 public:
-	void handleBoundsChange(AvoGUI::Rectangle<float> const& p_previousBounds) override
+	void handleBoundsChange(Avo::Rectangle<float> const& p_previousBounds) override
 	{
 		if (p_previousBounds.top != m_bounds.top && getWidth() && getHeight())
 		{
@@ -214,31 +214,31 @@ public:
 	//------------------------------
 
 private:
-	AvoGUI::Geometry m_fileGeometry;
-	AvoGUI::Geometry m_directoryGeometry;
-	AvoGUI::LinearGradient m_fileNameEndGradient;
+	Avo::Geometry m_fileGeometry;
+	Avo::Geometry m_directoryGeometry;
+	Avo::LinearGradient m_fileNameEndGradient;
 public:
-	AvoGUI::Geometry const& getFileGeometry()
+	Avo::Geometry const& getFileGeometry()
 	{
 		return m_fileGeometry;
 	}
-	AvoGUI::Geometry const& getDirectoryGeometry()
+	Avo::Geometry const& getDirectoryGeometry()
 	{
 		return m_directoryGeometry;
 	}
-	AvoGUI::LinearGradient& getFileNameEndGradient()
+	Avo::LinearGradient& getFileNameEndGradient()
 	{
 		return m_fileNameEndGradient;
 	}
 
 private:
-	AvoGUI::Text m_text_directories = getDrawingContext()->createText(Strings::directories, 16.f);
-	AvoGUI::Text m_text_files = getDrawingContext()->createText(Strings::files, 16.f);
-	AvoGUI::Text m_text_directoryIsEmpty = getDrawingContext()->createText(Strings::thisDirectoryIsEmpty, 24.f);
-	AvoGUI::Text m_text_loading = getDrawingContext()->createText(Strings::loading, 24.f);
+	Avo::Text m_text_directories = getDrawingContext()->createText(Strings::directories, 16.f);
+	Avo::Text m_text_files = getDrawingContext()->createText(Strings::files, 16.f);
+	Avo::Text m_text_directoryIsEmpty = getDrawingContext()->createText(Strings::thisDirectoryIsEmpty, 24.f);
+	Avo::Text m_text_loading = getDrawingContext()->createText(Strings::loading, 24.f);
 
 public:
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(Colors::label);
 		if (m_directoryItems.empty() && m_fileItems.empty())
@@ -264,7 +264,7 @@ public:
 			}
 		}
 	}
-	void drawOverlay(AvoGUI::DrawingContext* p_context, AvoGUI::Rectangle<float> const& p_target) override
+	void drawOverlay(Avo::DrawingContext* p_context, Avo::Rectangle<float> const& p_target) override
 	{
 		if (m_dragSelection.isDragging)
 		{
@@ -275,9 +275,9 @@ public:
 			auto& rectangle = m_dragSelection.rectangle;
 			if (rectangle.getWidth() > 1.f && rectangle.getHeight() > 1.f)
 			{
-				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Dash);
+				p_context->setLineDashStyle(Avo::LineDashStyle::Dash);
 				p_context->strokeRectangle(rectangle.left + 0.5f, rectangle.top + 0.5f, rectangle.right - 0.5f, rectangle.bottom - 0.5f, 1.f);
-				p_context->setLineDashStyle(AvoGUI::LineDashStyle::Solid);
+				p_context->setLineDashStyle(Avo::LineDashStyle::Solid);
 			}
 		}
 	}
@@ -295,7 +295,7 @@ public:
 		m_fileNameEndGradient = getDrawingContext()->createLinearGradient(
 			{
 				{ getThemeColor(ThemeColors::onBackground), 0.f },
-				{ AvoGUI::Color(0.f, 0.f), 1.f }
+				{ Avo::Color(0.f, 0.f), 1.f }
 			},
 			-25.f, 0.f, 0.f, 0.f
 		);

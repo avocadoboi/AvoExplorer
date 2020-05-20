@@ -1,7 +1,7 @@
 #pragma once
 
 #include <AvoGUI.hpp>
-using AvoGUI::Color;
+using Avo::Color;
 
 /*
 	These colors are named in a hierarchical way.

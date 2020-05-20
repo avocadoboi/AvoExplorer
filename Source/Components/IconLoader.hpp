@@ -18,7 +18,7 @@
 
 class FileBrowserItem;
 
-class IconLoader : public AvoGUI::Component
+class IconLoader : public Avo::Component
 {
 private:
 	IWICImagingFactory2* m_windowsImagingFactory = nullptr;
@@ -35,8 +35,8 @@ private:
 	IImageList2* m_windowsFileIconList = nullptr;
 
 	// Icon cache
-	std::unordered_map<uint32, AvoGUI::Image> m_uniqueLoadedDirectoryIcons;
-	std::unordered_map<uint32, AvoGUI::Image> m_uniqueLoadedFileIcons;
+	std::unordered_map<uint32, Avo::Image> m_uniqueLoadedDirectoryIcons;
+	std::unordered_map<uint32, Avo::Image> m_uniqueLoadedFileIcons;
 	std::vector<FileBrowserItem*> m_itemsToLoadIconFor;
 
 public:

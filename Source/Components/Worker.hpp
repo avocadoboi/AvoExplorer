@@ -4,7 +4,7 @@
 
 #include <condition_variable>
 
-class Worker : public AvoGUI::Component
+class Worker : public Avo::Component
 {
 private:
 	std::condition_variable m_needsToWakeUpConditionVariable;

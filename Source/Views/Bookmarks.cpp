@@ -37,7 +37,7 @@ void Bookmarks::handleBookmarkDrag(FileBrowserItem* p_bookmark)
 	{
 		float x = p_bookmark->getAbsoluteCenterX();//getGui()->getWindow()->getMousePosition().x;
 
-		AvoGUI::removeVectorElementWhileKeepingOrder(m_bookmarks, p_bookmark);
+		Avo::removeVectorElementWhileKeepingOrder(m_bookmarks, p_bookmark);
 		for (uint32 a = 0; a < m_bookmarks.size(); a++)
 		{
 			if (x < m_bookmarks[a]->getAbsoluteCenterX())

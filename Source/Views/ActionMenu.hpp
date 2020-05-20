@@ -23,8 +23,7 @@ struct ActionMenuItemData
 
 class ActionMenu;
 
-class ActionMenuItem :
-	public AvoGUI::View
+class ActionMenuItem : public Avo::View
 {
 public:
 	static constexpr float HEIGHT = 4.f        * 8.f;
@@ -33,24 +32,24 @@ public:
 
 private:
 	ActionMenu* m_parent;
-	AvoGUI::Ripple* m_ripple{ new AvoGUI::Ripple(this, AvoGUI::Color(1.f, 0.3f)) };
+	Avo::Ripple* m_ripple{ new Avo::Ripple(this, Avo::Color(1.f, 0.3f)) };
 
-	AvoGUI::Text m_text_action;
-	AvoGUI::Text m_text_shortcut;
+	Avo::Text m_text_action;
+	Avo::Text m_text_shortcut;
 
 public:
 	ActionMenuItem(ActionMenu* p_parent, std::string const& p_action, std::string const& p_shortcut = "") :
-		View((AvoGUI::View*)p_parent), 
+		View((Avo::View*)p_parent), 
 		m_parent(p_parent)
 	{
 		m_text_action = getDrawingContext()->createText(p_action, getThemeValue(ThemeValues::fontSize));
 		if (!p_shortcut.empty())
 		{
 			m_text_shortcut = getDrawingContext()->createText(p_shortcut, getThemeValue(ThemeValues::fontSize)*0.75f);
-			m_text_shortcut.setFontWeight(AvoGUI::FontWeight::Medium);
+			m_text_shortcut.setFontWeight(Avo::FontWeight::Medium);
 		}
 
-		setCursor(AvoGUI::Cursor::Hand);
+		setCursor(Avo::Cursor::Hand);
 		enableMouseEvents();
 	}
 	ActionMenuItem(ActionMenu* p_parent, ActionMenuItemData const& p_itemData) :
@@ -87,7 +86,7 @@ public:
 		}
 	}
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setOpacity(getThemeValue(ThemeValues::opacity));
 		p_context->setColor(getThemeColor(ThemeColors::onBackground));
@@ -103,7 +102,7 @@ public:
 //------------------------------
 
 class ActionMenu :
-	public AvoGUI::View
+	public Avo::View
 {
 public:
 	static constexpr float MIN_PARENT_MARGIN = 3.f * 8.f;
@@ -114,12 +113,12 @@ private:
 	float m_openAnimationTime{ 0.f };
 	float m_openAnimationValue{ 0.f };
 
-	AvoGUI::Point<float> m_anchor;
-	AvoGUI::Rectangle<float> m_targetBounds;
+	Avo::Point<float> m_anchor;
+	Avo::Rectangle<float> m_targetBounds;
 
 public:
-	ActionMenu(AvoGUI::View* p_parent, float p_width = 160.f) :
-		View(p_parent, AvoGUI::Rectangle<float>(0.f, 0.f, p_width, 0.f)),
+	ActionMenu(Avo::View* p_parent, float p_width = 160.f) :
+		View(p_parent, Avo::Rectangle<float>(0.f, 0.f, p_width, 0.f)),
 		m_targetBounds(0.f, 0.f, p_width, 0.f)
 	{
 		setThemeValue(ThemeValues::fontSize, 14.f);
@@ -131,7 +130,7 @@ public:
 		setIsVisible(false);
 		enableMouseEvents();
 
-		getGui()->mouseDownListeners += [this](AvoGUI::MouseEvent const& p_event) {
+		getGui()->mouseDownListeners += [this](Avo::MouseEvent const& p_event) {
 			if (m_openAnimationTime >= 1.f && !getIsContainingAbsolute(p_event.x, p_event.y))
 			{
 				setIsVisible(false);
@@ -142,7 +141,7 @@ public:
 
 	//------------------------------
 
-	AvoGUI::EventListeners<void(ActionMenuItem*)> actionMenuItemChoiceListeners;
+	Avo::EventListeners<void(ActionMenuItem*)> actionMenuItemChoiceListeners;
 
 	//------------------------------
 
@@ -158,8 +157,8 @@ public:
 			actionMenuItem->setTop(VERTICAL_PADDING);
 		}
 		actionMenuItem->setSize(m_targetBounds.getWidth(), ActionMenuItem::HEIGHT);
-		actionMenuItem->mouseUpListeners += [this, actionMenuItem](AvoGUI::MouseEvent const& p_event) {
-			if (p_event.mouseButton == AvoGUI::MouseButton::Left && actionMenuItem->getSize().getIsContaining(p_event.x, p_event.y))
+		actionMenuItem->mouseUpListeners += [this, actionMenuItem](Avo::MouseEvent const& p_event) {
+			if (p_event.mouseButton == Avo::MouseButton::Left && actionMenuItem->getSize().getIsContaining(p_event.x, p_event.y))
 			{
 				actionMenuItemChoiceListeners(actionMenuItem);
 
@@ -202,7 +201,7 @@ public:
 
 	//------------------------------
 
-	void open(AvoGUI::Point<float> const& p_anchor)
+	void open(Avo::Point<float> const& p_anchor)
 	{
 		open(p_anchor.x, p_anchor.y);
 	}
@@ -256,12 +255,12 @@ public:
 			queueAnimationUpdate();
 		}
 
-		float heightFactor = 1.f - std::cos(m_openAnimationValue * AvoGUI::HALF_PI);
+		float heightFactor = 1.f - std::cos(m_openAnimationValue * Avo::HALF_PI);
 		setBounds(
 			m_targetBounds.left,
-			AvoGUI::interpolate(m_anchor.y, m_targetBounds.top, heightFactor),
+			Avo::interpolate(m_anchor.y, m_targetBounds.top, heightFactor),
 			m_targetBounds.right,
-			AvoGUI::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
+			Avo::interpolate(m_anchor.y, m_targetBounds.bottom, heightFactor)
 		);
 		for (uint32_t a = 0; a < getNumberOfChildViews(); a++)
 		{
@@ -297,16 +296,16 @@ public:
 		//	}
 		//}
 
-		setOpacity(1.f - AvoGUI::square(1.f - m_openAnimationValue));
+		setOpacity(1.f - Avo::square(1.f - m_openAnimationValue));
 
 		invalidate();
 	}
 
-	void draw(AvoGUI::DrawingContext* p_context) override
+	void draw(Avo::DrawingContext* p_context) override
 	{
 		p_context->setColor(getThemeColor(ThemeColors::background));
 		p_context->fillRectangle(getSize());
-		p_context->setColor(AvoGUI::Color(getThemeColor(ThemeColors::onBackground), 0.1));
+		p_context->setColor(Avo::Color(getThemeColor(ThemeColors::onBackground), 0.1));
 		p_context->strokeRectangle(getSize(), getCorners());
 	}
 };

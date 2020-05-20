@@ -13,7 +13,7 @@ class TitleBar;
 class TopBar;
 class FileBrowser;
 
-class AvoExplorer : public AvoGUI::Gui
+class AvoExplorer : public Avo::Gui
 {
 public:
 	static constexpr uint32 WINDOW_WIDTH_MIN = 260;
@@ -30,11 +30,11 @@ private:
 public:
 	void handleSizeChange() override;
 
-	AvoGUI::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y) override;
+	Avo::WindowBorderArea getWindowBorderAreaAtPosition(float p_x, float p_y) override;
 
 	void restartWithElevatedPrivileges();
 
 	//------------------------------
 
-	AvoExplorer(AvoGUI::Component* p_parent, char const* p_initialPath);
+	AvoExplorer(Avo::Component* p_parent, char const* p_initialPath);
 };
